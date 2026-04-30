@@ -1,0 +1,71 @@
+name: AI reports
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily 09:00 MSK
+    - cron: '0 7 * * 1'   # weekly Mon 10:00 MSK
+  workflow_dispatch:
+    inputs:
+      grain:
+        description: 'Report grain (daily or weekly)'
+        required: true
+        default: 'daily'
+        type: choice
+        options:
+          - daily
+          - weekly
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore service account
+        run: |
+          printf '%s' "$GCP_SA" > service_account.json
+        env:
+          GCP_SA: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - name: Resolve grain
+        id: resolve
+        env:
+          INPUT_GRAIN: ${{ inputs.grain }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+        run: |
+          if [ -n "$INPUT_GRAIN" ]; then
+            echo "grain=$INPUT_GRAIN" >> "$GITHUB_OUTPUT"
+          elif [ "$SCHEDULE_CRON" = "0 7 * * 1" ]; then
+            echo "grain=weekly" >> "$GITHUB_OUTPUT"
+          else
+            echo "grain=daily" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate AI report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ai_report.py --grain "${{ steps.resolve.outputs.grain }}"
+
+      - name: Commit and push report
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git add reports/
+          if git diff --staged --quiet; then
+            echo "No new report to commit"
+          else
+            git commit -m "ai-report: ${{ steps.resolve.outputs.grain }} $(date -u +%Y-%m-%d)"
+            git push
+          fi

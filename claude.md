@@ -221,24 +221,34 @@ python update_analytics.py traffic products pages geo retention transactions
   - [ ] Добавить страницу "Трафик" (общая картина по каналам/странам/устройствам)
   - [ ] Добавить AI-выводы (текстовые рекомендации)
 - [x] **Автоматизация**
-  - [x] GitHub репо `voorlov/pinkspink-analytics` (private)
-  - [x] GitHub Actions — cron ежедневно 06:00 UTC (09:00 МСК), `.github/workflows/build-dashboard.yml`
-  - [x] GitHub Pages — публикация HTML, URL: https://voorlov.github.io/pinkspink-analytics/
-  - [x] AI-отчёты через Claude Code `/schedule` — daily 09:00 МСК + weekly Пн 10:00 МСК → Telegram
+  - [x] GitHub репо `voorlov/pinkspink-analytics` (public — нужно для бесплатного Pages)
+  - [x] GitHub Actions — `build-dashboard.yml` cron 06:00 UTC (HTML) + `ai-reports.yml` cron daily/weekly (AI)
+  - [x] GitHub Pages — https://voorlov.github.io/pinkspink-analytics/
+  - [x] AI-отчёты через GitHub Actions + Anthropic API → Telegram
 - [ ] Подключить Facebook Ads API (расходы, ROAS)
 - [ ] Подключить email-маркетинг (Omnisend)
 
 ## Автоматизация — как устроено
 
-**HTML-дашборд (Track A):**
-- GitHub Actions воркфлоу `.github/workflows/build-dashboard.yml` срабатывает по cron `0 6 * * *` (09:00 МСК) и по кнопке Run workflow.
+**Track A — HTML-дашборд:**
+- Workflow: `.github/workflows/build-dashboard.yml`, cron `0 6 * * *` (09:00 МСК) + кнопка Run workflow.
 - Запускает `python generate_report.py --grain all`, копирует HTML в `docs/`, коммитит и пушит.
-- GitHub Pages раздаёт `docs/` по адресу https://voorlov.github.io/pinkspink-analytics/ (доступ только под логином voorlov, репо приватный).
-- Секреты в репо: `GCP_SERVICE_ACCOUNT_JSON` (содержимое service_account.json).
+- GitHub Pages раздаёт `docs/` по адресу https://voorlov.github.io/pinkspink-analytics/.
+- Репо публичный (бесплатный план GitHub не поддерживает Pages на приватных репо). Данные — агрегатная аналитика без PII.
 
-**AI-отчёты (Track B):**
-- Запускаются через Claude Code `/schedule` — Anthropic-сторона, BigQuery MCP + skill `pinkspink-analytics-coach`.
-- Промпты для копирования в `/schedule`: см. `routine-prompt.md` (daily / weekly / monthly).
-- Доставка в Telegram прямым curl в Bot API.
-- Telegram bot: `@pink_analitics_bot`. Token и chat_id хранятся в `.env.routine` (gitignore).
-- Сохранённые отчёты: `reports/{daily,weekly,monthly}/YYYY-*.md` (коммитятся в репо).
+**Track B — AI-отчёты:**
+- Workflow: `.github/workflows/ai-reports.yml`. Два cron: `0 6 * * *` (daily, 09:00 МСК) и `0 7 * * 1` (weekly, понедельник 10:00 МСК). Также workflow_dispatch для ручного запуска.
+- Скрипт: `scripts/ai_report.py --grain daily|weekly`.
+  1. BigQuery: подтягивает session-level метрики за нужный период (yesterday + trailing-7d, или прошлая неделя + 4 предыдущие).
+  2. Aggregate: каналы, страны, девайсы, ATC rate, View→ATC, etc.
+  3. Загружает контент скилла (`SKILL.md` + `references/*.md`) как system prompt.
+  4. Зовёт Anthropic API (model: `claude-sonnet-4-6`) с pre-computed JSON-данными.
+  5. Сохраняет markdown в `reports/{daily,weekly}/YYYY-*.md`, коммитит и пушит.
+  6. POST в Telegram через Bot API (с chunking >4096 символов).
+- Telegram bot: `@pink_analitics_bot`.
+- Секреты в GitHub: `GCP_SERVICE_ACCOUNT_JSON`, `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+- Локально: `.env.routine` (gitignored) хранит Telegram-учётки на случай ad-hoc прогона `python scripts/ai_report.py`.
+
+**Ограничение weekly-автоотчёта:** скрипт не делает "exploratory pass" и "audience expansion screen" из скилла — для этих секций нужны ad-hoc BigQuery-запросы по решению модели, а в Actions модель работает с pre-computed данными. Эти секции отчёт помечает как «требует ad-hoc запроса в Claude Code». Для глубокого weekly-анализа — запросить вручную в Claude Code, скилл подцепится.
+
+**Файл `routine-prompt.md`** — устарел (был под /schedule с BigQuery MCP, который оказался недоступен на cloud-стороне). Можно удалить или оставить как референс если когда-то добавим BigQuery MCP в claude.ai connectors.
