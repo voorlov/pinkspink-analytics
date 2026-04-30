@@ -1,5 +1,6 @@
 # Credentials (НИКОГДА не коммитить!)
 service_account.json
+.env.routine
 
 # Python
 venv/

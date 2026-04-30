@@ -1,0 +1,48 @@
+name: Build dashboard
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore service account
+        run: |
+          printf '%s' "$GCP_SA" > service_account.json
+        env:
+          GCP_SA: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - name: Generate reports
+        run: python generate_report.py --grain all
+
+      - name: Publish to docs/
+        run: |
+          mkdir -p docs
+          cp report_week.html report_day.html report_month.html docs/
+
+      - name: Commit and push if changed
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git add docs/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "build: refresh dashboard $(date -u +%Y-%m-%d)"
+            git push
+          fi
