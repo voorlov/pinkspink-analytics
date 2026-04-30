@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinkspink Analytics — Воронки</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Ubuntu Mono', monospace; background: #FAFAFA; color: #2D3436; padding: 24px; max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        h2 { font-size: 24px; font-weight: 600; margin: 40px 0 16px; border-bottom: 2px solid #DFE6E9; padding-bottom: 8px; }
+        h3 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+        h4 { font-size: 13px; font-weight: 600; margin: 12px 0 6px; color: #636E72; }
+        .meta { color: #636E72; font-size: 13px; margin-bottom: 32px; }
+        .filters { display: flex; gap: 16px; margin-bottom: 24px; padding: 16px; background: #FFF; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .filters label { font-size: 13px; color: #636E72; }
+        .bubble-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 8px 12px; background: #FFF; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .bubble-filters label { font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .bubble-filters input { cursor: pointer; }
+
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+        .chart-box { background: #FFF; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .chart-box h3 { margin-bottom: 0; }
+        .chart-box canvas { margin-top: -8px; }
+
+        .cards { display: flex; gap: 16px; margin-bottom: 32px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+        .cards::-webkit-scrollbar { height: 6px; }
+        .cards::-webkit-scrollbar-thumb { background: #B2BEC3; border-radius: 3px; }
+        .cards .card { min-width: calc(33.333% - 11px); max-width: calc(33.333% - 11px); flex-shrink: 0; scroll-snap-align: start; }
+        .card { background: #FFF; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h3 { font-size: 14px; margin-bottom: 0; }
+        .card canvas { margin-top: -8px; }
+
+        .metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .metric { display: flex; flex-direction: column; }
+        .metric .label { font-size: 11px; color: #636E72; text-transform: uppercase; }
+        .metric .value { font-size: 18px; font-weight: 600; }
+        .delta { font-size: 12px; }
+        .delta.green { color: #00B894; }
+        .delta.red { color: #E17055; }
+        .delta.neutral { color: #636E72; }
+
+        .top-countries { margin-top: 12px; }
+        .country-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; border-bottom: 1px solid #F0F0F0; }
+
+        .bubble-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 32px; }
+        .bubble-box { background: #FFF; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .bubble-box h4 { text-align: center; margin-bottom: 8px; font-size: 14px; }
+
+        @media (max-width: 900px) {
+            .chart-row, .bubble-row { grid-template-columns: 1fr; }
+            .cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Pinkspink — Воронки</h1>
+    <p class="meta">Сгенерировано: 2026-04-15 19:13 | Grain: week | Исключены: China, Hong Kong, South Korea, Singapore</p>
+
+    <!-- BLOCK 1: Stacked bars -->
+    <h2>Динамика воронок по каналам</h2>
+    <div class="chart-row">
+        <div class="chart-box">
+            <h3>Мобилка</h3>
+            <canvas id="stacked-mobile" height="200"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>Веб</h3>
+            <canvas id="stacked-desktop" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- BLOCK 2: Mobile channel cards -->
+    <h2>Мобилка</h2>
+    <h3 style="margin-bottom:16px;">Динамика мобильной воронки по каналам</h3>
+    <div class="cards">
+        
+        <div class="card" style="border-top: 4px solid #6C5CE7">
+            <h3>Social</h3>
+            <canvas id="funnel-channel-social" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">252</span>
+                    <span class="delta green">↑ +76.5%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">54.4%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">41.7%</span>
+                    <span class="delta red">↓ -11.5 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">17.5s</span>
+                    <span class="delta red">↓ -5.9s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">36.5%</span>
+                    <span class="delta red">↓ -14.5 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">2.2</span>
+                    <span class="delta red">↓ -0.2</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Japan</span><span>145</span></div><div class="country-row"><span>United States</span><span>32</span></div><div class="country-row"><span>France</span><span>9</span></div><div class="country-row"><span>Russia</span><span>5</span></div><div class="country-row"><span>Canada</span><span>5</span></div>
+            </div>
+        </div>
+        
+        <div class="card" style="border-top: 4px solid #00B894">
+            <h3>Paid</h3>
+            <canvas id="funnel-channel-paid" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">108</span>
+                    <span class="delta green">↑ +4809.1%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">23.3%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">22.2%</span>
+                    <span class="delta red">↓ -40.8 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">5.6s</span>
+                    <span class="delta red">↓ -78.5s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">18.5%</span>
+                    <span class="delta red">↓ -50.7 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">1.7</span>
+                    <span class="delta green">↑ +0.3</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Japan</span><span>104</span></div><div class="country-row"><span>United States</span><span>3</span></div><div class="country-row"><span>Vietnam</span><span>1</span></div>
+            </div>
+        </div>
+        
+        <div class="card" style="border-top: 4px solid #636E72">
+            <h3>Direct</h3>
+            <canvas id="funnel-channel-direct" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">89</span>
+                    <span class="delta green">↑ +107.9%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">19.2%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">56.2%</span>
+                    <span class="delta red">↓ -1.2 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">34.7s</span>
+                    <span class="delta green">↑ +24.8s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">49.4%</span>
+                    <span class="delta red">↓ -5.5 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">1.6</span>
+                    <span class="delta red">↓ -0.4</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Japan</span><span>58</span></div><div class="country-row"><span>United States</span><span>15</span></div><div class="country-row"><span>Georgia</span><span>3</span></div><div class="country-row"><span>Canada</span><span>2</span></div><div class="country-row"><span>Colombia</span><span>1</span></div>
+            </div>
+        </div>
+        
+        <div class="card" style="border-top: 4px solid #0984E3">
+            <h3>Organic</h3>
+            <canvas id="funnel-channel-organic" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">12</span>
+                    <span class="delta green">↑ +100.0%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">2.6%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">58.3%</span>
+                    <span class="delta red">↓ -27.7 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">66.3s</span>
+                    <span class="delta green">↑ +169.5s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">58.3%</span>
+                    <span class="delta red">↓ -8.8 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">2.2</span>
+                    <span class="delta red">↓ -0.2</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>United States</span><span>4</span></div><div class="country-row"><span>Japan</span><span>3</span></div><div class="country-row"><span>Russia</span><span>2</span></div><div class="country-row"><span>Germany</span><span>2</span></div><div class="country-row"><span>Georgia</span><span>1</span></div>
+            </div>
+        </div>
+        
+        <div class="card" style="border-top: 4px solid #FDCB6E">
+            <h3>Referral</h3>
+            <canvas id="funnel-channel-referral" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">0</span>
+                    <span class="delta red">↓ -100.0%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">0.0%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">0%</span>
+                    <span class="delta red">↓ -100.0 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">0s</span>
+                    <span class="delta red">↓ -100.0s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">0%</span>
+                    <span class="delta red">↓ -100.0 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">0</span>
+                    <span class="delta red">↓ -0.5</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- BLOCK 3: Mobile source cards -->
+    <h3 style="margin-bottom:16px;">Динамика мобильной воронки по source (топ-5)</h3>
+    <div class="cards">
+        
+        <div class="card">
+            <h3>ig</h3>
+            <canvas id="funnel-source-ig" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">246</span>
+                    <span class="delta green">↑ +74.7%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">53.1%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">42.3%</span>
+                    <span class="delta red">↓ -11.3 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">17.5s</span>
+                    <span class="delta red">↓ -5.9s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">37.0%</span>
+                    <span class="delta red">↓ -14.0 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">2.3</span>
+                    <span class="delta red">↓ -0.2</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Japan</span><span>141</span></div><div class="country-row"><span>United States</span><span>32</span></div><div class="country-row"><span>France</span><span>9</span></div><div class="country-row"><span>Russia</span><span>5</span></div><div class="country-row"><span>Canada</span><span>5</span></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>meta (paid)</h3>
+            <canvas id="funnel-source-meta paid" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">108</span>
+                    <span class="delta green">↑ +4809.1%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">23.3%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">22.2%</span>
+                    <span class="delta red">↓ -40.8 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">5.6s</span>
+                    <span class="delta red">↓ -78.5s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">18.5%</span>
+                    <span class="delta red">↓ -50.7 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">1.7</span>
+                    <span class="delta green">↑ +0.3</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Japan</span><span>104</span></div><div class="country-row"><span>United States</span><span>3</span></div><div class="country-row"><span>Vietnam</span><span>1</span></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>(direct)</h3>
+            <canvas id="funnel-source-direct" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">89</span>
+                    <span class="delta green">↑ +107.9%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">19.2%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">56.2%</span>
+                    <span class="delta red">↓ -1.2 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">34.7s</span>
+                    <span class="delta green">↑ +24.8s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">49.4%</span>
+                    <span class="delta red">↓ -5.5 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">1.6</span>
+                    <span class="delta red">↓ -0.4</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Japan</span><span>58</span></div><div class="country-row"><span>United States</span><span>15</span></div><div class="country-row"><span>Georgia</span><span>3</span></div><div class="country-row"><span>Canada</span><span>2</span></div><div class="country-row"><span>Colombia</span><span>1</span></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>google</h3>
+            <canvas id="funnel-source-google" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">6</span>
+                    <span class="delta green">↑ +9.1%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">1.3%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">66.7%</span>
+                    <span class="delta red">↓ -15.6 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">148.5s</span>
+                    <span class="delta green">↑ +503.7s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">66.7%</span>
+                    <span class="delta green">↑ +7.1 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">1.7</span>
+                    <span class="delta red">↓ -0.8</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Russia</span><span>2</span></div><div class="country-row"><span>Germany</span><span>2</span></div><div class="country-row"><span>Japan</span><span>1</span></div><div class="country-row"><span>Georgia</span><span>1</span></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>l.instagram.com</h3>
+            <canvas id="funnel-source-l_instagram_com" height="200"></canvas>
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">Сессии</span>
+                    <span class="value">6</span>
+                    <span class="delta green">↑ +200.0%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Доля</span>
+                    <span class="value">1.3%</span>
+                </div>
+                <div class="metric">
+                    <span class="label">ER</span>
+                    <span class="value">16.7%</span>
+                    <span class="delta green">↑ +101.2 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Median sec</span>
+                    <span class="value">158.3s</span>
+                    <span class="delta green">↑ +1602.2s</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Глубина 2+</span>
+                    <span class="value">16.7%</span>
+                    <span class="delta green">↑ +101.2 п.п.</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Ср. карточек</span>
+                    <span class="value">1.2</span>
+                    <span class="delta green">↑ +0.6</span>
+                </div>
+            </div>
+            <div class="top-countries">
+                <h4>Топ 5 стран</h4>
+                <div class="country-row"><span>Japan</span><span>4</span></div><div class="country-row"><span>Kazakhstan</span><span>1</span></div><div class="country-row"><span>Mexico</span><span>1</span></div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- BLOCK 4: Bubble charts by source -->
+    <h2>Эффективность source </h2>
+    <div class="bubble-filters" id="filter-src"></div>
+    <div class="bubble-row">
+        <div class="bubble-box"><h4>Каталог → Товар</h4><canvas id="bubble-src-prod" height="200"></canvas></div>
+        <div class="bubble-box"><h4>Товар → Корзина</h4><canvas id="bubble-src-atc" height="200"></canvas></div>
+        <div class="bubble-box"><h4>Корзина → Чекаут</h4><canvas id="bubble-src-checkout" height="200"></canvas></div>
+        <div class="bubble-box"><h4>Чекаут → Покупка</h4><canvas id="bubble-src-purchase" height="200"></canvas></div>
+    </div>
+
+    <!-- BLOCK 5: Bubble charts by country -->
+    <h2>Эффективность воронки по странам </h2>
+    <div class="bubble-filters" id="filter-country"></div>
+    <div class="bubble-row">
+        <div class="bubble-box"><h4>Каталог → Товар</h4><canvas id="bubble-country-prod" height="200"></canvas></div>
+        <div class="bubble-box"><h4>Товар → Корзина</h4><canvas id="bubble-country-atc" height="200"></canvas></div>
+        <div class="bubble-box"><h4>Корзина → Чекаут</h4><canvas id="bubble-country-checkout" height="200"></canvas></div>
+        <div class="bubble-box"><h4>Чекаут → Покупка</h4><canvas id="bubble-country-purchase" height="200"></canvas></div>
+    </div>
+
+    <script>
+    const DATA = {"generated": "2026-04-15 19:13", "grain": "week", "periods": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "excluded_countries": ["China", "Hong Kong", "South Korea", "Singapore"], "mobile_funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [8, 39, 34, 10, 10, 11, 9, 18, 10], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [75, 499, 375, 131, 203, 110, 97, 240, 305], "backgroundColor": "#2D3436"}, {"label": "product", "data": [40, 256, 387, 81, 90, 61, 49, 89, 150], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [2, 1, 7, 1, 1, 3, 0, 4, 4], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [1, 1, 0, 0, 0, 1, 0, 1, 3], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "desktop_funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [4, 6, 5, 4, 4, 9, 2, 6, 9], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [2, 3, 10, 7, 4, 11, 4, 14, 12], "backgroundColor": "#2D3436"}, {"label": "product", "data": [3, 6, 6, 2, 6, 13, 3, 0, 57], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 0, 0, 0, 0, 0, 2], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "mobile_channel_cards": [{"channel": "Social", "color": "#6C5CE7", "period": "W15", "sessions": 252, "share": 54.4, "er": 41.7, "median_sec": 17.5, "deep_pct": 36.5, "avg_products": 2.2, "trend": [95, 597, 306, 117, 196, 93, 91, 191, 252], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [6, 23, 11, 2, 4, 3, 4, 6, 4], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [44, 388, 291, 101, 174, 82, 81, 184, 237], "backgroundColor": "#2D3436"}, {"label": "product", "data": [24, 188, 81, 50, 65, 29, 29, 50, 73], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [2, 1, 7, 0, 1, 0, 0, 4, 3], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [1, 1, 0, 0, 0, 0, 0, 1, 1], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 76.5, "delta_er": -11.5, "delta_median": -5.9, "delta_deep": -14.5, "delta_products": -0.2, "top_countries": [["Japan", 145], ["United States", 32], ["France", 9], ["Russia", 5], ["Canada", 5]]}, {"channel": "Paid", "color": "#00B894", "period": "W15", "sessions": 108, "share": 23.3, "er": 22.2, "median_sec": 5.6, "deep_pct": 18.5, "avg_products": 1.7, "trend": [11, 1, 351, 7, 3, 2, 2, 2, 108], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [0, 0, 15, 0, 0, 0, 0, 0, 0], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [4, 0, 19, 1, 0, 0, 1, 2, 16], "backgroundColor": "#2D3436"}, {"label": "product", "data": [2, 1, 257, 6, 2, 1, 2, 2, 21], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 4809.1, "delta_er": -40.8, "delta_median": -78.5, "delta_deep": -50.7, "delta_products": 0.3, "top_countries": [["Japan", 104], ["United States", 3], ["Vietnam", 1]]}, {"channel": "Direct", "color": "#636E72", "period": "W15", "sessions": 89, "share": 19.2, "er": 56.2, "median_sec": 34.7, "deep_pct": 49.4, "avg_products": 1.6, "trend": [28, 128, 75, 36, 33, 40, 31, 67, 89], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [2, 15, 7, 8, 4, 7, 5, 12, 5], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [26, 102, 52, 20, 22, 18, 14, 50, 44], "backgroundColor": "#2D3436"}, {"label": "product", "data": [13, 63, 43, 24, 18, 28, 18, 36, 50], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 1, 0, 2, 0, 0, 1], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 1, 0, 0, 2], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 107.9, "delta_er": -1.2, "delta_median": 24.8, "delta_deep": -5.5, "delta_products": -0.4, "top_countries": [["Japan", 58], ["United States", 15], ["Georgia", 3], ["Canada", 2], ["Colombia", 1]]}, {"channel": "Organic", "color": "#0984E3", "period": "W15", "sessions": 12, "share": 2.6, "er": 58.3, "median_sec": 66.3, "deep_pct": 58.3, "avg_products": 2.2, "trend": [1, 9, 12, 12, 9, 9, 3, 3, 12], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [0, 1, 1, 0, 2, 1, 0, 0, 1], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [1, 8, 10, 9, 7, 8, 1, 3, 8], "backgroundColor": "#2D3436"}, {"label": "product", "data": [1, 3, 6, 1, 5, 3, 0, 0, 6], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 100.0, "delta_er": -27.7, "delta_median": 169.5, "delta_deep": -8.8, "delta_products": -0.2, "top_countries": [["United States", 4], ["Japan", 3], ["Russia", 2], ["Germany", 2], ["Georgia", 1]]}, {"channel": "Referral", "color": "#FDCB6E", "period": "W15", "sessions": 0, "share": 0.0, "er": 0, "median_sec": 0, "deep_pct": 0, "avg_products": 0, "trend": [0, 2, 4, 0, 0, 3, 0, 1, 0], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [0, 1, 3, 0, 0, 2, 0, 1, 0], "backgroundColor": "#2D3436"}, {"label": "product", "data": [0, 1, 0, 0, 0, 0, 0, 1, 0], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 0, 0, 1, 0, 0, 0], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": -100.0, "delta_er": -100.0, "delta_median": -100.0, "delta_deep": -100.0, "delta_products": -0.5, "top_countries": []}], "mobile_source_cards": [{"source": "ig", "period": "W15", "sessions": 246, "share": 53.1, "er": 42.3, "median_sec": 17.5, "deep_pct": 37.0, "avg_products": 2.3, "trend": [93, 588, 306, 117, 195, 92, 85, 191, 246], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [6, 22, 11, 2, 4, 3, 3, 6, 4], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [44, 386, 291, 101, 174, 82, 80, 184, 236], "backgroundColor": "#2D3436"}, {"label": "product", "data": [22, 183, 81, 50, 65, 28, 26, 50, 68], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [2, 1, 7, 0, 1, 0, 0, 4, 3], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [1, 1, 0, 0, 0, 0, 0, 1, 1], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 74.7, "delta_er": -11.3, "delta_median": -5.9, "delta_deep": -14.0, "delta_products": -0.2, "top_countries": [["Japan", 141], ["United States", 32], ["France", 9], ["Russia", 5], ["Canada", 5]]}, {"source": "meta (paid)", "period": "W15", "sessions": 108, "share": 23.3, "er": 22.2, "median_sec": 5.6, "deep_pct": 18.5, "avg_products": 1.7, "trend": [11, 1, 351, 7, 3, 2, 2, 2, 108], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [0, 0, 15, 0, 0, 0, 0, 0, 0], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [4, 0, 19, 1, 0, 0, 1, 2, 16], "backgroundColor": "#2D3436"}, {"label": "product", "data": [2, 1, 257, 6, 2, 1, 2, 2, 21], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 4809.1, "delta_er": -40.8, "delta_median": -78.5, "delta_deep": -50.7, "delta_products": 0.3, "top_countries": [["Japan", 104], ["United States", 3], ["Vietnam", 1]]}, {"source": "(direct)", "period": "W15", "sessions": 89, "share": 19.2, "er": 56.2, "median_sec": 34.7, "deep_pct": 49.4, "avg_products": 1.6, "trend": [28, 128, 75, 36, 33, 40, 31, 67, 89], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [2, 15, 7, 8, 4, 7, 5, 12, 5], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [26, 102, 52, 20, 22, 18, 14, 50, 44], "backgroundColor": "#2D3436"}, {"label": "product", "data": [13, 63, 43, 24, 18, 28, 18, 36, 50], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 1, 0, 2, 0, 0, 1], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 1, 0, 0, 2], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 107.9, "delta_er": -1.2, "delta_median": 24.8, "delta_deep": -5.5, "delta_products": -0.4, "top_countries": [["Japan", 58], ["United States", 15], ["Georgia", 3], ["Canada", 2], ["Colombia", 1]]}, {"source": "google", "period": "W15", "sessions": 6, "share": 1.3, "er": 66.7, "median_sec": 148.5, "deep_pct": 66.7, "avg_products": 1.7, "trend": [1, 7, 12, 12, 7, 9, 3, 3, 6], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [0, 0, 1, 0, 1, 1, 0, 0, 0], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [1, 6, 10, 9, 5, 8, 1, 3, 5], "backgroundColor": "#2D3436"}, {"label": "product", "data": [1, 3, 6, 1, 3, 3, 0, 0, 5], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 9.1, "delta_er": -15.6, "delta_median": 503.7, "delta_deep": 7.1, "delta_products": -0.8, "top_countries": [["Russia", 2], ["Germany", 2], ["Japan", 1], ["Georgia", 1]]}, {"source": "l.instagram.com", "period": "W15", "sessions": 6, "share": 1.3, "er": 16.7, "median_sec": 158.3, "deep_pct": 16.7, "avg_products": 1.2, "trend": [2, 9, 0, 0, 1, 1, 6, 0, 6], "funnel": {"labels": ["W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15"], "datasets": [{"label": "home", "data": [0, 1, 0, 0, 0, 0, 1, 0, 0], "backgroundColor": "#636E72"}, {"label": "catalog", "data": [0, 2, 0, 0, 0, 0, 1, 0, 1], "backgroundColor": "#2D3436"}, {"label": "product", "data": [2, 5, 0, 0, 0, 1, 3, 0, 5], "backgroundColor": "#6C5CE7"}, {"label": "ATC", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#FDCB6E"}, {"label": "checkout", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#74B9FF"}, {"label": "purchase", "data": [0, 0, 0, 0, 0, 0, 0, 0, 0], "backgroundColor": "#00B894"}]}, "delta_sessions": 200.0, "delta_er": 101.2, "delta_median": 1602.2, "delta_deep": 101.2, "delta_products": 0.6, "top_countries": [["Japan", 4], ["Kazakhstan", 1], ["Mexico", 1]]}], "bubble_source": [{"name": "(direct)", "sessions": 89, "funnel_catalog": 44, "funnel_product": 50, "funnel_atc": 1, "funnel_checkout": 2, "funnel_purchase": 0, "cat_to_prod": 100.0, "prod_to_atc": 2.0, "atc_to_checkout": 100.0, "checkout_to_purchase": 0.0, "er": 56.2, "median_sec": 34.7}, {"name": "ecosia.org", "sessions": 4, "funnel_catalog": 1, "funnel_product": 1, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 100.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 25.0, "median_sec": 66.3}, {"name": "google", "sessions": 6, "funnel_catalog": 5, "funnel_product": 5, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 100.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 66.7, "median_sec": 148.5}, {"name": "meta (paid)", "sessions": 108, "funnel_catalog": 16, "funnel_product": 21, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 100.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 22.2, "median_sec": 5.6}, {"name": "ig", "sessions": 246, "funnel_catalog": 236, "funnel_product": 68, "funnel_atc": 3, "funnel_checkout": 1, "funnel_purchase": 0, "cat_to_prod": 28.8, "prod_to_atc": 4.4, "atc_to_checkout": 33.3, "checkout_to_purchase": 0.0, "er": 42.3, "median_sec": 17.5}, {"name": "l.instagram.com", "sessions": 6, "funnel_catalog": 1, "funnel_product": 5, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 100.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 16.7, "median_sec": 158.3}], "bubble_country": [{"name": "Japan", "sessions": 310, "funnel_catalog": 194, "funnel_product": 81, "funnel_atc": 2, "funnel_checkout": 3, "funnel_purchase": 0, "cat_to_prod": 41.8, "prod_to_atc": 2.5, "atc_to_checkout": 100.0, "checkout_to_purchase": 0.0, "er": 37.1, "median_sec": 17.5}, {"name": "United States", "sessions": 56, "funnel_catalog": 30, "funnel_product": 25, "funnel_atc": 1, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 83.3, "prod_to_atc": 4.0, "atc_to_checkout": 0.0, "checkout_to_purchase": 0, "er": 39.3, "median_sec": 24.8}, {"name": "France", "sessions": 9, "funnel_catalog": 7, "funnel_product": 3, "funnel_atc": 1, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 42.9, "prod_to_atc": 33.3, "atc_to_checkout": 0.0, "checkout_to_purchase": 0, "er": 44.4, "median_sec": 39.2}, {"name": "Russia", "sessions": 8, "funnel_catalog": 7, "funnel_product": 4, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 57.1, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 75.0, "median_sec": 78.3}, {"name": "Canada", "sessions": 7, "funnel_catalog": 7, "funnel_product": 2, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 28.6, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 57.1, "median_sec": 10.9}, {"name": "Georgia", "sessions": 6, "funnel_catalog": 3, "funnel_product": 5, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 100.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 50.0, "median_sec": 0.0}, {"name": "Germany", "sessions": 6, "funnel_catalog": 5, "funnel_product": 5, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 100.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 66.7, "median_sec": 41.4}, {"name": "Mexico", "sessions": 5, "funnel_catalog": 4, "funnel_product": 3, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 75.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 40.0, "median_sec": 0.0}, {"name": "Argentina", "sessions": 5, "funnel_catalog": 5, "funnel_product": 1, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 20.0, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 20.0, "median_sec": 7.1}, {"name": "Türkiye", "sessions": 4, "funnel_catalog": 3, "funnel_product": 2, "funnel_atc": 0, "funnel_checkout": 0, "funnel_purchase": 0, "cat_to_prod": 66.7, "prod_to_atc": 0.0, "atc_to_checkout": 0, "checkout_to_purchase": 0, "er": 50.0, "median_sec": 70.5}]};
+
+    Chart.register(ChartDataLabels);
+    Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+    Chart.defaults.font.size = 10;
+    Chart.defaults.plugins.legend.labels.boxWidth = 10;
+    Chart.defaults.plugins.legend.labels.boxHeight = 10;
+    Chart.defaults.plugins.legend.labels.font = { size: 10 };
+    Chart.defaults.plugins.legend.labels.padding = 12;
+    Chart.defaults.plugins.legend.align = 'start';
+
+    // Funnel bar chart (grouped, not stacked)
+    function funnelBar(id, chartData) {
+        new Chart(document.getElementById(id), {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: chartData.datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10 },
+                        formatter: v => v > 0 ? v : ''
+                    }
+                },
+                layout: { padding: { top: 10 } },
+                scales: {
+                    x: { stacked: false },
+                    y: { beginAtZero: true, grace: '15%' }
+                }
+            }
+        });
+    }
+
+    funnelBar('stacked-mobile', DATA.mobile_funnel);
+    funnelBar('stacked-desktop', DATA.desktop_funnel);
+
+    // Funnel bar charts for channel cards
+    DATA.mobile_channel_cards.forEach(card => {
+        const id = 'funnel-channel-' + card.channel.toLowerCase().replace(/\s/g, '-');
+        const el = document.getElementById(id);
+        if (!el) return;
+        funnelBar(id, card.funnel);
+    });
+
+    // Funnel bar charts for source cards
+    DATA.mobile_source_cards.forEach(card => {
+        const id = 'funnel-source-' + card.source.replace(/\./g, '_').replace(/[()]/g, '');
+        const el = document.getElementById(id);
+        if (!el) return;
+        funnelBar(id, card.funnel);
+    });
+
+    // Zone background plugin for bubble charts
+    const zonePlugin = {
+        id: 'zoneBackground',
+        beforeDraw: (chart) => {
+            if (!chart.config.options.plugins2 || !chart.config.options.plugins2.zones) return;
+            const ctx = chart.ctx;
+            const { left, right, top, bottom } = chart.chartArea;
+            const h = bottom - top;
+            // Bottom third = red (low conversion)
+            ctx.fillStyle = 'rgba(225, 112, 85, 0.06)';
+            ctx.fillRect(left, top + h * 0.66, right - left, h * 0.34);
+            // Middle third = yellow (average)
+            ctx.fillStyle = 'rgba(253, 203, 110, 0.06)';
+            ctx.fillRect(left, top + h * 0.33, right - left, h * 0.33);
+            // Top third = green (high conversion)
+            ctx.fillStyle = 'rgba(0, 184, 148, 0.06)';
+            ctx.fillRect(left, top, right - left, h * 0.33);
+        }
+    };
+    Chart.register(zonePlugin);
+
+    // Bubble chart helper
+    // sessKey = field for X axis (sessions at this funnel stage)
+    // convKey = field for Y axis (conversion to next stage)
+    function bubbleChart(id, items, sessKey, convKey, xLabel) {
+        const datasets = items.filter(item => item[sessKey] > 0).map(item => ({
+            label: item.name,
+            data: [{ x: item[sessKey], y: item[convKey], r: Math.max(6, Math.sqrt(item[sessKey]) * 2) }],
+            backgroundColor: 'rgba(108, 92, 231, 0.4)',
+            borderColor: '#6C5CE7',
+            borderWidth: 1,
+        }));
+        new Chart(document.getElementById(id), {
+            type: 'bubble',
+            data: { datasets },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        formatter: (val, ctx) => {
+                            const filtered = items.filter(i => i[sessKey] > 0);
+                            return filtered[ctx.datasetIndex] ? filtered[ctx.datasetIndex].name : '';
+                        },
+                        font: { size: 9 },
+                        color: '#2D3436',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        borderRadius: 3,
+                        padding: 3,
+                        anchor: 'end',
+                        align: function(ctx) {
+                            const idx = ctx.datasetIndex;
+                            const angles = ['top', 'right', 'left', 'bottom', 'top', 'right', 'left', 'bottom'];
+                            const filtered = items.filter(i => i[sessKey] > 0);
+                            const item = filtered[idx];
+                            if (!item) return 'top';
+                            const xMax = Math.max(...filtered.map(i => i[sessKey]));
+                            const yMax = Math.max(...filtered.map(i => i[convKey]));
+                            if (item[sessKey] > xMax * 0.7) return 'left';
+                            if (item[convKey] > yMax * 0.7) return 'bottom';
+                            return angles[idx % angles.length];
+                        },
+                        offset: 12,
+                        clamp: true,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const filtered = items.filter(i => i[sessKey] > 0);
+                                const item = filtered[ctx.datasetIndex];
+                                if (!item) return '';
+                                return [
+                                    item.name,
+                                    xLabel + ': ' + item[sessKey],
+                                    'Конверсия: ' + item[convKey] + '%',
+                                    'ER: ' + item.er + '%',
+                                    'Median: ' + item.median_sec + 's'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: xLabel }, ticks: { font: { size: 9 } } },
+                    y: { title: { display: true, text: 'Конверсия %' }, beginAtZero: true, ticks: { font: { size: 9 }, callback: v => v + '%' } }
+                },
+                plugins2: { zones: true }
+            }
+        });
+    }
+
+    // Bubble filter system
+    const bubbleCharts = {};
+
+    function buildBubbleFilters(containerId, items, prefix) {
+        const container = document.getElementById(containerId);
+        items.forEach(item => {
+            const label = document.createElement('label');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = true;
+            cb.dataset.name = item.name;
+            cb.dataset.prefix = prefix;
+            cb.addEventListener('change', () => redrawBubbles(prefix, items));
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(' ' + item.name));
+            container.appendChild(label);
+        });
+    }
+
+    function getExcluded(prefix) {
+        const cbs = document.querySelectorAll(`input[data-prefix="${prefix}"]`);
+        const excluded = new Set();
+        cbs.forEach(cb => { if (!cb.checked) excluded.add(cb.dataset.name); });
+        return excluded;
+    }
+
+    function redrawBubbles(prefix, allItems) {
+        const excluded = getExcluded(prefix);
+        const filtered = allItems.filter(i => !excluded.has(i.name));
+        const configs = bubbleCharts[prefix];
+        if (!configs) return;
+        configs.forEach(cfg => {
+            cfg.chart.destroy();
+            cfg.chart = bubbleChart(cfg.id, filtered, cfg.sessKey, cfg.convKey, cfg.xLabel);
+        });
+    }
+
+    // Override bubbleChart to return chart instance
+    function bubbleChart(id, items, sessKey, convKey, xLabel) {
+        const datasets = items.filter(item => item[sessKey] > 0).map(item => ({
+            label: item.name,
+            data: [{ x: item[sessKey], y: item[convKey], r: Math.max(6, Math.sqrt(item[sessKey]) * 2) }],
+            backgroundColor: 'rgba(108, 92, 231, 0.4)',
+            borderColor: '#6C5CE7',
+            borderWidth: 1,
+        }));
+        return new Chart(document.getElementById(id), {
+            type: 'bubble',
+            data: { datasets },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        formatter: (val, ctx) => {
+                            const filtered = items.filter(i => i[sessKey] > 0);
+                            return filtered[ctx.datasetIndex] ? filtered[ctx.datasetIndex].name : '';
+                        },
+                        font: { size: 9 },
+                        color: '#2D3436',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        borderRadius: 3,
+                        padding: 3,
+                        anchor: 'end',
+                        align: function(ctx) {
+                            const idx = ctx.datasetIndex;
+                            const angles = ['top', 'right', 'left', 'bottom', 'top', 'right', 'left', 'bottom'];
+                            const filtered = items.filter(i => i[sessKey] > 0);
+                            const item = filtered[idx];
+                            if (!item) return 'top';
+                            const xMax = Math.max(...filtered.map(i => i[sessKey]));
+                            const yMax = Math.max(...filtered.map(i => i[convKey]));
+                            if (item[sessKey] > xMax * 0.7) return 'left';
+                            if (item[convKey] > yMax * 0.7) return 'bottom';
+                            return angles[idx % angles.length];
+                        },
+                        offset: 12,
+                        clamp: true,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const filtered = items.filter(i => i[sessKey] > 0);
+                                const item = filtered[ctx.datasetIndex];
+                                if (!item) return '';
+                                return [
+                                    item.name,
+                                    xLabel + ': ' + item[sessKey],
+                                    'Конверсия: ' + item[convKey] + '%',
+                                    'ER: ' + item.er + '%',
+                                    'Median: ' + item.median_sec + 's'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: xLabel }, ticks: { font: { size: 9 } } },
+                    y: { title: { display: true, text: 'Конверсия %' }, beginAtZero: true, ticks: { font: { size: 9 }, callback: v => v + '%' } }
+                },
+                plugins2: { zones: true }
+            }
+        });
+    }
+
+    // Build source bubble charts with filters
+    buildBubbleFilters('filter-src', DATA.bubble_source, 'src');
+    bubbleCharts['src'] = [
+        { id: 'bubble-src-prod', sessKey: 'funnel_catalog', convKey: 'cat_to_prod', xLabel: 'Сессии в каталоге', chart: bubbleChart('bubble-src-prod', DATA.bubble_source, 'funnel_catalog', 'cat_to_prod', 'Сессии в каталоге') },
+        { id: 'bubble-src-atc', sessKey: 'funnel_product', convKey: 'prod_to_atc', xLabel: 'Сессии на товаре', chart: bubbleChart('bubble-src-atc', DATA.bubble_source, 'funnel_product', 'prod_to_atc', 'Сессии на товаре') },
+        { id: 'bubble-src-checkout', sessKey: 'funnel_atc', convKey: 'atc_to_checkout', xLabel: 'Сессии с корзиной', chart: bubbleChart('bubble-src-checkout', DATA.bubble_source, 'funnel_atc', 'atc_to_checkout', 'Сессии с корзиной') },
+        { id: 'bubble-src-purchase', sessKey: 'funnel_checkout', convKey: 'checkout_to_purchase', xLabel: 'Сессии с чекаутом', chart: bubbleChart('bubble-src-purchase', DATA.bubble_source, 'funnel_checkout', 'checkout_to_purchase', 'Сессии с чекаутом') },
+    ];
+
+    // Build country bubble charts with filters
+    buildBubbleFilters('filter-country', DATA.bubble_country, 'country');
+    bubbleCharts['country'] = [
+        { id: 'bubble-country-prod', sessKey: 'funnel_catalog', convKey: 'cat_to_prod', xLabel: 'Сессии в каталоге', chart: bubbleChart('bubble-country-prod', DATA.bubble_country, 'funnel_catalog', 'cat_to_prod', 'Сессии в каталоге') },
+        { id: 'bubble-country-atc', sessKey: 'funnel_product', convKey: 'prod_to_atc', xLabel: 'Сессии на товаре', chart: bubbleChart('bubble-country-atc', DATA.bubble_country, 'funnel_product', 'prod_to_atc', 'Сессии на товаре') },
+        { id: 'bubble-country-checkout', sessKey: 'funnel_atc', convKey: 'atc_to_checkout', xLabel: 'Сессии с корзиной', chart: bubbleChart('bubble-country-checkout', DATA.bubble_country, 'funnel_atc', 'atc_to_checkout', 'Сессии с корзиной') },
+        { id: 'bubble-country-purchase', sessKey: 'funnel_checkout', convKey: 'checkout_to_purchase', xLabel: 'Сессии с чекаутом', chart: bubbleChart('bubble-country-purchase', DATA.bubble_country, 'funnel_checkout', 'checkout_to_purchase', 'Сессии с чекаутом') },
+    ];
+    </script>
+</body>
+</html>

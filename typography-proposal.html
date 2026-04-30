@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pinkspink — Типографика, предложение</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        /* === BASE TOKENS (без типографики — она задаётся в скоупах ниже) === */
+        :root {
+            --c-channel-social: #6C5CE7;
+            --c-channel-paid:   #00B894;
+            --c-channel-direct: #636E72;
+            --c-funnel-product: #6C5CE7;
+            --c-funnel-atc:     #FDCB6E;
+            --c-funnel-checkout:#74B9FF;
+            --c-funnel-purchase:#00B894;
+            --c-growth:    #00B894;
+            --c-decline:   #E17055;
+            --c-highlight: #6C5CE7;
+            --tx-primary:  #2D3436;
+            --tx-secondary:#636E72;
+            --tx-muted:    #B2BEC3;
+            --tx-ondark:   #FFFFFF;
+            --bg-page:     #FAFAFA;
+            --bg-card:     #FFFFFF;
+            --bg-muted:    #F0F0F0;
+            --bg-border:   #DFE6E9;
+            --bg-divider:  #F0F0F0;
+            --bg-inverse:  #2D3436;
+            --bg-hover:    #F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ff-mono: 'Ubuntu Mono', monospace;
+        }
+
+        /* === SCALE: CURRENT (15 токенов / 10 уникальных значений) === */
+        .scale-current {
+            --fs-display:   32px;
+            --fs-kpi:       28px;
+            --fs-h2:        20px;
+            --fs-kpi-lg:    20px;
+            --fs-metric:    18px;
+            --fs-brand:     16px;
+            --fs-h3:        14px;
+            --fs-h4:        13px;
+            --fs-body:      13px;
+            --fs-meta:      12px;
+            --fs-table:     12px;
+            --fs-th:        11px;
+            --fs-label:     11px;
+            --fs-tag:       10px;
+            --fs-datalabel: 10px;
+        }
+
+        /* === SCALE: A — КОНСЕРВАТИВНЫЙ (10 токенов; 0 визуальных изменений) ===
+           Просто сливаем синонимы. h4=body=13, meta=table=12, th=label=11, tag=datalabel=10, h2=kpi-lg=20. */
+        .scale-a {
+            --fs-display: 32px;  /* h1 */
+            --fs-kpi:     28px;  /* kpi value 2x2 */
+            --fs-h2:      20px;  /* + kpi-lg */
+            --fs-metric:  18px;
+            --fs-brand:   16px;
+            --fs-h3:      14px;
+            --fs-body:    13px;  /* + h4 */
+            --fs-meta:    12px;  /* + table */
+            --fs-caption: 11px;  /* th + label */
+            --fs-micro:   10px;  /* tag + datalabel */
+        }
+
+        /* === SCALE: B — БАЛАНС (8 токенов; небольшие визуальные сдвиги) ===
+           A + brand→h2 (16→20), meta→body (12→13), table→caption (12→11). */
+        .scale-b {
+            --fs-display: 32px;
+            --fs-kpi:     28px;
+            --fs-h2:      20px;  /* + brand */
+            --fs-metric:  18px;
+            --fs-h3:      14px;
+            --fs-body:    13px;  /* + h4 + meta */
+            --fs-caption: 11px;  /* + th + label + table */
+            --fs-micro:   10px;  /* + tag + datalabel */
+        }
+
+        /* === SCALE: C — РАДИКАЛЬНЫЙ (6 токенов; заметные сдвиги) ===
+           B + metric→h2 (18→20), micro→caption (10→11). */
+        .scale-c {
+            --fs-display: 32px;
+            --fs-kpi:     28px;
+            --fs-h2:      20px;  /* + brand + metric */
+            --fs-h3:      14px;
+            --fs-body:    13px;
+            --fs-caption: 11px;  /* + table + th + label + tag + datalabel */
+        }
+
+        /* === Document layout === */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); }
+        h1.doc-h1 { font-size: 32px; font-weight: 700; margin-bottom: var(--sp-2); }
+        h2.doc-h2 { font-size: 20px; font-weight: 600; margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc-h3 { font-size: 14px; font-weight: 700; margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc { font-size: 13px; color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: 11px; background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+
+        /* Mapping table */
+        .map-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-card); margin-bottom: var(--sp-4); font-size: 12px; }
+        .map-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-2) var(--sp-3); font-size: 11px; text-align: left; font-weight: 600; }
+        .map-table td { padding: 6px var(--sp-3); border-bottom: 1px solid var(--bg-divider); }
+        .map-table tr:last-child td { border-bottom: none; }
+        .map-table .merge { color: var(--c-decline); font-weight: 700; }
+        .map-table .keep  { color: var(--tx-secondary); }
+        .map-table .new   { color: var(--c-growth); font-weight: 700; }
+
+        /* Compare grid */
+        .compare-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-5); }
+        @media (max-width: 1300px) { .compare-grid { grid-template-columns: repeat(2, 1fr); } }
+        .col-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tx-secondary); margin-bottom: var(--sp-2); }
+        .col-head .badge { background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); margin-right: 4px; font-size: 10px; }
+
+        /* Mockup card uses inherited --fs-* */
+        .mockup { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); }
+        .m-header { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: var(--sp-2); border-bottom: 1px solid var(--bg-divider); }
+        .m-brand   { font-size: var(--fs-brand, var(--fs-h2)); font-weight: var(--fw-bold); }
+        .m-headmeta{ font-size: var(--fs-th, var(--fs-caption)); color: var(--tx-secondary); }
+        .m-h1      { font-size: var(--fs-display); font-weight: var(--fw-bold); }
+        .m-h2      { font-size: var(--fs-h2); font-weight: var(--fw-semibold); }
+        .m-h3      { font-size: var(--fs-h3); font-weight: var(--fw-semibold); }
+        .m-h4      { font-size: var(--fs-h4, var(--fs-body)); font-weight: var(--fw-semibold); color: var(--tx-secondary); }
+        .m-body    { font-size: var(--fs-body); color: var(--tx-primary); }
+        .m-meta    { font-size: var(--fs-meta, var(--fs-body)); color: var(--tx-secondary); }
+        .m-block   { background: var(--bg-card); border: 1px solid var(--bg-border); border-radius: var(--r-lg); padding: var(--sp-3); }
+        .m-block .m-h3 { margin-bottom: 4px; }
+        .m-table   { width: 100%; border-collapse: collapse; }
+        .m-table th{ background: var(--bg-inverse); color: var(--tx-ondark); padding: 4px 8px; font-size: var(--fs-th, var(--fs-caption)); text-align: left; font-weight: var(--fw-semibold); }
+        .m-table td{ padding: 4px 8px; font-size: var(--fs-table, var(--fs-caption)); border-bottom: 1px solid var(--bg-divider); }
+        .m-kpi-lab { font-size: var(--fs-label, var(--fs-caption)); text-transform: uppercase; letter-spacing: 0.5px; color: var(--tx-secondary); }
+        .m-kpi-val { font-size: var(--fs-kpi); font-weight: var(--fw-bold); line-height: 1.1; margin: 4px 0; }
+        .m-kpi-valsm { font-size: var(--fs-kpi-lg, var(--fs-h2)); font-weight: var(--fw-bold); line-height: 1.1; margin: 4px 0; }
+        .m-kpi-bench { font-size: var(--fs-th, var(--fs-caption)); color: var(--tx-muted); }
+        .m-metric-val { font-size: var(--fs-metric, var(--fs-h2)); font-weight: var(--fw-semibold); }
+        .m-metric-lab { font-size: var(--fs-label, var(--fs-caption)); text-transform: uppercase; color: var(--tx-secondary); }
+        .m-tag       { font-size: var(--fs-tag, var(--fs-micro, var(--fs-caption))); color: var(--tx-muted); text-transform: lowercase; letter-spacing: 0.5px; }
+        .m-grain-btn { padding: 4px 12px; border-radius: var(--r-md); font-size: var(--fs-body); background: var(--bg-muted); color: var(--tx-secondary); border: none; cursor: default; }
+        .m-tab-btn   { padding: 6px 14px; border-radius: var(--r-md); font-size: var(--fs-meta, var(--fs-body)); font-weight: var(--fw-semibold); background: var(--bg-card); color: var(--tx-secondary); border: 1px solid var(--bg-border); }
+        .m-tab-btn.is-active { background: var(--bg-inverse); color: var(--tx-ondark); border-color: var(--bg-inverse); }
+        .m-btn-row   { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+        .m-chart-wrap{ position: relative; height: 180px; background: var(--bg-card); border: 1px solid var(--bg-border); border-radius: var(--r-lg); padding: var(--sp-2); }
+
+        /* Token sample list */
+        .tokens-list { display: flex; flex-direction: column; gap: 4px; margin-top: var(--sp-3); }
+        .tok-row { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 8px; background: var(--bg-muted); border-radius: var(--r-md); font-size: 11px; color: var(--tx-secondary); }
+        .tok-row .tok-name { font-family: var(--ff-mono); }
+
+        /* Compare table — count summary */
+        .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        .sum-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); }
+        .sum-card .lab { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tx-secondary); }
+        .sum-card .num { font-size: 28px; font-weight: 700; line-height: 1.1; margin: 4px 0; }
+        .sum-card .delta { font-size: 11px; color: var(--tx-muted); }
+        .delta-down { color: var(--c-growth) !important; }
+    </style>
+</head>
+<body>
+    <h1 class="doc-h1">Типографика — анализ и предложение</h1>
+    <p class="doc">Цель: сократить количество размеров шрифта в дашборде, не потеряв визуальную иерархию. Ниже — текущее состояние, три варианта сокращения и визуальные мокапы каждого. <strong>Дашборд пока не трогаем — это только предложение для согласования.</strong></p>
+
+    <h2 class="doc-h2">Текущее состояние</h2>
+    <p class="doc">Сейчас 15 семантических токенов размера, но <strong>10 уникальных численных значений</strong> — пять пар уже синонимы (один и тот же размер, разные имена). Это значит, что часть сокращения «бесплатная» — без визуальных изменений.</p>
+
+    <table class="map-table">
+        <thead><tr><th>Размер</th><th>Кол-во токенов</th><th>Текущие имена</th></tr></thead>
+        <tbody>
+            <tr><td>32px</td><td>1</td><td><code>--fs-h1</code></td></tr>
+            <tr><td>28px</td><td>1</td><td><code>--fs-kpi-xl</code></td></tr>
+            <tr><td>20px</td><td>2</td><td><code>--fs-h2</code> + <code>--fs-kpi-lg</code></td></tr>
+            <tr><td>18px</td><td>1</td><td><code>--fs-metric</code></td></tr>
+            <tr><td>16px</td><td>1</td><td><code>--fs-brand</code></td></tr>
+            <tr><td>14px</td><td>1</td><td><code>--fs-h3</code></td></tr>
+            <tr><td>13px</td><td>2</td><td><code>--fs-h4</code> + <code>--fs-body</code></td></tr>
+            <tr><td>12px</td><td>2</td><td><code>--fs-meta</code> + <code>--fs-table</code></td></tr>
+            <tr><td>11px</td><td>2</td><td><code>--fs-th</code> + <code>--fs-label</code></td></tr>
+            <tr><td>10px</td><td>2</td><td><code>--fs-tag</code> + <code>--fs-datalabel</code></td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="doc-h2">Три варианта сокращения</h2>
+
+    <div class="summary">
+        <div class="sum-card">
+            <div class="lab">Сейчас</div>
+            <div class="num">15</div>
+            <div class="delta">10 уникальных значений</div>
+        </div>
+        <div class="sum-card">
+            <div class="lab">Вариант A · Консервативный</div>
+            <div class="num">10</div>
+            <div class="delta delta-down">−5 токенов · 0 визуальных изменений</div>
+        </div>
+        <div class="sum-card">
+            <div class="lab">Вариант B · Баланс</div>
+            <div class="num">8</div>
+            <div class="delta delta-down">−7 токенов · 3 минимальных сдвига</div>
+        </div>
+        <div class="sum-card">
+            <div class="lab">Вариант C · Радикальный</div>
+            <div class="num">6</div>
+            <div class="delta delta-down">−9 токенов · 5 заметных сдвигов</div>
+        </div>
+    </div>
+
+    <h3 class="doc-h3">Что именно меняется в каждом варианте</h3>
+    <table class="map-table">
+        <thead>
+            <tr>
+                <th>Текущий токен</th><th>Размер</th>
+                <th>A · Консервативный</th>
+                <th>B · Баланс</th>
+                <th>C · Радикальный</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><code>--fs-h1</code></td><td>32px</td><td class="keep">→ <code>--fs-display</code></td><td class="keep">→ <code>--fs-display</code></td><td class="keep">→ <code>--fs-display</code></td></tr>
+            <tr><td><code>--fs-kpi-xl</code></td><td>28px</td><td class="keep">→ <code>--fs-kpi</code></td><td class="keep">→ <code>--fs-kpi</code></td><td class="keep">→ <code>--fs-kpi</code></td></tr>
+            <tr><td><code>--fs-h2</code></td><td>20px</td><td class="keep">→ <code>--fs-h2</code></td><td class="keep">→ <code>--fs-h2</code></td><td class="keep">→ <code>--fs-h2</code></td></tr>
+            <tr><td><code>--fs-kpi-lg</code></td><td>20px</td><td class="merge">→ <code>--fs-h2</code> (синоним)</td><td class="merge">→ <code>--fs-h2</code></td><td class="merge">→ <code>--fs-h2</code></td></tr>
+            <tr><td><code>--fs-metric</code></td><td>18px</td><td class="keep">→ <code>--fs-metric</code></td><td class="keep">→ <code>--fs-metric</code></td><td class="merge">→ <code>--fs-h2</code> (18→<strong>20</strong>)</td></tr>
+            <tr><td><code>--fs-brand</code></td><td>16px</td><td class="keep">→ <code>--fs-brand</code></td><td class="merge">→ <code>--fs-h2</code> (16→<strong>20</strong>)</td><td class="merge">→ <code>--fs-h2</code> (16→<strong>20</strong>)</td></tr>
+            <tr><td><code>--fs-h3</code></td><td>14px</td><td class="keep">→ <code>--fs-h3</code></td><td class="keep">→ <code>--fs-h3</code></td><td class="keep">→ <code>--fs-h3</code></td></tr>
+            <tr><td><code>--fs-h4</code></td><td>13px</td><td class="merge">→ <code>--fs-body</code> (синоним)</td><td class="merge">→ <code>--fs-body</code></td><td class="merge">→ <code>--fs-body</code></td></tr>
+            <tr><td><code>--fs-body</code></td><td>13px</td><td class="keep">→ <code>--fs-body</code></td><td class="keep">→ <code>--fs-body</code></td><td class="keep">→ <code>--fs-body</code></td></tr>
+            <tr><td><code>--fs-meta</code></td><td>12px</td><td class="keep">→ <code>--fs-meta</code></td><td class="merge">→ <code>--fs-body</code> (12→<strong>13</strong>)</td><td class="merge">→ <code>--fs-body</code> (12→<strong>13</strong>)</td></tr>
+            <tr><td><code>--fs-table</code></td><td>12px</td><td class="merge">→ <code>--fs-meta</code> (синоним)</td><td class="merge">→ <code>--fs-caption</code> (12→<strong>11</strong>)</td><td class="merge">→ <code>--fs-caption</code> (12→<strong>11</strong>)</td></tr>
+            <tr><td><code>--fs-th</code></td><td>11px</td><td class="merge">→ <code>--fs-caption</code> (rename)</td><td class="merge">→ <code>--fs-caption</code></td><td class="merge">→ <code>--fs-caption</code></td></tr>
+            <tr><td><code>--fs-label</code></td><td>11px</td><td class="merge">→ <code>--fs-caption</code> (синоним)</td><td class="merge">→ <code>--fs-caption</code></td><td class="merge">→ <code>--fs-caption</code></td></tr>
+            <tr><td><code>--fs-tag</code></td><td>10px</td><td class="merge">→ <code>--fs-micro</code> (rename)</td><td class="merge">→ <code>--fs-micro</code></td><td class="merge">→ <code>--fs-caption</code> (10→<strong>11</strong>)</td></tr>
+            <tr><td><code>--fs-datalabel</code></td><td>10px</td><td class="merge">→ <code>--fs-micro</code> (синоним)</td><td class="merge">→ <code>--fs-micro</code></td><td class="merge">→ <code>--fs-caption</code> (10→<strong>11</strong>)</td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="doc-h2">Визуальное сравнение</h2>
+    <p class="doc">Каждый столбец рендерит одни и те же UI-элементы (заголовок страницы, sticky header с логотипом, секция, карточка с h3+h4+body+meta, KPI, мини-таблица, кнопки, график с datalabels) с применением соответствующей шкалы. <strong>Сравнивай глазами.</strong></p>
+
+    <div class="compare-grid">
+        <!-- COLUMN 1: CURRENT -->
+        <div>
+            <div class="col-head"><span class="badge">Now</span>15 токенов</div>
+            <div class="scale-current mockup">
+                <div class="m-header">
+                    <span class="m-brand">Pinkspink</span>
+                    <span class="m-headmeta">2026-W01 — W08 · 8 нед.</span>
+                </div>
+                <div class="m-h1">Аналитика</div>
+                <div class="m-h2">Воронки</div>
+                <div class="m-block">
+                    <div class="m-h3">Динамика мобильной воронки <span class="m-tag">last 8w</span></div>
+                    <div class="m-h4">Социальные каналы</div>
+                    <div class="m-body">Сессии: 12 845 · бенч 4w +12.4%</div>
+                    <div class="m-meta">Период: 2026-W01 — 2026-W08 · 8 недель данных</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div class="m-block">
+                        <div class="m-kpi-lab">СЕССИИ</div>
+                        <div class="m-kpi-val">12 845</div>
+                        <div class="m-kpi-bench">vs 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+                    </div>
+                    <div class="m-block">
+                        <div class="m-kpi-lab">ATC</div>
+                        <div class="m-kpi-valsm">2.1%</div>
+                        <div class="m-kpi-bench">vs 4w: <span style="color:var(--c-decline)">−0.3pp</span></div>
+                    </div>
+                </div>
+                <table class="m-table">
+                    <thead><tr><th>Канал</th><th>Сессии</th><th>ATC</th></tr></thead>
+                    <tbody>
+                        <tr><td>Social</td><td>1 234</td><td>56</td></tr>
+                        <tr><td>Paid</td><td>342</td><td>3</td></tr>
+                    </tbody>
+                </table>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <div class="m-metric-lab">МЕДИАНА</div>
+                    <div class="m-metric-val">31s</div>
+                </div>
+                <div class="m-btn-row">
+                    <button class="m-grain-btn">day</button>
+                    <button class="m-grain-btn">week</button>
+                    <button class="m-grain-btn" style="background:var(--bg-inverse);color:var(--tx-ondark)">month</button>
+                </div>
+                <div class="m-chart-wrap"><canvas id="chart-current"></canvas></div>
+            </div>
+        </div>
+
+        <!-- COLUMN 2: A — CONSERVATIVE -->
+        <div>
+            <div class="col-head"><span class="badge" style="background:var(--c-growth)">A</span>10 токенов · 0 изменений</div>
+            <div class="scale-a mockup">
+                <div class="m-header">
+                    <span class="m-brand">Pinkspink</span>
+                    <span class="m-headmeta">2026-W01 — W08 · 8 нед.</span>
+                </div>
+                <div class="m-h1">Аналитика</div>
+                <div class="m-h2">Воронки</div>
+                <div class="m-block">
+                    <div class="m-h3">Динамика мобильной воронки <span class="m-tag">last 8w</span></div>
+                    <div class="m-h4">Социальные каналы</div>
+                    <div class="m-body">Сессии: 12 845 · бенч 4w +12.4%</div>
+                    <div class="m-meta">Период: 2026-W01 — 2026-W08 · 8 недель данных</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div class="m-block">
+                        <div class="m-kpi-lab">СЕССИИ</div>
+                        <div class="m-kpi-val">12 845</div>
+                        <div class="m-kpi-bench">vs 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+                    </div>
+                    <div class="m-block">
+                        <div class="m-kpi-lab">ATC</div>
+                        <div class="m-kpi-valsm">2.1%</div>
+                        <div class="m-kpi-bench">vs 4w: <span style="color:var(--c-decline)">−0.3pp</span></div>
+                    </div>
+                </div>
+                <table class="m-table">
+                    <thead><tr><th>Канал</th><th>Сессии</th><th>ATC</th></tr></thead>
+                    <tbody>
+                        <tr><td>Social</td><td>1 234</td><td>56</td></tr>
+                        <tr><td>Paid</td><td>342</td><td>3</td></tr>
+                    </tbody>
+                </table>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <div class="m-metric-lab">МЕДИАНА</div>
+                    <div class="m-metric-val">31s</div>
+                </div>
+                <div class="m-btn-row">
+                    <button class="m-grain-btn">day</button>
+                    <button class="m-grain-btn">week</button>
+                    <button class="m-grain-btn" style="background:var(--bg-inverse);color:var(--tx-ondark)">month</button>
+                </div>
+                <div class="m-chart-wrap"><canvas id="chart-a"></canvas></div>
+            </div>
+        </div>
+
+        <!-- COLUMN 3: B — BALANCED -->
+        <div>
+            <div class="col-head"><span class="badge" style="background:var(--c-channel-social)">B</span>8 токенов · 3 сдвига</div>
+            <div class="scale-b mockup">
+                <div class="m-header">
+                    <span class="m-brand">Pinkspink</span>
+                    <span class="m-headmeta">2026-W01 — W08 · 8 нед.</span>
+                </div>
+                <div class="m-h1">Аналитика</div>
+                <div class="m-h2">Воронки</div>
+                <div class="m-block">
+                    <div class="m-h3">Динамика мобильной воронки <span class="m-tag">last 8w</span></div>
+                    <div class="m-h4">Социальные каналы</div>
+                    <div class="m-body">Сессии: 12 845 · бенч 4w +12.4%</div>
+                    <div class="m-meta">Период: 2026-W01 — 2026-W08 · 8 недель данных</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div class="m-block">
+                        <div class="m-kpi-lab">СЕССИИ</div>
+                        <div class="m-kpi-val">12 845</div>
+                        <div class="m-kpi-bench">vs 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+                    </div>
+                    <div class="m-block">
+                        <div class="m-kpi-lab">ATC</div>
+                        <div class="m-kpi-valsm">2.1%</div>
+                        <div class="m-kpi-bench">vs 4w: <span style="color:var(--c-decline)">−0.3pp</span></div>
+                    </div>
+                </div>
+                <table class="m-table">
+                    <thead><tr><th>Канал</th><th>Сессии</th><th>ATC</th></tr></thead>
+                    <tbody>
+                        <tr><td>Social</td><td>1 234</td><td>56</td></tr>
+                        <tr><td>Paid</td><td>342</td><td>3</td></tr>
+                    </tbody>
+                </table>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <div class="m-metric-lab">МЕДИАНА</div>
+                    <div class="m-metric-val">31s</div>
+                </div>
+                <div class="m-btn-row">
+                    <button class="m-grain-btn">day</button>
+                    <button class="m-grain-btn">week</button>
+                    <button class="m-grain-btn" style="background:var(--bg-inverse);color:var(--tx-ondark)">month</button>
+                </div>
+                <div class="m-chart-wrap"><canvas id="chart-b"></canvas></div>
+            </div>
+        </div>
+
+        <!-- COLUMN 4: C — AGGRESSIVE -->
+        <div>
+            <div class="col-head"><span class="badge" style="background:var(--c-decline)">C</span>6 токенов · 5 сдвигов</div>
+            <div class="scale-c mockup">
+                <div class="m-header">
+                    <span class="m-brand">Pinkspink</span>
+                    <span class="m-headmeta">2026-W01 — W08 · 8 нед.</span>
+                </div>
+                <div class="m-h1">Аналитика</div>
+                <div class="m-h2">Воронки</div>
+                <div class="m-block">
+                    <div class="m-h3">Динамика мобильной воронки <span class="m-tag">last 8w</span></div>
+                    <div class="m-h4">Социальные каналы</div>
+                    <div class="m-body">Сессии: 12 845 · бенч 4w +12.4%</div>
+                    <div class="m-meta">Период: 2026-W01 — 2026-W08 · 8 недель данных</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div class="m-block">
+                        <div class="m-kpi-lab">СЕССИИ</div>
+                        <div class="m-kpi-val">12 845</div>
+                        <div class="m-kpi-bench">vs 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+                    </div>
+                    <div class="m-block">
+                        <div class="m-kpi-lab">ATC</div>
+                        <div class="m-kpi-valsm">2.1%</div>
+                        <div class="m-kpi-bench">vs 4w: <span style="color:var(--c-decline)">−0.3pp</span></div>
+                    </div>
+                </div>
+                <table class="m-table">
+                    <thead><tr><th>Канал</th><th>Сессии</th><th>ATC</th></tr></thead>
+                    <tbody>
+                        <tr><td>Social</td><td>1 234</td><td>56</td></tr>
+                        <tr><td>Paid</td><td>342</td><td>3</td></tr>
+                    </tbody>
+                </table>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <div class="m-metric-lab">МЕДИАНА</div>
+                    <div class="m-metric-val">31s</div>
+                </div>
+                <div class="m-btn-row">
+                    <button class="m-grain-btn">day</button>
+                    <button class="m-grain-btn">week</button>
+                    <button class="m-grain-btn" style="background:var(--bg-inverse);color:var(--tx-ondark)">month</button>
+                </div>
+                <div class="m-chart-wrap"><canvas id="chart-c"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="doc-h2">Рекомендация</h2>
+    <p class="doc"><strong>Вариант B (8 токенов)</strong> — оптимальный компромисс. Убирает почти половину токенов и при этом меняет дашборд минимально:</p>
+    <ul style="font-size: 13px; color: var(--tx-secondary); margin: 0 0 var(--sp-3) var(--sp-4); line-height: 1.6;">
+        <li><strong>Логотип Pinkspink</strong> 16→20px — становится чуть «брендовее», лучше видно в шапке</li>
+        <li><strong>Описание <code>.meta</code></strong> 12→13px — сливается с body, на 1px крупнее</li>
+        <li><strong>Контент таблиц <code>td</code></strong> 12→11px — на 1px компактнее, помещается больше строк</li>
+    </ul>
+    <p class="doc">Эти три сдвига взаимно компенсируются: где-то стало чуть крупнее, где-то чуть мельче, общая «громкость» дашборда не меняется. <strong>Вариант A</strong> — если хочется ровно ноль визуальных правок (просто сложить синонимы и переименовать). <strong>Вариант C</strong> — если готов на более грубую сетку (logo и slider-цифры заметно подрастут до 20px).</p>
+
+    <p class="doc">Скажи, какой вариант принимаем (A / B / C) — после этого внесу изменения в <code>TOKENS</code> в <code>generate_report.py</code>, обновлю styleguide и пересоберу отчёты. <strong>До этого момента ничего в дашборде не меняется.</strong></p>
+
+    <script>
+    // === Chart.js setup with TOKENS-style defaults (matches dashboard) ===
+    Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+    Chart.defaults.color = '#636E72';
+    Chart.defaults.scale.grid.color = 'rgba(0,0,0,0.06)';
+
+    function makeBarChart(canvasId, datalabelSize, axisLabelSize) {
+        return new Chart(document.getElementById(canvasId), {
+            type: 'bar',
+            data: {
+                labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+                datasets: [
+                    { label: 'home',    backgroundColor: '#636E72', data: [80, 95, 92, 110, 125] },
+                    { label: 'product', backgroundColor: '#6C5CE7', data: [60, 72, 68, 85, 96] },
+                    { label: 'ATC',     backgroundColor: '#FDCB6E', data: [12, 14, 11, 18, 22] }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: axisLabelSize } } },
+                    datalabels: {
+                        anchor: 'end', align: 'top',
+                        font: { size: datalabelSize },
+                        formatter: v => v > 50 ? v : ''
+                    }
+                },
+                scales: {
+                    x: { ticks: { font: { size: axisLabelSize } } },
+                    y: { beginAtZero: true, grace: '15%', ticks: { font: { size: axisLabelSize } } }
+                }
+            }
+        });
+    }
+
+    // Apply size from each scale's actual --fs-datalabel / --fs-th values
+    const get = (el, name) => parseInt(getComputedStyle(el).getPropertyValue(name).trim()) || 0;
+
+    const cur = document.querySelector('.scale-current');
+    makeBarChart('chart-current', get(cur, '--fs-datalabel'), get(cur, '--fs-th'));
+
+    const a = document.querySelector('.scale-a');
+    makeBarChart('chart-a', get(a, '--fs-micro'), get(a, '--fs-caption'));
+
+    const b = document.querySelector('.scale-b');
+    makeBarChart('chart-b', get(b, '--fs-micro'), get(b, '--fs-caption'));
+
+    const c = document.querySelector('.scale-c');
+    makeBarChart('chart-c', get(c, '--fs-caption'), get(c, '--fs-caption'));
+    </script>
+</body>
+</html>

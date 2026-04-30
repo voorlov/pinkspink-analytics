@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pinkspink — Blocks (предложение)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Typography v1.1 */
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ls-label: 0.5px;
+            --fs-kpi: 28px; --fs-h2: 18px; --fs-h3: 14px;
+            --fs-body: 13px; --fs-caption: 11px; --fs-chart-meta: 10px;
+            --mt-h2: 44px; --mt-h3: 24px; --mt-h4: 16px;
+            --tight-pair: 4px; --content-gap: 8px;
+
+            /* Controls / Tables */
+            --h-control: 28px; --r-control: 2px;
+            --row-h-table: 28px; --max-rows-table: 20;
+
+            /* Charts heights */
+            --ch-xs: 60px; --ch-sm: 180px; --ch-md: 280px; --ch-lg: 360px;
+
+            --c-channel-social: #6C5CE7;
+            --c-growth: #00B894; --c-decline: #E17055; --c-highlight: #6C5CE7;
+            --tx-primary:#2D3436; --tx-secondary:#636E72; --tx-muted:#B2BEC3; --tx-ondark:#FFFFFF;
+            --bg-page:#FAFAFA; --bg-card:#FFFFFF; --bg-muted:#F0F0F0; --bg-border:#DFE6E9; --bg-divider:#F0F0F0; --bg-inverse:#2D3436; --bg-hover:#F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1300px; margin: 0 auto; line-height: 1.25; }
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin: 0 0 var(--sp-2); line-height: 1.25; }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--mt-h2) 0 0; line-height: 1.25; }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--mt-h3) 0 0; line-height: 1.25; }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); margin: var(--tight-pair) 0 var(--content-gap); line-height: 1.25; }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+        pre { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; font-family: var(--ff-mono); margin: var(--sp-2) 0 var(--sp-3); }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); }
+        .badge { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+
+        /* Inventory */
+        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 1100px) { .inv-grid { grid-template-columns: repeat(2, 1fr); } }
+        .inv-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); }
+        .inv-card .lab { font-size: 10px; text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .inv-card .num { font-size: var(--fs-kpi); font-weight: var(--fw-bold); line-height: 1.1; margin: var(--sp-1) 0; }
+        .inv-card .det { font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        .iss { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2); border-left: 4px solid var(--c-decline); }
+        .iss .lab { font-size: 10px; text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--c-decline); margin-bottom: 4px; }
+        .iss .title { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin-bottom: var(--sp-1); }
+        .iss .desc { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; }
+        .iss .desc strong { color: var(--tx-primary); }
+
+        /* === CURRENT styles (как в дашборде) — для сравнения === */
+        .cur-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: 80px;                       /* HARDCODE 80 */
+            gap: var(--sp-4);
+        }
+        .cur-h4x6 {
+            grid-column: span 6;
+            grid-row: span 5;                            /* 5 × 80 = 400px */
+            display: grid;
+            grid-template-rows: 80px 1fr;                /* HARDCODE 80px row */
+            gap: var(--sp-2);
+        }
+        .cur-h4x12 { grid-column: span 12; grid-row: span 5; display: grid; grid-template-rows: 80px 1fr; gap: var(--sp-2); }
+        .cur-title-area {
+            display: flex; flex-direction: column;
+            justify-content: flex-end;                   /* bottom-aligned */
+            padding-bottom: var(--sp-1);
+            outline: 1px dashed rgba(225,112,85,0.5);    /* подсветка для диагностики */
+        }
+        .cur-title-area::after {
+            content: 'title-area: 80px row, contents bottom-aligned → ~43px пустоты сверху';
+            position: absolute;
+            font-size: 9px; color: var(--c-decline);
+            background: var(--bg-card); padding: 0 4px;
+            top: 4px; left: 8px;
+        }
+        .cur-title-area { position: relative; }
+        .cur-title-area h3 { font-size: var(--fs-body); font-weight: var(--fw-bold); margin: 0 0 2px 0; }   /* 13/bold override */
+        .cur-title-area .meta { margin: 0; font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.3; }
+        .cur-cell { background: var(--bg-card); border-radius: var(--r-xl); padding: 14px; box-shadow: var(--sh-card); overflow: hidden; }
+        .cur-chart-mock { background: var(--bg-muted); border-radius: var(--r-md); height: 100%; min-height: 200px; display: flex; align-items: center; justify-content: center; font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        /* === PROPOSED — Blocks v1.0 === */
+        .pr-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: var(--sp-4);
+            /* НЕТ grid-auto-rows — ряды auto по контенту */
+        }
+        .pr-block {
+            background: var(--bg-card);
+            border-radius: var(--r-xl);
+            box-shadow: var(--sh-card);
+            padding: var(--sp-3);
+            display: flex; flex-direction: column;
+            /* margin-top на h2/h3/h4 внутри обнуляется (block-header первый ребёнок) */
+        }
+        .pr-block > :first-child { margin-top: 0; }      /* первый h3/h4 не получает свой margin-top */
+        .pr-block h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); line-height: 1.25; margin: 0; }
+        .pr-block .meta { font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.25; margin: var(--tight-pair) 0 var(--content-gap); }
+        .pr-block .chart-mock { background: var(--bg-muted); border-radius: var(--r-md); height: var(--ch-md); display: flex; align-items: center; justify-content: center; font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        /* Span классы (placement в .pr-grid) */
+        .pr-span-12 { grid-column: span 12; }
+        .pr-span-8  { grid-column: span 8; }
+        .pr-span-6  { grid-column: span 6; }
+        .pr-span-4  { grid-column: span 4; }
+        .pr-span-3  { grid-column: span 3; }
+        .pr-span-2  { grid-column: span 2; }
+
+        /* Chart height variants внутри .pr-block (используют Charts v1.0 tokens) */
+        .pr-block.h-xs .chart-mock { height: var(--ch-xs); }
+        .pr-block.h-sm .chart-mock { height: var(--ch-sm); }
+        .pr-block.h-md .chart-mock { height: var(--ch-md); }
+        .pr-block.h-lg .chart-mock { height: var(--ch-lg); }
+
+        /* KPI variant */
+        .pr-block.kpi { padding: var(--sp-3); }
+        .pr-block.kpi .kpi-label { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .pr-block.kpi .kpi-value { font-size: var(--fs-kpi); font-weight: var(--fw-bold); line-height: 1.1; margin: var(--sp-1) 0; }
+        .pr-block.kpi .kpi-bench { font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        /* Side-by-side blocks */
+        .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-3); align-items: start; }
+        @media (max-width: 900px) { .ba-grid { grid-template-columns: 1fr; } }
+        .ba-col { background: var(--bg-card); border-radius: var(--r-xl); padding: var(--sp-3); box-shadow: var(--sh-card); }
+        .ba-col.before { border-left: 4px solid var(--c-decline); }
+        .ba-col.after  { border-left: 4px solid var(--c-growth); }
+        .ba-lab { font-size: 10px; text-transform: uppercase; letter-spacing: var(--ls-label); margin-bottom: var(--sp-2); }
+        .ba-col.before .ba-lab { color: var(--c-decline); }
+        .ba-col.after  .ba-lab { color: var(--c-growth); }
+
+        .tk-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-card); margin-bottom: var(--sp-4); font-size: var(--fs-caption); }
+        .tk-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-2) var(--sp-3); text-align: left; font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: var(--ls-label); }
+        .tk-table td { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--bg-divider); vertical-align: top; }
+        .tk-table tr:last-child td { border-bottom: none; }
+        .tk-table .desc { color: var(--tx-secondary); }
+        .tk-table .changed { color: var(--c-decline); font-weight: var(--fw-bold); }
+
+        .q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 900px) { .q-grid { grid-template-columns: 1fr; } }
+        .q-card { background: linear-gradient(135deg, var(--c-channel-social), var(--c-growth)); color: var(--tx-ondark); border-radius: var(--r-xl); padding: var(--sp-4); }
+        .q-card .num { font-size: var(--fs-h2); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        .q-card .title { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin-bottom: var(--sp-2); }
+        .q-card .desc { font-size: var(--fs-body); opacity: 0.95; line-height: 1.5; }
+        .q-card code { background: rgba(255,255,255,0.2); color: var(--tx-ondark); }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Blocks <span class="badge">v0 · обзор</span></h1>
+    <p class="meta-line">Pinkspink Design System · Блоки-карточки · 2026-04-29</p>
+    <p class="doc">Расследование «больших отступов» показало: типография обновлена, но <strong>grid system хардкоды</strong> в дашборде остались — <code>.h4x6 + .title-area + .cell</code> цепочка из трёх классов с 80px-row и font-overrides. Этот файл — обзор + предложение единого примитива <code>.block</code> взамен этой цепочки. Совместимо со всеми ранее зафиксированными разделами (Typography v1.1, Tables v1.0, Charts v1.0, Controls v1.0).</p>
+
+    <h2 class="doc">1. Что есть сейчас</h2>
+
+    <div class="inv-grid">
+        <div class="inv-card">
+            <div class="lab">.h4x6 (chart-блок half-width)</div>
+            <div class="num">26</div>
+            <div class="det">самый частый паттерн</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">.h4x12 (wide)</div>
+            <div class="num">5</div>
+            <div class="det">полная ширина, средняя высота</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">.title-area</div>
+            <div class="num">37</div>
+            <div class="det">ВНУТРИ каждого блока — 80px row</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">.cell (любой)</div>
+            <div class="num">56</div>
+            <div class="det">включая kpi-cell, h4x*-cell, h8x12-cell</div>
+        </div>
+    </div>
+
+    <p class="doc">Текущая структура одного блока:</p>
+    <pre>&lt;div class="grid"&gt;                                 ← grid-auto-rows: 80px (хардкод)
+    &lt;div class="h4x6"&gt;                              ← grid-column span 6, grid-row span 5 (= 400px)
+        &lt;div class="title-area"&gt;                    ← grid-row 1 (80px), justify-content: flex-end
+            &lt;h3&gt;Заголовок&lt;/h3&gt;                       ← override: 13/bold (НЕ 14/semibold)
+            &lt;p class="meta"&gt;Описание&lt;/p&gt;            ← override: line-height 1.3 (НЕ 1.25)
+        &lt;/div&gt;
+        &lt;div class="cell"&gt;                          ← grid-row 2 (320px), padding 14px
+            &lt;canvas&gt;chart&lt;/canvas&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</pre>
+
+    <h2 class="doc">2. Найденные нестыковки</h2>
+
+    <div class="iss">
+        <div class="lab">Issue 1</div>
+        <div class="title">Три класса для одного блока</div>
+        <div class="desc"><code>.h4x6</code> (placement) + <code>.title-area</code> (header layout) + <code>.cell</code> (visual) — три обёртки для одного семантического блока «карточка с графиком». Сложно поддерживать, легко забыть один класс.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 2</div>
+        <div class="title">80px row хардкод создаёт пустоту</div>
+        <div class="desc"><code>.grid { grid-auto-rows: 80px }</code> + <code>.h4x6 { grid-template-rows: 80px 1fr }</code> + <code>.title-area { justify-content: flex-end }</code>. Контент h3+meta весит ~37px, но row фиксирован 80px → <strong>~43px пустоты сверху</strong> в каждом блоке. Это «странные большие отступы» в скриншоте.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 3</div>
+        <div class="title"><code>.title-area</code> переопределяет шрифты — нарушает Typography v1.1</div>
+        <div class="desc"><code>.title-area h3 { font-size: var(--fs-body); font-weight: bold }</code> — 13/bold вместо global 14/semibold. <code>.title-area .meta { line-height: 1.3 }</code> — не 1.25 как у global .meta. <strong>Заголовок внутри блока выглядит мельче и жирнее</strong> чем заголовок в обычном flow, хотя должен быть такой же.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 4</div>
+        <div class="title">Grid-row span форсит высоту блока</div>
+        <div class="desc"><code>.h4x6 { grid-row: span 5 }</code> = 5 × 80 = 400px <strong>независимо от контента</strong>. Если внутри график 200px — пустота 200px снизу. Если контент по природе короче — обёртка всё равно растянется.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 5</div>
+        <div class="title">Inline overrides на h2 (workaround)</div>
+        <div class="desc">В двух местах <code>&lt;h2 style="margin-top:32px;"&gt;</code> — потому что дефолтный margin-top h2 не подходил после chart-блоков. С новой типографикой <code>--mt-h2 = 44px</code>, эти inline overrides побеждают токен и оставляют 32px. <strong>После миграции — убрать</strong>.</div>
+    </div>
+
+    <h2 class="doc">3. Предложение конвенций · Blocks v1.0</h2>
+
+    <p class="doc">Один примитив <code>.block</code> взамен <code>.h4x6 + .title-area + .cell</code>. <code>.grid</code> теряет хардкод <code>grid-auto-rows: 80px</code> — ряды auto по контенту. Высота контента задаётся через chart-tokens (<code>--ch-md</code> и т.п.) — визуальный ритм сохраняется через единые размеры графиков, а не через grid-row span.</p>
+
+    <table class="tk-table">
+        <thead>
+            <tr><th>Параметр</th><th>Сейчас</th><th>Стало</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Классы блока</td>
+                <td><code>.h4x6 + .title-area + .cell</code></td>
+                <td><strong class="changed"><code>.block.span-6</code></strong></td>
+            </tr>
+            <tr>
+                <td>Grid auto-rows</td>
+                <td>80px (хардкод)</td>
+                <td><strong class="changed">убран — auto по контенту</strong></td>
+            </tr>
+            <tr>
+                <td>Заголовок внутри</td>
+                <td><code>.title-area h3</code> (13/bold override)</td>
+                <td><strong class="changed">обычный <code>h3</code> + правила Typography v1.1</strong></td>
+            </tr>
+            <tr>
+                <td>Описание</td>
+                <td><code>.title-area .meta</code> (lh 1.3)</td>
+                <td><strong class="changed">обычный <code>.meta</code> + Typography v1.1 (lh 1.25)</strong></td>
+            </tr>
+            <tr>
+                <td>Высота</td>
+                <td>grid-row span 5 = 400px фикс</td>
+                <td><strong class="changed">по контенту</strong> (chart-wrap задаёт высоту через <code>--ch-md</code>)</td>
+            </tr>
+            <tr>
+                <td>Padding блока</td>
+                <td>14px (хардкод)</td>
+                <td><strong class="changed"><code>--sp-3</code> 12px</strong> (из шкалы)</td>
+            </tr>
+            <tr>
+                <td>Inline overrides на h2</td>
+                <td>2 места</td>
+                <td><strong class="changed">удаляются</strong> — токен <code>--mt-h2: 44px</code> работает</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="doc"><strong>Структура блока:</strong></p>
+    <pre>&lt;div class="grid"&gt;
+    &lt;div class="block span-6 h-md"&gt;                  ← span = ширина, h-md = высота графика
+        &lt;h3&gt;Заголовок&lt;/h3&gt;                            ← global h3 (14/semibold), без override
+        &lt;p class="meta"&gt;Описание&lt;/p&gt;                  ← global .meta (11/regular/lh 1.25)
+        &lt;div class="chart-wrap"&gt;
+            &lt;canvas&gt;...&lt;/canvas&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</pre>
+
+    <p class="doc"><strong>CSS:</strong></p>
+    <pre>.grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--sp-4);
+    /* НЕТ grid-auto-rows — ряды auto по контенту */
+}
+
+.block {
+    background:    var(--bg-card);
+    border-radius: var(--r-xl);
+    box-shadow:    var(--sh-card);
+    padding:       var(--sp-3);
+    display:       flex;
+    flex-direction: column;
+}
+
+/* Первый child не получает свой margin-top (h3 внутри блока) */
+.block &gt; :first-child { margin-top: 0; }
+
+/* Span-классы для placement в .grid */
+.span-12 { grid-column: span 12; }
+.span-8  { grid-column: span 8; }
+.span-6  { grid-column: span 6; }
+.span-4  { grid-column: span 4; }
+.span-3  { grid-column: span 3; }
+.span-2  { grid-column: span 2; }
+
+/* Высота контента блока — через chart heights (Charts v1.0) */
+.block.h-xs .chart-wrap { height: var(--ch-xs); }      /* 60px (sparkline) */
+.block.h-sm .chart-wrap { height: var(--ch-sm); }      /* 180px (slider) */
+.block.h-md .chart-wrap { height: var(--ch-md); }      /* 280px (default) */
+.block.h-lg .chart-wrap { height: var(--ch-lg); }      /* 360px (detailed) */</pre>
+
+    <h2 class="doc">4. Три случая — было / стало</h2>
+
+    <h3 class="doc">A · Chart block, half-width (.h4x6 → .block.span-6.h-md)</h3>
+    <p class="doc">Самый частый паттерн (26 блоков из 32). Слева — текущая цепочка трёх классов с 80px-row. Справа — единый <code>.block</code>.</p>
+
+    <div class="ba-grid">
+        <div class="ba-col before">
+            <div class="ba-lab">Сейчас (.h4x6 + .title-area + .cell)</div>
+            <div class="cur-grid" style="grid-template-columns: 1fr; grid-auto-rows: 80px;">
+                <div class="cur-h4x6" style="grid-column: span 1; grid-row: span 5">
+                    <div class="cur-title-area">
+                        <h3>По устройствам</h3>
+                        <p class="meta">% сессий со scroll до 90%</p>
+                    </div>
+                    <div class="cur-cell">
+                        <div class="cur-chart-mock">[ chart ]</div>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">Высота фикс 400px (5 × 80). Title-area = 80px row, h3 прижат к низу → ~43px пустоты сверху (красный outline).</p>
+        </div>
+        <div class="ba-col after">
+            <div class="ba-lab">Стало (.block.span-6.h-md)</div>
+            <div class="pr-grid" style="grid-template-columns: 1fr;">
+                <div class="pr-block span-6 h-md" style="grid-column: span 1">
+                    <h3>По устройствам</h3>
+                    <p class="meta">% сессий со scroll до 90%</p>
+                    <div class="chart-mock">[ chart 280px ]</div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">Высота по контенту: 12 (padding) + 17 (h3) + 4 (tight-pair) + 13 (meta) + 8 (gap) + 280 (chart) + 12 = 346px. Никаких пустот.</p>
+        </div>
+    </div>
+
+    <h3 class="doc">B · Wide chart, full-width (.h4x12 → .block.span-12.h-md)</h3>
+
+    <div class="ba-grid">
+        <div class="ba-col before">
+            <div class="ba-lab">Сейчас</div>
+            <div class="cur-grid" style="grid-template-columns: 1fr; grid-auto-rows: 80px;">
+                <div class="cur-h4x12" style="grid-column: span 1; grid-row: span 5">
+                    <div class="cur-title-area">
+                        <h3>Воронка по периодам</h3>
+                        <p class="meta">Сессии по этапам, последние 8 недель</p>
+                    </div>
+                    <div class="cur-cell">
+                        <div class="cur-chart-mock">[ chart ]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ba-col after">
+            <div class="ba-lab">Стало</div>
+            <div class="pr-grid" style="grid-template-columns: 1fr;">
+                <div class="pr-block span-12 h-md" style="grid-column: span 1">
+                    <h3>Воронка по периодам</h3>
+                    <p class="meta">Сессии по этапам, последние 8 недель</p>
+                    <div class="chart-mock">[ chart 280px ]</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="doc">C · Visual rhythm — два блока рядом</h3>
+    <p class="doc">Слева — два блока со 80px-row хардкодом, оба 400px (рынок ритм через grid). Справа — два блока auto по контенту, оба ~346px (рынок ритм через одинаковую высоту chart-tokens).</p>
+
+    <div class="ba-grid">
+        <div class="ba-col before">
+            <div class="ba-lab">Сейчас (rhythm через 80px row)</div>
+            <div class="cur-grid">
+                <div class="cur-h4x6">
+                    <div class="cur-title-area">
+                        <h3>По устройствам</h3>
+                        <p class="meta">Описание</p>
+                    </div>
+                    <div class="cur-cell"><div class="cur-chart-mock">[ chart ]</div></div>
+                </div>
+                <div class="cur-h4x6">
+                    <div class="cur-title-area">
+                        <h3>По каналам</h3>
+                        <p class="meta">Описание</p>
+                    </div>
+                    <div class="cur-cell"><div class="cur-chart-mock">[ chart ]</div></div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">Оба 400px (5 rows × 80). Ритм есть, но в каждом ~43px пустоты сверху.</p>
+        </div>
+        <div class="ba-col after">
+            <div class="ba-lab">Стало (rhythm через chart-height tokens)</div>
+            <div class="pr-grid">
+                <div class="pr-block span-6 h-md">
+                    <h3>По устройствам</h3>
+                    <p class="meta">Описание</p>
+                    <div class="chart-mock">[ chart 280px ]</div>
+                </div>
+                <div class="pr-block span-6 h-md">
+                    <h3>По каналам</h3>
+                    <p class="meta">Описание</p>
+                    <div class="chart-mock">[ chart 280px ]</div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">Оба ~346px. Ритм через единый <code>--ch-md</code> для chart-wrap. Без пустот.</p>
+        </div>
+    </div>
+
+    <h2 class="doc">5. Совместимость с другими разделами</h2>
+
+    <table class="tk-table">
+        <thead><tr><th>Раздел</th><th>Совместимость</th><th>Комментарий</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><strong>Typography v1.1</strong></td>
+                <td class="desc">✓ полная</td>
+                <td class="desc">Внутри <code>.block</code> работают глобальные h3, h4, .meta. <code>.block &gt; :first-child { margin-top: 0 }</code> — техническое правило чтобы первый h3 не получал свой 24px margin-top (он внутри блока).</td>
+            </tr>
+            <tr>
+                <td><strong>Charts v1.0</strong></td>
+                <td class="desc">✓ полная</td>
+                <td class="desc">Высоты графиков через <code>--ch-xs/sm/md/lg</code> tokens (которые уже зафиксированы в Charts v1.0). Класс <code>.block.h-md</code> применяет <code>--ch-md</code> к chart-wrap внутри.</td>
+            </tr>
+            <tr>
+                <td><strong>Tables v1.0</strong></td>
+                <td class="desc">✓ полная</td>
+                <td class="desc">Tables уже зафиксировал собственный паттерн (<code>.data-table-wrap</code>) без grid-cell обёртки. Внутри <code>.block</code> можно положить <code>.data-table-wrap</code> вместо <code>.chart-wrap</code> — структура совместима.</td>
+            </tr>
+            <tr>
+                <td><strong>Controls v1.0</strong></td>
+                <td class="desc">✓ полная</td>
+                <td class="desc">Контролы (filter-bar, кнопки) живут вне <code>.block</code>, в нормальном flow. Никакого пересечения.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="doc">6. Что упраздняется при миграции дашборда</h2>
+
+    <div class="iss" style="border-left-color: var(--c-decline);">
+        <div class="lab">DELETE</div>
+        <div class="title">Классы и правила</div>
+        <div class="desc">
+            <ul style="margin-left: var(--sp-4); margin-top: var(--sp-1);">
+                <li><code>.h4x12, .h4x8, .h4x6, .h4x4</code> — заменяются на <code>.block.span-N</code></li>
+                <li><code>.h8x12</code> — уже упразднён в Tables v1.0</li>
+                <li><code>.h2x2, .h1x4, .h1x2</code> — заменяются на <code>.block.span-N</code> (KPI-варианты в отдельном спеке Components v1.0 позже)</li>
+                <li><code>.title-area</code> + все её правила (font overrides, justify-content) — упраздняется полностью</li>
+                <li><code>.cell</code> — заменяется на <code>.block</code> (то же самое, более чистое имя)</li>
+                <li><code>grid-auto-rows: 80px</code> в <code>.grid</code> — удалить</li>
+                <li><code>grid-template-rows: 80px 1fr</code> во всех <code>.h4x*</code> — удалить (классы уходят целиком)</li>
+                <li>Inline <code>style="margin-top:32px"</code> на h2 — удалить (новый <code>--mt-h2: 44px</code> подходит)</li>
+                <li><code>.cell h2, .cell h3, .cell h4 { margin-top: 0 }</code> — заменяется на <code>.block &gt; :first-child { margin-top: 0 }</code> (более узкое правило)</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2 class="doc">7. Вопросы для решения</h2>
+
+    <div class="q-grid">
+        <div class="q-card">
+            <div class="num">Q1</div>
+            <div class="title">Принимаем единый <code>.block</code>?</div>
+            <div class="desc">Заменяет цепочку <code>.h4x6 + .title-area + .cell</code> одним классом. Padding 12px, radius 8px, shadow card. Внутри — h3 + meta + контент в normal flow.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q2</div>
+            <div class="title">Убираем <code>grid-auto-rows: 80px</code>?</div>
+            <div class="desc">Ряды grid'а становятся auto по контенту. Визуальный ритм сохраняется через единые chart-heights (<code>--ch-md</code> для большинства, <code>--ch-lg</code> для bubble и т.п.).</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q3</div>
+            <div class="title">Span-классы (<code>.span-12 / .span-8 / .span-6 / .span-4</code>)?</div>
+            <div class="desc">Заменяют <code>.h4x12 / .h4x8 / .h4x6 / .h4x4</code>. Имена короче и универсальнее (<code>.span-N</code> = grid-column span N). Высота больше не закодирована в имени класса — задаётся отдельно через <code>.h-md</code> и т.п.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q4</div>
+            <div class="title">Padding блока — <code>--sp-3</code> 12px?</div>
+            <div class="desc">Сейчас хардкод 14px. <code>--sp-3</code> 12px — из spacing-шкалы. Альтернатива — <code>--sp-4</code> 16px (просторнее). 12px ближе к текущему 14px, переход незаметный.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q5</div>
+            <div class="title">KPI блоки (h2x2, h1x4, h1x2) — отдельным спеком?</div>
+            <div class="desc">У них специфическая внутренняя раскладка (kpi-label + kpi-value + kpi-spark). Сейчас в дашборде <strong>не используются</strong> на main view. Предлагаю: <code>.block</code> — основной примитив для chart/table блоков. KPI-варианты (со спарклайнами и т.п.) — будущий раздел <code>components/</code>.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q6</div>
+            <div class="title">Migration: всё одной волной или поэтапно?</div>
+            <div class="desc">26 <code>.h4x6</code> + 5 <code>.h4x12</code> + 1 <code>.h4x8</code> + 37 <code>.title-area</code> = много замен. Можно: (а) одной волной с глобальным sed по generate_report.py, (б) по группам (сначала h4x6, потом h4x12 и т.д.). Какой путь?</div>
+        </div>
+    </div>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Blocks v0 (proposal) · 2026-04-29</p>
+</body>
+</html>

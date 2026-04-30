@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pinkspink — Controls (кнопки, фильтры, чекбоксы)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ls-label: 0.5px;
+            --fs-kpi: 28px; --fs-h2: 18px; --fs-h3: 14px;
+            --fs-body: 13px; --fs-caption: 11px; --fs-chart-meta: 10px;
+
+            --c-channel-social: #6C5CE7;
+            --c-growth: #00B894; --c-decline: #E17055;
+            --tx-primary:#2D3436; --tx-secondary:#636E72; --tx-muted:#B2BEC3; --tx-ondark:#FFFFFF;
+            --bg-page:#FAFAFA; --bg-card:#FFFFFF; --bg-muted:#F0F0F0; --bg-border:#DFE6E9; --bg-divider:#F0F0F0; --bg-inverse:#2D3436; --bg-hover:#F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px; --r-pill: 999px;
+            --r-control: 2px;  /* радиус всех контролов (.btn, .btn-sq, .check) — компактный, «инженерный» */
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1400px; margin: 0 auto; }
+
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+        pre { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; font-family: var(--ff-mono); margin: var(--sp-2) 0 var(--sp-3); }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+        .badge { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+
+        /* Inventory grid */
+        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 1100px) { .inv-grid { grid-template-columns: repeat(2, 1fr); } }
+        .inv-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); }
+        .inv-card .lab { font-size: 10px; text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .inv-card .num { font-size: var(--fs-kpi); font-weight: var(--fw-bold); line-height: 1.1; margin: var(--sp-1) 0; }
+        .inv-card .det { font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        /* Demo card (current state with example buttons) */
+        .demo-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-3); }
+        .demo-card .name { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin-bottom: var(--sp-1); }
+        .demo-card .where { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+        .demo-card .row { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); flex-wrap: wrap; }
+        .demo-card .row .row-lab { font-size: var(--fs-caption); color: var(--tx-secondary); width: 90px; flex-shrink: 0; }
+        .demo-card .spec { font-size: 10px; color: var(--tx-muted); margin-top: var(--sp-2); }
+        .demo-card .spec code { font-size: 10px; }
+
+        /* === CURRENT styles (recreated for showcase) === */
+        .cur-grain {
+            padding: var(--sp-1) var(--sp-3); border-radius: var(--r-md);
+            font-size: var(--fs-body); color: var(--tx-secondary);
+            background: var(--bg-muted); border: none; cursor: pointer;
+        }
+        .cur-grain.is-hover { background: var(--bg-border); }
+        .cur-grain.is-active { background: var(--bg-inverse); color: var(--tx-ondark); }
+        .cur-tab {
+            padding: 6px 14px; border-radius: var(--r-md);
+            font-size: var(--fs-meta, 12px); font-weight: var(--fw-semibold);
+            border: 1px solid var(--bg-border); cursor: pointer;
+            background: var(--bg-card); color: var(--tx-secondary);
+        }
+        .cur-tab.is-hover { background: var(--bg-muted); }
+        .cur-tab.is-active { background: var(--bg-inverse); color: var(--tx-ondark); border-color: var(--bg-inverse); }
+        .cur-sq {
+            width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+            font-size: var(--fs-meta, 12px); font-weight: var(--fw-bold);
+            background: var(--bg-muted); color: var(--tx-secondary);
+            border-radius: var(--r-md); border: none; cursor: pointer;
+        }
+        .cur-sq.is-hover { background: var(--bg-border); }
+        .cur-bubble-filters { display: flex; flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); background: var(--bg-card); border-radius: var(--r-lg); box-shadow: var(--sh-card); }
+        .cur-bubble-filters label { font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: var(--sp-1); }
+
+        /* Issue cards */
+        .iss { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2); border-left: 4px solid var(--c-decline); }
+        .iss .lab { font-size: 10px; text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--c-decline); margin-bottom: 4px; }
+        .iss .title { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin-bottom: var(--sp-1); }
+        .iss .desc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; }
+        .iss .desc strong { color: var(--tx-primary); }
+
+        /* Proposal control system */
+        .prop-section { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-3); }
+        .prop-section h3 { margin-top: 0; }
+        .prop-grid { display: grid; grid-template-columns: 130px 1fr 1fr 1fr 1fr 1fr; gap: var(--sp-2); align-items: center; padding: var(--sp-2) 0; border-bottom: 1px solid var(--bg-divider); }
+        .prop-grid:last-child { border-bottom: none; }
+        .prop-grid.head { font-size: 10px; text-transform: uppercase; color: var(--tx-secondary); letter-spacing: var(--ls-label); border-bottom: 2px solid var(--bg-inverse); margin-bottom: var(--sp-1); }
+        .prop-grid .col-lab { font-size: var(--fs-caption); color: var(--tx-secondary); }
+
+        /* === PROPOSED styles === */
+        /* === FILTER controls — заполненные тёмные при active === */
+
+        /* Toggle button (заменяет .grain-btn, для filters). Высота 32px = .btn-sq */
+        .pr-btn {
+            font-family: var(--ff-mono);
+            height: 32px;                              /* фикс — = .pr-sq */
+            padding: 0 var(--sp-3);                    /* 0 vertical, 12 horizontal */
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: var(--r-control);
+            font-size: var(--fs-body);
+            font-weight: var(--fw-regular);
+            color: var(--tx-secondary);
+            background: var(--bg-muted);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 120ms, color 120ms, border-color 120ms;
+            line-height: 1;
+        }
+        .pr-btn.is-hover    { background: var(--bg-border); color: var(--tx-primary); }
+        .pr-btn.is-active   { background: var(--bg-inverse); color: var(--tx-ondark); }
+        .pr-btn.is-focus    { outline: 2px solid var(--c-channel-social); outline-offset: 2px; }
+        .pr-btn.is-disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Square toggle (заменяет .grain-sq). Высота 32×32 = .btn */
+        .pr-sq {
+            font-family: var(--ff-mono);
+            width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: var(--fs-body);
+            font-weight: var(--fw-semibold);
+            color: var(--tx-secondary);
+            background: var(--bg-muted);
+            border: 1px solid transparent;
+            border-radius: var(--r-control);
+            cursor: pointer;
+            transition: background 120ms, color 120ms, border-color 120ms;
+        }
+        .pr-sq.is-hover  { background: var(--bg-border); color: var(--tx-primary); }
+        .pr-sq.is-active { background: var(--bg-inverse); color: var(--tx-ondark); }
+        .pr-sq.is-focus  { outline: 2px solid var(--c-channel-social); outline-offset: 2px; }
+
+        /* === NAVIGATION tab — текст + подчёркивание, БЕЗ заливки === */
+        /* Используется ТОЛЬКО для top-level навигации дашборда. Не путать с filter-кнопками. */
+        .pr-tab {
+            font-family: var(--ff-mono);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: var(--sp-2) var(--sp-3) var(--sp-1);
+            font-size: var(--fs-body);
+            font-weight: var(--fw-regular);
+            color: var(--tx-muted);                    /* «чуть более серый когда не активен» */
+            cursor: pointer;
+            transition: color 120ms, border-color 120ms;
+            line-height: 1.4;
+        }
+        .pr-tab.is-hover  { color: var(--tx-secondary); }
+        .pr-tab.is-active { color: var(--tx-primary); border-bottom-color: var(--tx-primary); font-weight: var(--fw-semibold); }
+        .pr-tab.is-focus  { outline: 2px solid var(--c-channel-social); outline-offset: 2px; border-radius: var(--r-control); }
+
+        .pr-tab-bar { display: flex; gap: var(--sp-3); border-bottom: 1px solid var(--bg-border); padding: 0 var(--sp-3); }
+
+        /* Checkbox — заполнение чёрным (--bg-inverse) при checked */
+        .pr-check { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-caption); color: var(--tx-primary); cursor: pointer; line-height: 1.4; user-select: none; }
+        .pr-check input { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; border: 1.5px solid var(--bg-border); border-radius: var(--r-control); background: var(--bg-card); cursor: pointer; flex-shrink: 0; transition: background 120ms, border-color 120ms; position: relative; }
+        .pr-check input:checked { background: var(--bg-inverse); border-color: var(--bg-inverse); }
+        .pr-check input:checked::after { content: ''; position: absolute; left: 3px; top: 0; width: 5px; height: 9px; border: solid var(--tx-ondark); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+        .pr-check input:hover  { border-color: var(--tx-secondary); }
+        .pr-check input:focus  { outline: 2px solid var(--c-channel-social); outline-offset: 2px; }
+        .pr-check.is-disabled { opacity: 0.4; cursor: not-allowed; }
+        .pr-check.is-disabled input { cursor: not-allowed; }
+
+        /* Filter bar (group of controls) */
+        .pr-filters { display: flex; align-items: flex-start; gap: var(--sp-5); padding: var(--sp-3); background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); flex-wrap: wrap; }
+
+        /* Filter group — каждый «грейн» группы кнопок: подпись + полоска + кнопки */
+        .filter-group { display: flex; flex-direction: column; gap: var(--sp-1); }
+        .filter-group .filter-label {
+            font-size: var(--fs-caption);
+            font-weight: var(--fw-regular);
+            color: var(--tx-secondary);
+            text-transform: uppercase;
+            letter-spacing: var(--ls-label);
+            padding-bottom: var(--sp-1);
+            border-bottom: 1px solid var(--bg-border);
+            min-width: 110px;
+        }
+        .filter-group .filter-buttons { display: flex; gap: var(--sp-1); }
+
+        /* Segmented (alt вариант — для справки в секции 3) */
+        .pr-toggle-group { display: inline-flex; gap: 2px; padding: 2px; background: var(--bg-muted); border-radius: var(--r-control); }
+        .pr-toggle-group .pr-btn { background: transparent; border: none; }
+        .pr-toggle-group .pr-btn.is-active { background: var(--bg-card); color: var(--tx-primary); box-shadow: var(--sh-card); }
+
+        /* Question cards */
+        .q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 900px) { .q-grid { grid-template-columns: 1fr; } }
+        .q-card { background: linear-gradient(135deg, var(--c-channel-social), var(--c-growth)); color: var(--tx-ondark); border-radius: var(--r-xl); padding: var(--sp-4); }
+        .q-card .num { font-size: var(--fs-h2); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        .q-card .title { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin-bottom: var(--sp-2); }
+        .q-card .desc { font-size: var(--fs-body); opacity: 0.95; line-height: 1.5; }
+        .q-card code { background: rgba(255,255,255,0.2); color: var(--tx-ondark); }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Controls <span class="badge">v0 · решения зафиксированы</span></h1>
+    <p class="meta-line">Pinkspink Design System · Кнопки, фильтры, чекбоксы · 2026-04-28</p>
+    <p class="doc">В дашборде сейчас 5 элементов управления с разнобоем (размеры, веса, паттерны). Этот файл — обзор + предложение + <strong>принятые решения</strong>. Все примеры в секции 3 уже отрисованы по новым правилам. Если всё ОК — собираю спецификацию <code>design-system/controls/</code> v1.0.</p>
+
+    <h2 class="doc">1. Что есть сейчас в дашборде</h2>
+
+    <div class="inv-grid">
+        <div class="inv-card">
+            <div class="lab">Toggle</div>
+            <div class="num">2</div>
+            <div class="det">.grain-btn (фильтры) + .tab-btn (вкладки) — оба переключатели но с разными стилями</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">Square</div>
+            <div class="num">1</div>
+            <div class="det">.grain-sq (D/W/M в шапке)</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">Checkbox</div>
+            <div class="num">1</div>
+            <div class="det">.bubble-filters (multi-select source)</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">Container</div>
+            <div class="num">1</div>
+            <div class="det">.filters (общий блок-обёртка)</div>
+        </div>
+    </div>
+
+    <p class="doc">Каждый элемент сейчас в трёх состояниях (default, hover, active/checked). Никаких focus или disabled — для accessibility критично, добавим в предложение.</p>
+
+    <div class="demo-card">
+        <div class="name"><code>.grain-btn</code> — день/неделя/месяц</div>
+        <div class="where">Где: блок <code>.filters</code> над графиками. Используется для переключения grain.</div>
+        <div class="row">
+            <span class="row-lab">default</span>
+            <button class="cur-grain">day</button>
+        </div>
+        <div class="row">
+            <span class="row-lab">hover</span>
+            <button class="cur-grain is-hover">day</button>
+        </div>
+        <div class="row">
+            <span class="row-lab">active</span>
+            <button class="cur-grain is-active">day</button>
+        </div>
+        <div class="spec">Padding <code>4×12</code> · radius <code>4</code> · font <code>13/regular</code> · без бордера · active = bg-inverse + tx-ondark</div>
+    </div>
+
+    <div class="demo-card">
+        <div class="name"><code>.tab-btn</code> — вкладки страниц</div>
+        <div class="where">Где: верхнее меню — Сводка / Воронки / Аналитика.</div>
+        <div class="row">
+            <span class="row-lab">default</span>
+            <button class="cur-tab">Воронки</button>
+        </div>
+        <div class="row">
+            <span class="row-lab">hover</span>
+            <button class="cur-tab is-hover">Воронки</button>
+        </div>
+        <div class="row">
+            <span class="row-lab">active</span>
+            <button class="cur-tab is-active">Воронки</button>
+        </div>
+        <div class="spec">Padding <code>6×14 (хардкод!)</code> · radius <code>4</code> · font <code>12/semibold</code> · 1px border · active = bg-inverse + tx-ondark + border-inverse</div>
+    </div>
+
+    <div class="demo-card">
+        <div class="name"><code>.grain-sq</code> — квадратные D/W/M в шапке</div>
+        <div class="where">Где: sticky-header, переключатель grain в виде «иконок».</div>
+        <div class="row">
+            <span class="row-lab">default</span>
+            <button class="cur-sq">D</button>
+            <button class="cur-sq">W</button>
+            <button class="cur-sq">M</button>
+        </div>
+        <div class="row">
+            <span class="row-lab">hover</span>
+            <button class="cur-sq is-hover">D</button>
+        </div>
+        <div class="spec">Размер <code>32×32</code> · radius <code>4</code> · font <code>12/bold</code> · active не определён (как маркируется выбор?)</div>
+    </div>
+
+    <div class="demo-card">
+        <div class="name"><code>.bubble-filters</code> — чекбоксы источников</div>
+        <div class="where">Где: над bubble-чартами, multi-select для скрытия source.</div>
+        <div class="row">
+            <span class="row-lab">группа</span>
+            <div class="cur-bubble-filters">
+                <label><input type="checkbox" checked> ig</label>
+                <label><input type="checkbox" checked> meta (paid)</label>
+                <label><input type="checkbox"> google</label>
+                <label><input type="checkbox" checked> (direct)</label>
+                <label><input type="checkbox"> youtube</label>
+            </div>
+        </div>
+        <div class="spec">Чекбоксы дефолтные браузерные · label <code>11/regular</code> · контейнер: bg-card, radius lg, shadow</div>
+    </div>
+
+    <h2 class="doc">2. Найденные нестыковки</h2>
+
+    <div class="iss">
+        <div class="lab">Issue 1 · Размеры и веса</div>
+        <div class="title">Три разных font-size, три разных font-weight на трёх типах кнопок</div>
+        <div class="desc">grain-btn: <strong>13px / regular</strong>. tab-btn: <strong>12px / semibold</strong>. grain-sq: <strong>12px / bold</strong>. Все три — переключатели, но визуально разные. Логики не видно.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 2 · Активное состояние</div>
+        <div class="title">Два разных паттерна active: с бордером и без</div>
+        <div class="desc">grain-btn: только смена фона + цвета. tab-btn: + ещё border-color меняется. grain-sq: вообще нет active-состояния в коде (визуально не понятно какой grain выбран в шапке).</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 3 · Padding вне токенов</div>
+        <div class="title">tab-btn использует <code>6px 14px</code> — хардкод</div>
+        <div class="desc">Все остальные кнопки используют <code>var(--sp-*)</code>. Один tab-btn выпадает из шкалы 4/8/12/16. Если меняем spacing-токены — tab-btn останется как был.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 4 · Нет focus-состояния</div>
+        <div class="title">Накл. Tab по клавиатуре — не видно куда упал фокус</div>
+        <div class="desc">Accessibility: при нажатии Tab пользователь должен видеть какой элемент сейчас в фокусе. У текущих кнопок <code>:focus</code> отсутствует — фокус невидимый.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 5 · Нет disabled-состояния</div>
+        <div class="title">Если понадобится отключить кнопку — нечем визуально</div>
+        <div class="desc">Сейчас в дашборде всё активно, но в будущем будут случаи (например, «дисейблить month-grain если данных меньше 4 недель»). Нужен консистентный паттерн disabled.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 6 · Чекбоксы — браузерные дефолты</div>
+        <div class="title">Чекбоксы выглядят системно, не вписываются в дизайн</div>
+        <div class="desc">Сейчас <code>&lt;input type="checkbox"&gt;</code> рендерится как стандартный системный квадратик. На моноширинном дашборде смотрится чужеродно. Нужен кастомный стиль — обычно делают через <code>appearance:none</code> + кастомные псевдоэлементы.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 7 · font-family на кнопках</div>
+        <div class="title">Кнопки наследуют системный sans-serif, не Ubuntu Mono</div>
+        <div class="desc">Это <strong>уже решённая проблема</strong> — мы зафиксировали в Typography v1.0 правило <code>* { font-family: inherit; }</code>. Контролы получат правильный шрифт когда применим typography.</div>
+    </div>
+
+    <h2 class="doc">3. Предложение единой системы</h2>
+    <p class="doc">Три типа контролов, единые правила состояний, опора на токены. Никаких хардкод-значений вне Typography v1.0 / spacing.</p>
+
+    <div class="prop-section">
+        <h3 class="doc"><code>.btn</code> — Toggle button (заменяет grain-btn И tab-btn)</h3>
+        <p class="doc">Один тип переключателя для всех мест: фильтры, вкладки, table sort headers и т.д. <strong>Default — без бордера</strong> (бордер только в focus). Все размеры и веса — из Typography v1.0.</p>
+
+        <div class="prop-grid head">
+            <span class="col-lab">Состояние</span>
+            <span class="col-lab">default</span>
+            <span class="col-lab">hover</span>
+            <span class="col-lab">active</span>
+            <span class="col-lab">focus</span>
+            <span class="col-lab">disabled</span>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Demo</span>
+            <button class="pr-btn">day</button>
+            <button class="pr-btn is-hover">day</button>
+            <button class="pr-btn is-active">day</button>
+            <button class="pr-btn is-focus">day</button>
+            <button class="pr-btn is-disabled">day</button>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Background</span>
+            <code>--bg-muted</code>
+            <code>--bg-border</code>
+            <code>--bg-inverse</code>
+            <code>--bg-muted</code>
+            <code>--bg-muted</code>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Color</span>
+            <code>--tx-secondary</code>
+            <code>--tx-primary</code>
+            <code>--tx-ondark</code>
+            <code>--tx-secondary</code>
+            <code>opacity:0.4</code>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Outline</span>
+            <span style="font-size:10px;color:var(--tx-muted)">—</span>
+            <span style="font-size:10px;color:var(--tx-muted)">—</span>
+            <span style="font-size:10px;color:var(--tx-muted)">—</span>
+            <code>2px social</code>
+            <span style="font-size:10px;color:var(--tx-muted)">—</span>
+        </div>
+
+        <p class="doc" style="margin-top:var(--sp-3);margin-bottom:var(--sp-1);"><strong>Базовые параметры:</strong></p>
+        <pre>.btn {
+    font-family: var(--ff-mono);              /* наследуется */
+    padding: var(--sp-1) var(--sp-3);          /* 4×12 (из spacing-токенов) */
+    font-size: var(--fs-body);                 /* 13px */
+    font-weight: var(--fw-regular);            /* 400 */
+    border-radius: var(--r-md);                /* 4px */
+    border: 1px solid transparent;             /* резерв под focus-outline без скачков размера */
+    transition: background 120ms, color 120ms;
+}</pre>
+    </div>
+
+    <div class="prop-section">
+        <h3 class="doc"><code>.btn-sq</code> — Square button (заменяет grain-sq)</h3>
+        <p class="doc">Фиксированный 32×32 для случаев когда нужна «иконочная» компактность (D/W/M в шапке, кнопки сортировки, иконки фильтров). Все остальные правила — те же что у <code>.btn</code>. Добавил active-состояние (его сейчас нет в дашборде).</p>
+
+        <div class="prop-grid head">
+            <span class="col-lab">Состояние</span>
+            <span class="col-lab">default</span>
+            <span class="col-lab">hover</span>
+            <span class="col-lab">active</span>
+            <span class="col-lab">focus</span>
+            <span class="col-lab">—</span>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Demo</span>
+            <button class="pr-sq">D</button>
+            <button class="pr-sq is-hover">W</button>
+            <button class="pr-sq is-active">M</button>
+            <button class="pr-sq is-focus">D</button>
+            <span></span>
+        </div>
+
+        <p class="doc" style="margin-top:var(--sp-3);margin-bottom:var(--sp-1);"><strong>Параметры:</strong></p>
+        <pre>.btn-sq {
+    width: 32px; height: 32px;
+    font-family: var(--ff-mono);
+    font-size: var(--fs-body);                 /* 13px (было 12px) */
+    font-weight: var(--fw-semibold);           /* 600 (было bold 700 — слишком жирно) */
+    /* остальные правила как у .btn */
+}</pre>
+    </div>
+
+    <div class="prop-section" style="border-left: 4px solid var(--c-channel-social);">
+        <h3 class="doc"><code>.tab</code> — Navigation tab (НОВЫЙ — отдельный от filter-кнопок)</h3>
+        <p class="doc">Только для top-level навигации дашборда (Сводка / Воронки / Аналитика). <strong>Просто текст с подчёркиванием</strong> — никакой заливки, никакого тёмного фона. Визуально отделяет навигацию от чёрных filter-кнопок.</p>
+
+        <div class="prop-grid head">
+            <span class="col-lab">Состояние</span>
+            <span class="col-lab">default</span>
+            <span class="col-lab">hover</span>
+            <span class="col-lab">active</span>
+            <span class="col-lab">focus</span>
+            <span class="col-lab">—</span>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Demo</span>
+            <button class="pr-tab">Сводка</button>
+            <button class="pr-tab is-hover">Сводка</button>
+            <button class="pr-tab is-active">Сводка</button>
+            <button class="pr-tab is-focus">Сводка</button>
+            <span></span>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Color</span>
+            <code>--tx-muted</code>
+            <code>--tx-secondary</code>
+            <code>--tx-primary</code>
+            <code>--tx-muted</code>
+            <span></span>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Underline</span>
+            <span style="font-size:10px;color:var(--tx-muted)">2px transparent</span>
+            <span style="font-size:10px;color:var(--tx-muted)">2px transparent</span>
+            <code>2px tx-primary</code>
+            <span style="font-size:10px;color:var(--tx-muted)">—</span>
+            <span></span>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Weight</span>
+            <code>regular</code>
+            <code>regular</code>
+            <code>semibold</code>
+            <code>regular</code>
+            <span></span>
+        </div>
+
+        <p class="doc" style="margin-top:var(--sp-3)"><strong>Пример навигации в шапке дашборда:</strong></p>
+        <div style="background:var(--bg-card);border-radius:var(--r-xl);box-shadow:var(--sh-card);margin-bottom:var(--sp-3);padding-top:var(--sp-2);">
+            <div class="pr-tab-bar">
+                <button class="pr-tab">Сводка</button>
+                <button class="pr-tab is-active">Воронки</button>
+                <button class="pr-tab">Аналитика</button>
+            </div>
+        </div>
+
+        <p class="doc" style="margin-top:var(--sp-3);margin-bottom:var(--sp-1);"><strong>Параметры:</strong></p>
+        <pre>.tab {
+    font-family: var(--ff-mono);
+    background: none;                          /* без заливки */
+    border: none;
+    border-bottom: 2px solid transparent;      /* резерв под active-underline */
+    padding: var(--sp-2) var(--sp-3) var(--sp-1);
+    font-size: var(--fs-body);                 /* 13px */
+    color: var(--tx-muted);                    /* серый когда не активен */
+}
+.tab.is-active {
+    color: var(--tx-primary);                  /* тёмный текст */
+    border-bottom-color: var(--tx-primary);    /* подчёркивание */
+    font-weight: var(--fw-semibold);
+}
+.tab-bar { border-bottom: 1px solid var(--bg-border); }</pre>
+    </div>
+
+    <div class="prop-section">
+        <h3 class="doc"><code>.check</code> — Checkbox</h3>
+        <p class="doc">Кастомный чекбокс на CSS — <code>appearance: none</code> + псевдоэлемент с галочкой. Заменяет браузерный дефолт.</p>
+
+        <div class="prop-grid head">
+            <span class="col-lab">Состояние</span>
+            <span class="col-lab">default</span>
+            <span class="col-lab">hover</span>
+            <span class="col-lab">checked</span>
+            <span class="col-lab">focus</span>
+            <span class="col-lab">disabled</span>
+        </div>
+        <div class="prop-grid">
+            <span class="col-lab">Demo</span>
+            <label class="pr-check"><input type="checkbox"> ig</label>
+            <label class="pr-check"><input type="checkbox" style="border-color:var(--tx-secondary)"> ig</label>
+            <label class="pr-check"><input type="checkbox" checked> ig</label>
+            <label class="pr-check"><input type="checkbox" style="outline:2px solid var(--c-channel-social);outline-offset:2px"> ig</label>
+            <label class="pr-check is-disabled"><input type="checkbox" disabled> ig</label>
+        </div>
+
+        <p class="doc" style="margin-top:var(--sp-3);margin-bottom:var(--sp-1);"><strong>Параметры:</strong></p>
+        <pre>.check input {
+    appearance: none; -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--bg-border);
+    border-radius: 3px;
+    background: var(--bg-card);
+}
+.check input:checked {
+    background: var(--c-channel-social);
+    border-color: var(--c-channel-social);
+}
+.check input:checked::after {
+    content: ''; position: absolute;
+    /* галочка через CSS-rotation 5×9 рамки */
+}</pre>
+    </div>
+
+    <div class="prop-section">
+        <h3 class="doc">Filter-bar — Variant A с filter-group</h3>
+        <p class="doc">Принят Variant A. <strong>Заголовок группы фильтра</strong> — мелкими серыми UPPERCASE-буквами с тонкой линией-разделителем под ним. Несколько групп идут side-by-side в filter-баре.</p>
+
+        <div class="pr-filters" style="margin-bottom:var(--sp-3)">
+            <div class="filter-group">
+                <div class="filter-label">GRAIN</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">D</button>
+                    <button class="pr-sq is-active">W</button>
+                    <button class="pr-sq">M</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">DEVICE</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">M</button>
+                    <button class="pr-sq is-active">D</button>
+                    <button class="pr-sq">T</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">ПЕРИОД</div>
+                <div class="filter-buttons">
+                    <button class="pr-btn is-active">last 8w</button>
+                    <button class="pr-btn">last 12w</button>
+                    <button class="pr-btn">all</button>
+                </div>
+            </div>
+        </div>
+
+        <p class="doc"><strong>Анатомия filter-group:</strong></p>
+        <pre>&lt;div class="filter-group"&gt;
+    &lt;div class="filter-label"&gt;GRAIN&lt;/div&gt;
+    &lt;div class="filter-buttons"&gt;
+        &lt;button class="btn-sq"&gt;D&lt;/button&gt;
+        &lt;button class="btn-sq is-active"&gt;W&lt;/button&gt;
+        &lt;button class="btn-sq"&gt;M&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+.filter-label {
+    font-size: var(--fs-caption);          /* 11px */
+    font-weight: var(--fw-regular);        /* 400 */
+    color: var(--tx-secondary);
+    text-transform: uppercase;
+    letter-spacing: var(--ls-label);       /* 0.5px */
+    padding-bottom: var(--sp-1);
+    border-bottom: 1px solid var(--bg-border);
+}</pre>
+
+        <p class="doc">Подпись группы (<code>GRAIN</code>, <code>DEVICE</code>, <code>ПЕРИОД</code>) — это <code>--fs-caption</code> 11px regular UPPERCASE с <code>--ls-label</code> letter-spacing — точно как <code>.kpi-label</code> в Typography v1.0. Линия-разделитель — 1px <code>--bg-border</code>.</p>
+    </div>
+
+    <h2 class="doc">4. Соответствие Typography v1.0</h2>
+    <div class="prop-section" style="border-left: 4px solid var(--c-growth);">
+        <p class="doc"><strong>Все размеры и веса — из шкалы типографики:</strong></p>
+        <ul style="font-size:var(--fs-body);color:var(--tx-primary);line-height:1.7;margin-left:var(--sp-4)">
+            <li><code>.btn</code>: <code>--fs-body</code> 13 / <code>--fw-regular</code> 400</li>
+            <li><code>.btn-sq</code>: <code>--fs-body</code> 13 / <code>--fw-semibold</code> 600 (квадратные кнопки традиционно полужирные для компактности)</li>
+            <li><code>.check label</code>: <code>--fs-caption</code> 11 / <code>--fw-regular</code> 400</li>
+            <li>filter-bar <code>.lab</code>: <code>--fs-caption</code> 11 / <code>--fw-regular</code> 400</li>
+        </ul>
+        <p class="doc" style="margin-top:var(--sp-3);margin-bottom:0"><strong>Все размеры из spacing v1.0:</strong> padding <code>var(--sp-1) var(--sp-3)</code> = 4×12. Никаких хардкод-цифр.</p>
+    </div>
+
+    <h2 class="doc">5. Принятые решения</h2>
+    <p class="doc">Зафиксированы в этой версии файла. Все примеры выше уже сделаны по этим правилам.</p>
+
+    <div class="q-grid">
+        <div class="q-card">
+            <div class="num">Q1 ✓</div>
+            <div class="title">Два компонента: <code>.btn</code> для фильтров, <code>.tab</code> для навигации</div>
+            <div class="desc">Filter-кнопки (grain, device, период) — заполненный <code>--bg-muted</code>, active = чёрная заливка. <strong>Top-level вкладки</strong> (Сводка / Воронки / Аналитика) — отдельный <code>.tab</code>: только текст с подчёркиванием при active. Навигация визуально отделена от фильтров.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q2 ✓</div>
+            <div class="title">Active = dark fill</div>
+            <div class="desc"><code>background: --bg-inverse; color: --tx-ondark</code>. Самый контрастный паттерн, читается с любого расстояния.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q3 ✓</div>
+            <div class="title">Focus = outline 2px + offset 2px</div>
+            <div class="desc">Цвет — <code>--c-channel-social</code> (бренд-фиолетовый). Outline не сдвигает layout. Доступность с клавиатуры.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q4 ✓</div>
+            <div class="title">Disabled = opacity 0.4 + cursor not-allowed</div>
+            <div class="desc">Контрол узнаваем, но явно «не активен».</div>
+        </div>
+
+        <div class="q-card" style="background: linear-gradient(135deg, var(--bg-inverse), var(--tx-secondary));">
+            <div class="num">Q5 ✓</div>
+            <div class="title">Чекбокс checked = чёрный (--bg-inverse)</div>
+            <div class="desc">Заполнение <code>--bg-inverse</code> (#2D3436) с белой галочкой. Не фиолетовый — не отвлекает от данных, нейтрально, в духе моноширинной «инженерности».</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q6 ✓</div>
+            <div class="title">Filter-bar — Variant A с filter-group</div>
+            <div class="desc">Каждая группа: подпись <code>--fs-caption</code> UPPERCASE серым + 1px полоска снизу + кнопки. Несколько групп side-by-side. Segmented control (B) — отвергнут.</div>
+        </div>
+
+        <div class="q-card" style="background: linear-gradient(135deg, var(--c-decline), var(--c-channel-social));">
+            <div class="num">Q7 ✓</div>
+            <div class="title">Border-radius всех контролов = 2px</div>
+            <div class="desc">Новый токен <code>--r-control: 2px</code>. Применяется к <code>.btn</code>, <code>.btn-sq</code>, <code>.check</code>. Существующие <code>--r-md</code> (4px), <code>--r-lg</code> (6px), <code>--r-xl</code> (8px) остаются для карточек/таблиц.</div>
+        </div>
+
+        <div class="q-card" style="background: linear-gradient(135deg, var(--bg-inverse), var(--c-channel-social));">
+            <div class="num">Q8 ✓</div>
+            <div class="title">Высота <code>.btn</code> = <code>.btn-sq</code> = 32px</div>
+            <div class="desc">Раньше <code>.btn</code> был ~28px (по padding), <code>.btn-sq</code> — 32px. Стояли рядом в filter-баре с разной высотой → визуальный шум. Теперь оба <code>height: 32px</code> с явным <code>display: inline-flex; align-items: center</code>. Padding у <code>.btn</code> только горизонтальный (<code>0 var(--sp-3)</code>). Centering через flex.</div>
+        </div>
+    </div>
+
+    <h2 class="doc">6. Размер контрола — 24 / 28 / 32 px</h2>
+    <p class="doc">Три варианта высоты на одинаковом контенте. Меняется только высота — шрифт остаётся <code>--fs-body</code> 13px. <strong>Выбери глазами какой ритм лучше</strong>: 24px = плотно (для power-user), 28px = баланс, 32px = просторно.</p>
+
+    <style>
+        .size-24 .pr-btn, .size-24 .pr-sq { height: 24px; }
+        .size-24 .pr-sq { width: 24px; font-size: var(--fs-caption); }
+        .size-28 .pr-btn, .size-28 .pr-sq { height: 28px; }
+        .size-28 .pr-sq { width: 28px; }
+        /* 32 = default из .pr-btn/.pr-sq */
+
+        .h-compare-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-3); }
+        .h-compare-card .h-tag { display: inline-block; padding: 2px 8px; border-radius: var(--r-control); background: var(--bg-inverse); color: var(--tx-ondark); font-size: var(--fs-caption); font-weight: var(--fw-bold); margin-bottom: var(--sp-3); }
+        .h-compare-card .h-note { font-size: var(--fs-caption); color: var(--tx-secondary); margin-top: var(--sp-2); }
+        .h-compare-row { display: flex; align-items: flex-start; gap: var(--sp-5); flex-wrap: wrap; }
+    </style>
+
+    <div class="h-compare-card size-24">
+        <span class="h-tag">24 px · плотно</span>
+        <div class="h-compare-row">
+            <div class="filter-group">
+                <div class="filter-label">GRAIN</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">D</button>
+                    <button class="pr-sq is-active">W</button>
+                    <button class="pr-sq">M</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">DEVICE</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">M</button>
+                    <button class="pr-sq is-active">D</button>
+                    <button class="pr-sq">T</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">ПЕРИОД</div>
+                <div class="filter-buttons">
+                    <button class="pr-btn is-active">last 8w</button>
+                    <button class="pr-btn">last 12w</button>
+                    <button class="pr-btn">all</button>
+                </div>
+            </div>
+        </div>
+        <div class="h-note">Высота 24px · font-size 11px у квадратных (тесно для 13px). «Engineering / Linear-like» — power-user плотность.</div>
+    </div>
+
+    <div class="h-compare-card size-28">
+        <span class="h-tag">28 px · баланс</span>
+        <div class="h-compare-row">
+            <div class="filter-group">
+                <div class="filter-label">GRAIN</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">D</button>
+                    <button class="pr-sq is-active">W</button>
+                    <button class="pr-sq">M</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">DEVICE</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">M</button>
+                    <button class="pr-sq is-active">D</button>
+                    <button class="pr-sq">T</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">ПЕРИОД</div>
+                <div class="filter-buttons">
+                    <button class="pr-btn is-active">last 8w</button>
+                    <button class="pr-btn">last 12w</button>
+                    <button class="pr-btn">all</button>
+                </div>
+            </div>
+        </div>
+        <div class="h-note">Высота 28px · font-size 13px (--fs-body). Стандарт для современных дашбордов (Mode, Hex, Looker). Не утилитарно-тесно, но и не «жирно».</div>
+    </div>
+
+    <div class="h-compare-card">
+        <span class="h-tag">32 px · просторно (текущее предложение)</span>
+        <div class="h-compare-row">
+            <div class="filter-group">
+                <div class="filter-label">GRAIN</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">D</button>
+                    <button class="pr-sq is-active">W</button>
+                    <button class="pr-sq">M</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">DEVICE</div>
+                <div class="filter-buttons">
+                    <button class="pr-sq">M</button>
+                    <button class="pr-sq is-active">D</button>
+                    <button class="pr-sq">T</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">ПЕРИОД</div>
+                <div class="filter-buttons">
+                    <button class="pr-btn is-active">last 8w</button>
+                    <button class="pr-btn">last 12w</button>
+                    <button class="pr-btn">all</button>
+                </div>
+            </div>
+        </div>
+        <div class="h-note">Высота 32px · font-size 13px. Comfortable click-target по Apple HIG / Google MD. «Executive dashboard» feel — больше воздуха, дороже выглядит.</div>
+    </div>
+
+    <p class="doc"><strong>Скажи какую берём — 24 / 28 / 32</strong>. После этого обновлю токен <code>--h-control</code> и финальное «было / стало» (ниже) автоматически встанет в выбранный размер.</p>
+
+    <h2 class="doc">7. Финальное было / стало</h2>
+    <p class="doc">Реальные кусочки UI с тем что в дашборде сейчас (слева) и что станет (справа). По строкам — четыре типа контролов.</p>
+
+    <style>
+        .ba-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; margin-bottom: var(--sp-4); }
+        .ba-table th, .ba-table td { padding: var(--sp-3) var(--sp-4); text-align: left; vertical-align: middle; }
+        .ba-table thead { background: var(--bg-muted); }
+        .ba-table thead th { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); font-weight: var(--fw-semibold); }
+        .ba-table tbody tr { border-bottom: 1px solid var(--bg-divider); }
+        .ba-table tbody td { border-top: 1px solid var(--bg-divider); }
+        .ba-table .col-name { font-size: var(--fs-caption); color: var(--tx-primary); width: 140px; font-weight: var(--fw-bold); }
+        .ba-table .col-before { width: 30%; border-left: 4px solid var(--c-decline); background: rgba(225,112,85,0.04); }
+        .ba-table .col-after  { width: 30%; border-left: 4px solid var(--c-growth); background: rgba(0,184,148,0.04); }
+        .ba-table .col-changes { font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.5; }
+        .ba-table .col-changes ul { margin-left: var(--sp-3); }
+        .ba-table .col-changes li { margin-bottom: 2px; }
+    </style>
+
+    <table class="ba-table">
+        <thead>
+            <tr>
+                <th>Компонент</th>
+                <th>Сейчас</th>
+                <th>Стало</th>
+                <th>Что изменилось</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="col-name">.btn<br>(filter toggle)</td>
+                <td class="col-before">
+                    <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap">
+                        <button class="cur-grain">day</button>
+                        <button class="cur-grain is-active">week</button>
+                        <button class="cur-grain">month</button>
+                        <button class="cur-tab">+ tab-btn (другая выс.)</button>
+                    </div>
+                </td>
+                <td class="col-after">
+                    <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap">
+                        <button class="pr-btn">day</button>
+                        <button class="pr-btn is-active">week</button>
+                        <button class="pr-btn">month</button>
+                    </div>
+                </td>
+                <td class="col-changes">
+                    <ul>
+                        <li>Высота 32px (= <code>.btn-sq</code>)</li>
+                        <li>Radius <code>4 → 2</code> px</li>
+                        <li>tab-btn вынесен в <code>.tab</code></li>
+                        <li>+ focus + disabled</li>
+                        <li>Шрифт наследуется (Ubuntu Mono)</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-name">.btn-sq<br>(square toggle)</td>
+                <td class="col-before">
+                    <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap">
+                        <button class="cur-sq">D</button>
+                        <button class="cur-sq">W</button>
+                        <button class="cur-sq">M</button>
+                    </div>
+                    <div style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-1)">active не определён</div>
+                </td>
+                <td class="col-after">
+                    <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap">
+                        <button class="pr-sq">D</button>
+                        <button class="pr-sq is-active">W</button>
+                        <button class="pr-sq">M</button>
+                    </div>
+                </td>
+                <td class="col-changes">
+                    <ul>
+                        <li>Radius <code>4 → 2</code> px</li>
+                        <li>Font weight <code>bold → semibold</code></li>
+                        <li>Font size <code>12 → 13</code> (как <code>.btn</code>)</li>
+                        <li>+ active-состояние (тёмная заливка)</li>
+                        <li>+ focus</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-name">.tab<br>(navigation — НОВЫЙ)</td>
+                <td class="col-before">
+                    <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap">
+                        <button class="cur-tab">Сводка</button>
+                        <button class="cur-tab is-active">Воронки</button>
+                        <button class="cur-tab">Аналитика</button>
+                    </div>
+                    <div style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-1)">сейчас — заполненный tab-btn (не отличить от filters)</div>
+                </td>
+                <td class="col-after">
+                    <div style="background:var(--bg-card);border-radius:var(--r-md);padding-top:var(--sp-1);">
+                        <div class="pr-tab-bar" style="border-bottom:1px solid var(--bg-border)">
+                            <button class="pr-tab">Сводка</button>
+                            <button class="pr-tab is-active">Воронки</button>
+                            <button class="pr-tab">Аналитика</button>
+                        </div>
+                    </div>
+                    <div style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-1)">текст + подчёркивание, без заливки</div>
+                </td>
+                <td class="col-changes">
+                    <ul>
+                        <li>Отдельный компонент</li>
+                        <li>Только текст, без рамки/фона</li>
+                        <li>Active = подчёркивание + tx-primary + semibold</li>
+                        <li>Default = tx-muted (приглушённый)</li>
+                        <li>Визуально отделено от чёрных filter-кнопок</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-name">.check<br>(checkbox)</td>
+                <td class="col-before">
+                    <div style="display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap">
+                        <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> ig</label>
+                        <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> meta</label>
+                        <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="checkbox"> google</label>
+                    </div>
+                    <div style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-1)">браузерный дефолт (системный sans-serif)</div>
+                </td>
+                <td class="col-after">
+                    <div style="display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap">
+                        <label class="pr-check"><input type="checkbox" checked> ig</label>
+                        <label class="pr-check"><input type="checkbox" checked> meta</label>
+                        <label class="pr-check"><input type="checkbox"> google</label>
+                    </div>
+                    <div style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-1)">кастомный · checked = чёрный · radius 2px · Ubuntu Mono</div>
+                </td>
+                <td class="col-changes">
+                    <ul>
+                        <li>Полностью кастомный (<code>appearance:none</code>)</li>
+                        <li>Checked = <code>--bg-inverse</code> (чёрный)</li>
+                        <li>Galочка через CSS rotation</li>
+                        <li>Radius 2px</li>
+                        <li>+ focus + disabled</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-name">filter-bar<br>(группа фильтров)</td>
+                <td class="col-before">
+                    <div style="display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap;padding:var(--sp-2);background:var(--bg-card);border-radius:var(--r-md);border:1px solid var(--bg-border)">
+                        <span style="font-size:13px;color:var(--tx-secondary)">Grain:</span>
+                        <button class="cur-grain">day</button>
+                        <button class="cur-grain is-active">week</button>
+                        <button class="cur-grain">month</button>
+                    </div>
+                    <div style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-1)">подпись inline-текстом</div>
+                </td>
+                <td class="col-after">
+                    <div style="display:flex;align-items:flex-start;gap:var(--sp-5);padding:var(--sp-3);background:var(--bg-card);border-radius:var(--r-xl);border:1px solid var(--bg-border)">
+                        <div class="filter-group">
+                            <div class="filter-label">GRAIN</div>
+                            <div class="filter-buttons">
+                                <button class="pr-sq">D</button>
+                                <button class="pr-sq is-active">W</button>
+                                <button class="pr-sq">M</button>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <div class="filter-label">DEVICE</div>
+                            <div class="filter-buttons">
+                                <button class="pr-sq">M</button>
+                                <button class="pr-sq is-active">D</button>
+                                <button class="pr-sq">T</button>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td class="col-changes">
+                    <ul>
+                        <li>Подпись группы UPPERCASE серым (<code>--fs-caption</code>)</li>
+                        <li>Тонкая полоска под подписью</li>
+                        <li>Группы side-by-side с <code>gap: --sp-5</code> (24px)</li>
+                        <li>Семантически очевидно «это разные категории»</li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="doc" style="margin-top:var(--sp-3)"><strong>Если всё ОК — собираю спецификацию <code>design-system/controls/</code> v1.0</strong> (по образцу typography и charts: README + tokens.json + tokens.md + controls.html). Если что-то ещё хочется поменять — скажи здесь.</p>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Controls v0 · 2026-04-28 · готовится финализация</p>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Controls · Pinkspink Design System v1.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* === Typography v1.0 === */
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ls-label: 0.5px;
+            --fs-kpi: 28px; --fs-h2: 18px; --fs-h3: 14px;
+            --fs-body: 13px; --fs-caption: 11px; --fs-chart-meta: 10px;
+
+            /* === Controls v1.0 === */
+            --h-control: 28px;
+            --r-control: 2px;
+
+            /* Базовые цвета */
+            --c-channel-social: #6C5CE7;
+            --c-growth: #00B894;
+            --tx-primary:#2D3436; --tx-secondary:#636E72; --tx-muted:#B2BEC3; --tx-ondark:#FFFFFF;
+            --bg-page:#FAFAFA; --bg-card:#FFFFFF; --bg-muted:#F0F0F0; --bg-border:#DFE6E9; --bg-divider:#F0F0F0; --bg-inverse:#2D3436; --bg-hover:#F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1300px; margin: 0 auto; }
+
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+        pre { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; font-family: var(--ff-mono); margin: var(--sp-2) 0 var(--sp-3); }
+        .badge { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+
+        /* === ФИНАЛЬНЫЕ компоненты — те, что описаны в спецификации === */
+
+        .btn {
+            font-family: var(--ff-mono);
+            height: var(--h-control);
+            padding: 0 var(--sp-3);
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: var(--r-control);
+            font-size: var(--fs-body);
+            font-weight: var(--fw-regular);
+            color: var(--tx-secondary);
+            background: var(--bg-muted);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 120ms, color 120ms, border-color 120ms;
+            line-height: 1;
+        }
+        .btn:hover, .btn.is-hover     { background: var(--bg-border); color: var(--tx-primary); }
+        .btn.is-active                 { background: var(--bg-inverse); color: var(--tx-ondark); }
+        .btn.is-focus                  { outline: 2px solid var(--c-channel-social); outline-offset: 2px; }
+        .btn[disabled], .btn.is-disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-sq {
+            font-family: var(--ff-mono);
+            width: var(--h-control); height: var(--h-control);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: var(--fs-body);
+            font-weight: var(--fw-semibold);
+            color: var(--tx-secondary);
+            background: var(--bg-muted);
+            border: 1px solid transparent;
+            border-radius: var(--r-control);
+            cursor: pointer;
+            transition: background 120ms, color 120ms, border-color 120ms;
+        }
+        .btn-sq:hover, .btn-sq.is-hover { background: var(--bg-border); color: var(--tx-primary); }
+        .btn-sq.is-active                { background: var(--bg-inverse); color: var(--tx-ondark); }
+        .btn-sq.is-focus                 { outline: 2px solid var(--c-channel-social); outline-offset: 2px; }
+
+        .tab {
+            font-family: var(--ff-mono);
+            background: none; border: none;
+            border-bottom: 2px solid transparent;
+            padding: var(--sp-2) var(--sp-3) var(--sp-1);
+            font-size: var(--fs-body);
+            font-weight: var(--fw-regular);
+            color: var(--tx-muted);
+            cursor: pointer;
+            transition: color 120ms, border-color 120ms;
+            line-height: 1.4;
+        }
+        .tab:hover, .tab.is-hover { color: var(--tx-secondary); }
+        .tab.is-active             { color: var(--tx-primary); border-bottom-color: var(--tx-primary); font-weight: var(--fw-semibold); }
+        .tab.is-focus              { outline: 2px solid var(--c-channel-social); outline-offset: 2px; border-radius: var(--r-control); }
+
+        .tab-bar { display: flex; gap: var(--sp-3); border-bottom: 1px solid var(--bg-border); padding: 0 var(--sp-3); }
+
+        .check { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-caption); color: var(--tx-primary); cursor: pointer; line-height: 1.4; user-select: none; }
+        .check input { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; border: 1.5px solid var(--bg-border); border-radius: var(--r-control); background: var(--bg-card); cursor: pointer; flex-shrink: 0; transition: background 120ms, border-color 120ms; position: relative; }
+        .check input:hover { border-color: var(--tx-secondary); }
+        .check input:checked { background: var(--bg-inverse); border-color: var(--bg-inverse); }
+        .check input:checked::after { content: ''; position: absolute; left: 3px; top: 0; width: 5px; height: 9px; border: solid var(--tx-ondark); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+        .check input:focus { outline: 2px solid var(--c-channel-social); outline-offset: 2px; }
+        .check.is-disabled { opacity: 0.4; cursor: not-allowed; }
+        .check.is-disabled input { cursor: not-allowed; }
+
+        .filter-bar { display: flex; align-items: flex-start; gap: var(--sp-5); padding: var(--sp-3); background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: var(--sp-1); }
+        .filter-group .filter-label { font-size: var(--fs-caption); font-weight: var(--fw-regular); color: var(--tx-secondary); text-transform: uppercase; letter-spacing: var(--ls-label); padding-bottom: var(--sp-1); border-bottom: 1px solid var(--bg-border); min-width: 110px; }
+        .filter-group .filter-buttons { display: flex; gap: var(--sp-1); }
+
+        /* Layout */
+        .comp-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); margin-bottom: var(--sp-3); overflow: hidden; }
+        .comp-head { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3) var(--sp-4); display: flex; justify-content: space-between; align-items: baseline; }
+        .comp-head .name { font-size: var(--fs-h3); font-weight: var(--fw-bold); }
+        .comp-head .meta { font-size: var(--fs-caption); color: var(--tx-muted); }
+        .comp-body { padding: var(--sp-4); }
+        .states-grid { display: grid; grid-template-columns: 130px repeat(5, 1fr); gap: var(--sp-3); align-items: center; padding: var(--sp-2) 0; border-bottom: 1px solid var(--bg-divider); }
+        .states-grid:last-child { border-bottom: none; }
+        .states-grid.head { font-size: 10px; text-transform: uppercase; color: var(--tx-secondary); letter-spacing: var(--ls-label); border-bottom: 2px solid var(--bg-inverse); }
+        .states-grid .col-lab { font-size: var(--fs-caption); color: var(--tx-secondary); }
+
+        .summary-box { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .summary-box ul { font-size: var(--fs-body); color: var(--tx-primary); line-height: 1.7; margin-left: var(--sp-4); }
+
+        .apply { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .apply .step { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: var(--sp-3) 0 var(--sp-2); }
+        .apply .step .num { background: var(--c-channel-social); color: var(--tx-ondark); padding: 2px 8px; border-radius: var(--r-control); font-size: var(--fs-caption); margin-right: var(--sp-2); }
+
+        /* Token table */
+        .tk-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-card); margin-bottom: var(--sp-4); }
+        .tk-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-2) var(--sp-3); font-size: var(--fs-caption); text-align: left; font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: var(--ls-label); }
+        .tk-table td { padding: var(--sp-2) var(--sp-3); font-size: var(--fs-caption); border-bottom: 1px solid var(--bg-divider); }
+        .tk-table tr:last-child td { border-bottom: none; }
+        .tk-table .desc { color: var(--tx-secondary); }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Controls <span class="badge">v1.0</span></h1>
+    <p class="meta-line">Pinkspink Design System · Кнопки, фильтры, чекбоксы, навигация · 4 компонента · 28px / 2px · 5 состояний</p>
+    <p class="doc">Спецификация контролов. Filter-кнопки и квадратные переключатели — на одной высоте 28px (стоят пиксель-в-пиксель). Top-level навигация — отдельный компонент <code>.tab</code> с подчёркиванием, без заливки. Чекбоксы — кастомные с чёрной заливкой при checked. Полное соответствие <a href="../typography/" style="color:var(--c-channel-social)">Typography v1.0</a>. Источник правды — <code>tokens.json</code>.</p>
+
+    <h2 class="doc">1. Базовые токены</h2>
+    <table class="tk-table">
+        <thead><tr><th>Токен</th><th>Значение</th><th>Что это</th></tr></thead>
+        <tbody>
+            <tr><td><code>--h-control</code></td><td>28px</td><td class="desc">Высота всех контролов (.btn, .btn-sq). Square кнопки = квадрат 28×28.</td></tr>
+            <tr><td><code>--r-control</code></td><td>2px</td><td class="desc">Радиус всех контролов. Меньше чем у карточек/таблиц — даёт «инженерный» вид.</td></tr>
+        </tbody>
+    </table>
+
+    <pre>:root {
+    /* Controls v1.0 — дополнение к Typography v1.0 */
+    --h-control: 28px;
+    --r-control: 2px;
+}</pre>
+
+    <h2 class="doc">2. Четыре компонента</h2>
+
+    <!-- BTN -->
+    <div class="comp-card">
+        <div class="comp-head">
+            <span class="name">.btn</span>
+            <span class="meta">Filter toggle · 28px</span>
+        </div>
+        <div class="comp-body">
+            <p class="doc">Toggle для filter-секций (период, тип, и т.п.). НЕ использовать для top-level навигации — для неё <code>.tab</code>.</p>
+            <div class="states-grid head">
+                <span></span>
+                <span class="col-lab">default</span>
+                <span class="col-lab">hover</span>
+                <span class="col-lab">active</span>
+                <span class="col-lab">focus</span>
+                <span class="col-lab">disabled</span>
+            </div>
+            <div class="states-grid">
+                <span class="col-lab">demo</span>
+                <button class="btn">last 8w</button>
+                <button class="btn is-hover">last 8w</button>
+                <button class="btn is-active">last 8w</button>
+                <button class="btn is-focus">last 8w</button>
+                <button class="btn is-disabled">last 8w</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BTN-SQ -->
+    <div class="comp-card">
+        <div class="comp-head">
+            <span class="name">.btn-sq</span>
+            <span class="meta">Square toggle · 28×28</span>
+        </div>
+        <div class="comp-body">
+            <p class="doc">Иконочно-компактный переключатель (D/W/M в шапке, M/D/T для девайсов). font-weight semibold — буквы держат компактный квадрат.</p>
+            <div class="states-grid head">
+                <span></span>
+                <span class="col-lab">default</span>
+                <span class="col-lab">hover</span>
+                <span class="col-lab">active</span>
+                <span class="col-lab">focus</span>
+                <span class="col-lab">—</span>
+            </div>
+            <div class="states-grid">
+                <span class="col-lab">demo</span>
+                <button class="btn-sq">D</button>
+                <button class="btn-sq is-hover">W</button>
+                <button class="btn-sq is-active">M</button>
+                <button class="btn-sq is-focus">D</button>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB -->
+    <div class="comp-card">
+        <div class="comp-head">
+            <span class="name">.tab</span>
+            <span class="meta">Navigation · text + underline</span>
+        </div>
+        <div class="comp-body">
+            <p class="doc">Top-level навигация дашборда. Только текст с подчёркиванием — без заливки, без рамки. Визуально отделено от чёрных filter-кнопок.</p>
+            <div class="states-grid head">
+                <span></span>
+                <span class="col-lab">default</span>
+                <span class="col-lab">hover</span>
+                <span class="col-lab">active</span>
+                <span class="col-lab">focus</span>
+                <span class="col-lab">—</span>
+            </div>
+            <div class="states-grid">
+                <span class="col-lab">demo</span>
+                <button class="tab">Воронки</button>
+                <button class="tab is-hover">Воронки</button>
+                <button class="tab is-active">Воронки</button>
+                <button class="tab is-focus">Воронки</button>
+                <span></span>
+            </div>
+
+            <p class="doc" style="margin-top:var(--sp-3)"><strong>Реальный tab-bar:</strong></p>
+            <div style="background:var(--bg-card);border-radius:var(--r-md);padding-top:var(--sp-1);">
+                <div class="tab-bar">
+                    <button class="tab">Сводка</button>
+                    <button class="tab is-active">Воронки</button>
+                    <button class="tab">Аналитика</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECK -->
+    <div class="comp-card">
+        <div class="comp-head">
+            <span class="name">.check</span>
+            <span class="meta">Custom checkbox · checked = чёрный</span>
+        </div>
+        <div class="comp-body">
+            <p class="doc">Кастомный чекбокс через <code>appearance: none</code>. Заполнение чёрным (<code>--bg-inverse</code>) при checked, белая галочка через CSS-rotation. Заменяет браузерный дефолт.</p>
+            <div class="states-grid head">
+                <span></span>
+                <span class="col-lab">default</span>
+                <span class="col-lab">hover</span>
+                <span class="col-lab">checked</span>
+                <span class="col-lab">focus</span>
+                <span class="col-lab">disabled</span>
+            </div>
+            <div class="states-grid">
+                <span class="col-lab">demo</span>
+                <label class="check"><input type="checkbox"> ig</label>
+                <label class="check"><input type="checkbox" style="border-color:var(--tx-secondary)"> ig</label>
+                <label class="check"><input type="checkbox" checked> ig</label>
+                <label class="check"><input type="checkbox" style="outline:2px solid var(--c-channel-social);outline-offset:2px"> ig</label>
+                <label class="check is-disabled"><input type="checkbox" disabled> ig</label>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="doc">3. Filter-bar и filter-group</h2>
+    <p class="doc">Когда несколько filter-кнопок объединены в смысловую группу — оборачиваются в <code>.filter-group</code> с UPPERCASE-подписью + 1px полоской под ней. Несколько групп идут side-by-side в <code>.filter-bar</code>.</p>
+
+    <div class="filter-bar" style="margin-bottom:var(--sp-3)">
+        <div class="filter-group">
+            <div class="filter-label">GRAIN</div>
+            <div class="filter-buttons">
+                <button class="btn-sq">D</button>
+                <button class="btn-sq is-active">W</button>
+                <button class="btn-sq">M</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <div class="filter-label">DEVICE</div>
+            <div class="filter-buttons">
+                <button class="btn-sq">M</button>
+                <button class="btn-sq is-active">D</button>
+                <button class="btn-sq">T</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <div class="filter-label">ПЕРИОД</div>
+            <div class="filter-buttons">
+                <button class="btn is-active">last 8w</button>
+                <button class="btn">last 12w</button>
+                <button class="btn">all</button>
+            </div>
+        </div>
+    </div>
+
+    <p class="doc"><strong>Подпись группы</strong> — <code>--fs-caption</code> 11px regular UPPERCASE с <code>--ls-label</code> letter-spacing, цвет <code>--tx-secondary</code>. Тонкая полоска снизу — <code>1px solid --bg-border</code>. Min-width 110px чтобы группы выравнивались.</p>
+
+    <h2 class="doc">4. Соответствие Typography v1.0</h2>
+    <div class="summary-box">
+        <table class="tk-table">
+            <thead><tr><th>Компонент</th><th>Размер</th><th>Вес</th></tr></thead>
+            <tbody>
+                <tr><td><code>.btn</code></td><td>--fs-body 13px</td><td>--fw-regular 400</td></tr>
+                <tr><td><code>.btn-sq</code></td><td>--fs-body 13px</td><td>--fw-semibold 600</td></tr>
+                <tr><td><code>.tab</code> (default)</td><td>--fs-body 13px</td><td>--fw-regular 400</td></tr>
+                <tr><td><code>.tab</code> (active)</td><td>--fs-body 13px</td><td>--fw-semibold 600</td></tr>
+                <tr><td><code>.check label</code></td><td>--fs-caption 11px</td><td>--fw-regular 400</td></tr>
+                <tr><td><code>.filter-label</code></td><td>--fs-caption 11px UPPERCASE</td><td>--fw-regular + --ls-label 0.5px</td></tr>
+            </tbody>
+        </table>
+        <p class="doc" style="margin-top:var(--sp-3);margin-bottom:0"><strong>Шрифт:</strong> наследуется от <code>body</code> через <code>* { font-family: inherit; }</code> (см. Typography v1.0). Без этого правила button/input получат системный sans-serif вместо Ubuntu Mono.</p>
+    </div>
+
+    <h2 class="doc">5. Принципы</h2>
+    <div class="summary-box">
+        <ul>
+            <li><strong>Одна высота</strong> — все контролы на <code>--h-control</code> 28px. В filter-баре они стоят пиксель-в-пиксель.</li>
+            <li><strong>Один радиус</strong> — все контролы на <code>--r-control</code> 2px. Карточки/таблицы — свои радиусы (4 / 6 / 8).</li>
+            <li><strong>Active = тёмная заливка</strong> для <code>.btn</code> и <code>.btn-sq</code>. Чёрный фон + белый текст.</li>
+            <li><strong>Навигация — особый случай</strong> — <code>.tab</code> с подчёркиванием, без заливки. Визуально отличается от filter-кнопок.</li>
+            <li><strong>Focus всегда виден</strong> — outline 2px бренд-фиолетовый с offset 2px. Не убирать <code>outline: none</code> без замены.</li>
+            <li><strong>Никаких хардкод-размеров</strong> — всё из Typography v1.0.</li>
+        </ul>
+    </div>
+
+    <h2 class="doc">6. Применение в новом проекте</h2>
+    <div class="apply">
+        <div class="step"><span class="num">1</span>Применить Typography v1.0</div>
+        <p class="doc">См. соседнюю папку <code>typography/</code>. Без неё контролы не будут работать как задумано (шрифт, размеры).</p>
+
+        <div class="step"><span class="num">2</span>Добавить токены контролов в <code>:root</code></div>
+        <pre>:root {
+    --h-control: 28px;
+    --r-control: 2px;
+}</pre>
+
+        <div class="step"><span class="num">3</span>Скопировать CSS компонентов</div>
+        <p class="doc">Из <code>tokens.md</code> → секция «Четыре компонента». Готовые блоки для <code>.btn</code>, <code>.btn-sq</code>, <code>.tab</code>, <code>.check</code> и контейнеров.</p>
+
+        <div class="step"><span class="num">4</span>Использовать классы</div>
+        <pre>&lt;!-- Filter-bar с двумя группами --&gt;
+&lt;div class="filter-bar"&gt;
+    &lt;div class="filter-group"&gt;
+        &lt;div class="filter-label"&gt;GRAIN&lt;/div&gt;
+        &lt;div class="filter-buttons"&gt;
+            &lt;button class="btn-sq"&gt;D&lt;/button&gt;
+            &lt;button class="btn-sq is-active"&gt;W&lt;/button&gt;
+            &lt;button class="btn-sq"&gt;M&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- Top-level навигация --&gt;
+&lt;div class="tab-bar"&gt;
+    &lt;button class="tab"&gt;Сводка&lt;/button&gt;
+    &lt;button class="tab is-active"&gt;Воронки&lt;/button&gt;
+    &lt;button class="tab"&gt;Аналитика&lt;/button&gt;
+&lt;/div&gt;
+
+&lt;!-- Чекбоксы --&gt;
+&lt;label class="check"&gt;&lt;input type="checkbox" checked&gt; ig&lt;/label&gt;
+&lt;label class="check"&gt;&lt;input type="checkbox"&gt; google&lt;/label&gt;</pre>
+    </div>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Controls v1.0 · 2026-04-28</p>
+</body>
+</html>

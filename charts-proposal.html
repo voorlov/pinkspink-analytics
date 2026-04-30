@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pinkspink — Графики, обзор и предложение</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ls-label: 0.5px;
+            --fs-kpi: 28px; --fs-h2: 18px; --fs-h3: 14px;
+            --fs-body: 13px; --fs-caption: 11px; --fs-chart-meta: 10px;
+
+            --c-channel-social: #6C5CE7;
+            --c-channel-paid:   #00B894;
+            --c-channel-direct: #636E72;
+            --c-channel-organic:#0984E3;
+            --c-channel-referral:#FDCB6E;
+            --c-channel-email:  #E17055;
+            --c-funnel-home:    #636E72;
+            --c-funnel-catalog: #2D3436;
+            --c-funnel-product: #6C5CE7;
+            --c-funnel-atc:     #FDCB6E;
+            --c-funnel-checkout:#74B9FF;
+            --c-funnel-purchase:#00B894;
+            --c-growth:    #00B894;
+            --c-decline:   #E17055;
+            --c-highlight: #6C5CE7;
+            --tx-primary:  #2D3436;
+            --tx-secondary:#636E72;
+            --tx-muted:    #B2BEC3;
+            --tx-ondark:   #FFFFFF;
+            --bg-page:     #FAFAFA;
+            --bg-card:     #FFFFFF;
+            --bg-muted:    #F0F0F0;
+            --bg-border:   #DFE6E9;
+            --bg-divider:  #F0F0F0;
+            --bg-inverse:  #2D3436;
+            --bg-hover:    #F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1400px; margin: 0 auto; }
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+        pre  { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; font-family: var(--ff-mono); margin: var(--sp-2) 0 var(--sp-3); }
+
+        /* Inventory cards */
+        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 1100px) { .inv-grid { grid-template-columns: repeat(2, 1fr); } }
+        .inv-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); }
+        .inv-card .lab { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .inv-card .num { font-size: var(--fs-kpi); font-weight: var(--fw-bold); line-height: 1.1; margin: var(--sp-1) 0; }
+        .inv-card .det { font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        /* Type cards */
+        .type-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); margin-bottom: var(--sp-4); overflow: hidden; }
+        .type-head { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3) var(--sp-4); display: flex; justify-content: space-between; align-items: baseline; }
+        .type-head .name { font-size: var(--fs-h3); font-weight: var(--fw-bold); }
+        .type-head .meta { font-size: var(--fs-caption); color: var(--tx-muted); }
+        .type-body { padding: var(--sp-4); display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--sp-4); }
+        @media (max-width: 900px) { .type-body { grid-template-columns: 1fr; } }
+        .type-canvas { position: relative; height: 300px; }
+        .type-spec { display: flex; flex-direction: column; gap: var(--sp-2); }
+        .type-spec .row { display: grid; grid-template-columns: 90px 1fr; gap: var(--sp-2); padding: 4px 0; border-bottom: 1px solid var(--bg-divider); font-size: var(--fs-caption); }
+        .type-spec .row:last-child { border-bottom: none; }
+        .type-spec .k { color: var(--tx-secondary); background: transparent; padding: 0; border-radius: 0; font-family: var(--ff-mono); }
+        .type-spec .v { color: var(--tx-primary); background: transparent; padding: 0; border-radius: 0; font-family: var(--ff-mono); display: block; }
+        .type-spec .v code { font-size: 10px; }
+
+        /* Issue cards (нестыковки) */
+        .iss { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-3); border-left: 4px solid var(--c-decline); }
+        .iss .lab { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--c-decline); margin-bottom: var(--sp-1); }
+        .iss .title { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        .iss .desc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-2); }
+        .iss .desc strong { color: var(--tx-primary); }
+        .iss pre { margin: 0; }
+
+        /* Proposal cards (предложения) */
+        .prop { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-3); border-left: 4px solid var(--c-growth); }
+        .prop .lab { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--c-growth); margin-bottom: var(--sp-1); }
+        .prop .title { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        .prop .desc { font-size: var(--fs-body); color: var(--tx-primary); line-height: 1.5; margin-bottom: var(--sp-2); }
+
+        /* Question cards */
+        .q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 900px) { .q-grid { grid-template-columns: 1fr; } }
+        .q-card { background: linear-gradient(135deg, var(--c-channel-social), var(--c-funnel-purchase)); color: var(--tx-ondark); border-radius: var(--r-xl); padding: var(--sp-4); }
+        .q-card .num { font-size: var(--fs-h2); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        .q-card .title { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin-bottom: var(--sp-2); }
+        .q-card .desc { font-size: var(--fs-body); opacity: 0.95; line-height: 1.5; }
+        .q-card code { background: rgba(255,255,255,0.2); color: var(--tx-ondark); }
+
+        .v { font-family: var(--ff-mono); font-size: 11px; background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+
+        /* Side-by-side формат сравнения */
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin: var(--sp-2) 0 var(--sp-3); }
+        @media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
+        .compare .side { padding: var(--sp-3); border-radius: var(--r-lg); border: 1px solid var(--bg-border); }
+        .compare .side .lab { font-size: 10px; text-transform: uppercase; color: var(--tx-secondary); margin-bottom: var(--sp-1); letter-spacing: var(--ls-label); }
+        .compare .bad  { border-left: 3px solid var(--c-decline); }
+        .compare .good { border-left: 3px solid var(--c-growth); }
+        .compare pre { font-size: 10px; padding: var(--sp-2); margin: 0; }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Графики <span class="v">v0 · обзор</span></h1>
+    <p class="meta-line">Pinkspink Design System · Раздел charts · Обзор текущего состояния и предложение конвенций</p>
+    <p class="doc">В дашборде <strong>29 графиков</strong> на основе Chart.js + datalabels-plugin. Раньше типографику мы привели в порядок, теперь — графики. Этот файл — <strong>не финальная спецификация</strong>, а отправная точка для обсуждения. Внутри: каталог типов с живыми примерами, найденные нестыковки в текущем коде, предложение единых конвенций и список вопросов для решения.</p>
+
+    <h2 class="doc">1. Что у нас есть</h2>
+
+    <div class="inv-grid">
+        <div class="inv-card">
+            <div class="lab">Всего графиков</div>
+            <div class="num">29</div>
+            <div class="det">все на Chart.js 4.4 + datalabels 2.2</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">Типов</div>
+            <div class="num">5</div>
+            <div class="det">bar · line · bubble · combo · sparkline</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">Уникальных форматтеров</div>
+            <div class="num">11+</div>
+            <div class="det">для одних и тех же типов значений (%, числа, время) написаны по-разному</div>
+        </div>
+        <div class="inv-card">
+            <div class="lab">Уже унифицировано</div>
+            <div class="num">3</div>
+            <div class="det">шрифт, цвет осей, цвет сетки — через <code>Chart.defaults</code></div>
+        </div>
+    </div>
+
+    <h2 class="doc">2. Каталог типов — живые примеры</h2>
+    <p class="doc">Пять основных паттернов. У каждого свои правила для подписей, легенды, осей. Цифры в столбцах справа — то, что сейчас разбросано по коду; задача — собрать в одно место.</p>
+
+    <!-- Type 1: Grouped Bar -->
+    <div class="type-card">
+        <div class="type-head">
+            <span class="name">A · Grouped Bar</span>
+            <span class="meta">~9 графиков в дашборде</span>
+        </div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-grouped"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Где</span><span class="v">Воронка по периодам, динамика по каналам/source</span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">Funnel или Channel — по смыслу датасета</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>anchor:'end'</code> · <code>align:'top'</code> · скрыть нули</span></div>
+                <div class="row"><span class="k">Легенда</span><span class="v"><code>position:'top'</code></span></div>
+                <div class="row"><span class="k">Y</span><span class="v"><code>beginAtZero:true</code> · <code>grace:'15%'</code></span></div>
+                <div class="row"><span class="k">X</span><span class="v">Категории: периоды (W04, W05...)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type 2: Stacked Bar -->
+    <div class="type-card">
+        <div class="type-head">
+            <span class="name">B · Stacked Bar</span>
+            <span class="meta">~3 графика в дашборде</span>
+        </div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-stacked"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Где</span><span class="v">Композиция (доли каналов в общем объёме сессий)</span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">Channel</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>anchor:'center'</code> · <code>align:'center'</code> · <code>color:#FFF</code> · скрыть мелкие сегменты</span></div>
+                <div class="row"><span class="k">Легенда</span><span class="v"><code>position:'top'</code></span></div>
+                <div class="row"><span class="k">Y</span><span class="v"><code>stacked:true</code> · <code>beginAtZero:true</code></span></div>
+                <div class="row"><span class="k">Tooltip</span><span class="v">С процентом доли (custom callback)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type 3: Combo (Bar + Line dual-axis) -->
+    <div class="type-card">
+        <div class="type-head">
+            <span class="name">C · Combo · Bar + Line (dual-axis)</span>
+            <span class="meta">~4 графика</span>
+        </div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-combo"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Где</span><span class="v">Сессии (bar) + Покупатели (line); ATC% + Покупки% (две линии)</span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">Channel или Semantic (growth для линии)</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v">Обычно <code>display:false</code> — слишком плотно</span></div>
+                <div class="row"><span class="k">Легенда</span><span class="v"><code>position:'top'</code></span></div>
+                <div class="row"><span class="k">Y / Y1</span><span class="v">Y слева для bar, Y1 справа для line, <code>grid.drawOnChartArea:false</code> у Y1</span></div>
+                <div class="row"><span class="k">Линия</span><span class="v"><code>borderWidth:2</code> · <code>tension:0.3</code></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type 4: Line -->
+    <div class="type-card">
+        <div class="type-head">
+            <span class="name">D · Line</span>
+            <span class="meta">~10 графиков</span>
+        </div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-line"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Где</span><span class="v">% конверсии (catalog→product, product→ATC и т.п.), тренды</span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">Funnel (для переходов воронки)</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>align:'top'</code> · с форматтером (% или число)</span></div>
+                <div class="row"><span class="k">Легенда</span><span class="v"><code>position:'top'</code></span></div>
+                <div class="row"><span class="k">Y</span><span class="v"><code>beginAtZero:true</code> · <code>grace:'15%'</code> · <code>ticks.callback: v =&gt; v + '%'</code></span></div>
+                <div class="row"><span class="k">Linia</span><span class="v"><code>tension:0.3</code> · <code>borderWidth:2</code></span></div>
+                <div class="row"><span class="k">Tooltip</span><span class="v">Custom: <code>+ '%'</code> в label</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type 5: Bubble -->
+    <div class="type-card">
+        <div class="type-head">
+            <span class="name">E · Bubble</span>
+            <span class="meta">2 графика (4 в слайдере)</span>
+        </div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-bubble"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Где</span><span class="v">Эффективность source/страны: объём × конверсия × размер</span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">Channel (по source)</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>display:false</code></span></div>
+                <div class="row"><span class="k">Легенда</span><span class="v"><code>position:'top'</code></span></div>
+                <div class="row"><span class="k">X</span><span class="v">Сессии на этапе (объём)</span></div>
+                <div class="row"><span class="k">Y</span><span class="v">Конверсия в следующий этап %</span></div>
+                <div class="row"><span class="k">R</span><span class="v">Размер пузыря = объём (вторичная подсказка)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type 6: Sparkline -->
+    <div class="type-card">
+        <div class="type-head">
+            <span class="name">F · Sparkline</span>
+            <span class="meta">~5 в KPI-карточках</span>
+        </div>
+        <div class="type-body">
+            <div style="position:relative;height:60px;background:var(--bg-muted);border-radius:var(--r-lg);padding:var(--sp-1)"><div style="position:relative;height:100%"><canvas id="ch-spark"></canvas></div></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Где</span><span class="v">.kpi-spark в KPI-карточках (тренд глазом, не для считывания)</span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">Один цвет: Channel или Semantic (growth/decline по тренду)</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>display:false</code></span></div>
+                <div class="row"><span class="k">Легенда</span><span class="v"><code>display:false</code></span></div>
+                <div class="row"><span class="k">Оси</span><span class="v">Скрыты (<code>x.display:false</code>, <code>y.display:false</code>)</span></div>
+                <div class="row"><span class="k">Tooltip</span><span class="v"><code>enabled:false</code> — мини-график без интерактива</span></div>
+                <div class="row"><span class="k">Линия</span><span class="v"><code>borderWidth:1.5</code> · <code>tension:0.4</code> · <code>pointRadius:0</code></span></div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="doc">3. Найденные нестыковки в текущем коде</h2>
+    <p class="doc">Сравнил все 29 графиков. Вот четыре места, где сейчас разнобой — задача систематизации в первую очередь про них.</p>
+
+    <div class="iss">
+        <div class="lab">Issue 1</div>
+        <div class="title">Форматтеры значений написаны по-разному для одинаковых типов данных</div>
+        <div class="desc">В коде нашёл минимум <strong>11 разных форматтеров</strong> — для процентов, секунд, чисел. Часто отличаются только в мелочах: один с <code>toFixed(1)</code>, другой без; один скрывает нули через <code>v &gt; 0</code>, другой через <code>v != null</code>.</div>
+        <div class="compare">
+            <div class="side bad">
+                <div class="lab">Сейчас (фрагменты разных графиков)</div>
+                <pre>v =&gt; v
+v =&gt; v &gt; 0 ? v : ''
+v =&gt; v + '%'
+v =&gt; v.toFixed(1) + '%'
+v =&gt; v != null ? v.toFixed(1) + '%' : ''
+v =&gt; v &gt; 0 ? v + '%' : ''
+v =&gt; v &gt; 0 ? v + 's' : ''
+v =&gt; v != null ? v + 's' : ''</pre>
+            </div>
+            <div class="side good">
+                <div class="lab">Предложение (4 единых функции)</div>
+                <pre>fmtNum(v)      // 12 845
+fmtPct(v, 1)   // 12.4%
+fmtSec(v)      // 31s
+fmtCur(v)      // $630
+
+// Все скрывают нули и null
+// автоматически</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 2</div>
+        <div class="title">Скрытие нулей — где-то есть, где-то нет</div>
+        <div class="desc">Нули на графиках — визуальный шум. В коде <strong>часть графиков</strong> прячет их (<code>v &gt; 0 ? v : ''</code>), часть — нет. У grouped bar воронки нули регулярно встречаются (этап «purchase» в неудачные недели = 0).</div>
+        <div class="desc"><strong>Предложение:</strong> правило по умолчанию — всегда скрывать нули и <code>null</code>. Реализуется внутри стандартных форматтеров (см. Issue 1).</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 3</div>
+        <div class="title">Datalabel-позиции для bar — anchor/align не консистентны</div>
+        <div class="desc">Для grouped bar нашёл вариант <code>anchor:'end', align:'top'</code> (подпись над столбиком). Для stacked bar — <code>anchor:'center', align:'center'</code> с белым цветом (внутри сегмента). Это <strong>правильно</strong> и оба варианта нужны, но не зафиксировано как правило.</div>
+        <div class="desc"><strong>Предложение:</strong> правило-таблица — для каждого типа графика своя пара <code>anchor/align</code>, чтобы не выбирать каждый раз заново.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 4</div>
+        <div class="title">Цветовая логика — иногда из CHANNEL, иногда из FUNNEL, иногда хардкод</div>
+        <div class="desc">У большинства графиков цвета берутся из <code>CHANNEL_COLORS</code> или <code>FUNNEL_STAGES</code> (через TOKENS). Но в нескольких местах остался хардкод (например, <code>borderColor: '#6C5CE7'</code> вместо <code>cssvar('--c-channel-social')</code> или <code>TOKENS["channel"]["social"]</code>).</div>
+        <div class="desc"><strong>Предложение:</strong> правило — все цвета графиков берутся ИСКЛЮЧИТЕЛЬНО из CHANNEL_COLORS / FUNNEL_STAGES / TOKENS["semantic"]. Никаких inline hex.</div>
+    </div>
+
+    <h2 class="doc">4. Предложение конвенций</h2>
+    <p class="doc">Что предлагаю зафиксировать в <code>design-system/charts/</code> v1.0. Это не догма — обсуждаемо, можно править.</p>
+
+    <div class="prop">
+        <div class="lab">Convention 1</div>
+        <div class="title">Стандартный набор форматтеров</div>
+        <div class="desc">Четыре функции, которые покрывают 90% случаев. Объявляются один раз в Chart.defaults или в общем JS-блоке, используются везде.</div>
+        <pre>const fmt = {
+  num: (v)         =&gt; (v == null || v === 0) ? '' : v.toLocaleString('ru-RU'),    // 12 845
+  pct: (v, dec=1)  =&gt; (v == null || v === 0) ? '' : v.toFixed(dec) + '%',         // 12.4%
+  sec: (v)         =&gt; (v == null || v === 0) ? '' : v + 's',                      // 31s
+  cur: (v, c='$')  =&gt; (v == null || v === 0) ? '' : c + v.toLocaleString('ru-RU') // $630
+};</pre>
+    </div>
+
+    <div class="prop">
+        <div class="lab">Convention 2</div>
+        <div class="title">Datalabel-позиции по типу графика</div>
+        <div class="desc">Правило-таблица. Один раз решили — везде применяем.</div>
+        <pre>// Grouped Bar       → anchor:'end',    align:'top'    color:tx-primary
+// Stacked Bar       → anchor:'center', align:'center' color:tx-ondark
+// Combo (bar часть) → display:false (слишком плотно)
+// Line              → align:'top'                     color:tx-primary
+// Bubble            → display:false (используется label в tooltip)
+// Sparkline         → display:false</pre>
+    </div>
+
+    <div class="prop">
+        <div class="lab">Convention 3</div>
+        <div class="title">Легенда — единое правило</div>
+        <div class="desc">Везде <code>position:'top'</code>. Исключение — sparkline (<code>display:false</code>).</div>
+    </div>
+
+    <div class="prop">
+        <div class="lab">Convention 4</div>
+        <div class="title">Цвета — только через токены</div>
+        <div class="desc">Никаких inline hex в Chart-конфигах. Только <code>cssvar('--c-channel-X')</code> в JS, или <code>TOKENS["channel"]["X"]</code> при сборке в Python. Один источник правды.</div>
+    </div>
+
+    <div class="prop">
+        <div class="lab">Convention 5</div>
+        <div class="title">Размеры (уже зафиксировано в типографике)</div>
+        <div class="desc">Datalabels = <code>--fs-caption</code> (11px). Оси и легенда = <code>--fs-chart-meta</code> (10px). Уже работает через <code>Chart.defaults</code>.</div>
+    </div>
+
+    <div class="prop">
+        <div class="lab">Convention 6</div>
+        <div class="title">Tooltip — кастомный callback там, где есть % или валюта</div>
+        <div class="desc">По умолчанию tooltip Chart.js показывает голое число. Для процентов и валюты — custom callback с правильным форматированием. Можно тоже унифицировать через общую функцию.</div>
+        <pre>tooltip: { callbacks: {
+    label: ctx =&gt; ctx.dataset.label + ': ' + fmt.pct(ctx.parsed.y, 1)
+}}</pre>
+    </div>
+
+    <h2 class="doc">5. Вопросы для обсуждения</h2>
+    <p class="doc">Шесть точек, по которым надо принять решение, чтобы зафиксировать в спецификацию. Прочитай и скажи: согласен / не согласен / предлагаю другое.</p>
+
+    <div class="q-grid">
+        <div class="q-card">
+            <div class="num">Q1</div>
+            <div class="title">Принимаем 4 стандартных форматтера?</div>
+            <div class="desc"><code>fmt.num</code> · <code>fmt.pct</code> · <code>fmt.sec</code> · <code>fmt.cur</code> — все автоматически скрывают нули и null. Вместо 11+ разных формул будет 4 функции на весь дашборд. Локаль <code>ru-RU</code> для разделителя тысяч (12&nbsp;845).</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q2</div>
+            <div class="title">Скрываем нули — везде по умолчанию?</div>
+            <div class="desc">Если значение = 0 или null → подпись пустая. Это станет частью стандартных форматтеров. Альтернатива — показывать «—» вместо пустоты. Что выбираем?</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q3</div>
+            <div class="title">Datalabel-позиции по типу — фиксируем таблицей?</div>
+            <div class="desc">См. Convention 2. Каждый тип получает раз и навсегда определённую пару anchor/align/color. Если ОК — применим ко всем 29 графикам в один проход.</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q4</div>
+            <div class="title">Легенда всегда сверху?</div>
+            <div class="desc">Кроме sparkline — везде <code>position:'top'</code>. Альтернативы: bottom, right (вертикально). <strong>Top</strong> кажется оптимальным для дашбордовых графиков, но проверь — может, где-то bottom удобнее?</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q5</div>
+            <div class="title">Tooltip — кастомизировать или дефолтный?</div>
+            <div class="desc">Дефолтный показывает голое число. Кастом с форматтером (<code>+ '%'</code>, <code>$</code>, разделители тысяч) — приятнее, но больше кода. Пишем общую функцию <code>customTooltip(fmt)</code>?</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q6</div>
+            <div class="title">Цветовая логика по типу датасета?</div>
+            <div class="desc">Правила: «датасет про каналы → CHANNEL», «про этапы воронки → FUNNEL», «про дельты → SEMANTIC (growth/decline)», «один тренд (sparkline) → SEMANTIC по направлению». Согласовываем?</div>
+        </div>
+    </div>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Charts v0 (proposal) · 2026-04-28</p>
+
+    <script>
+    Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+    Chart.defaults.color = '#636E72';
+    Chart.defaults.font.size = 10;
+    Chart.defaults.scale.grid.color = 'rgba(0,0,0,0.06)';
+    Chart.defaults.plugins.legend.labels.font = { size: 10 };
+    Chart.defaults.plugins.datalabels = Chart.defaults.plugins.datalabels || {};
+    Chart.defaults.plugins.datalabels.font = { size: 11 };
+
+    const cssvar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    // Standard formatters (proposal)
+    const fmt = {
+        num: v => (v == null || v === 0) ? '' : v.toLocaleString('ru-RU'),
+        pct: (v, dec=1) => (v == null || v === 0) ? '' : v.toFixed(dec) + '%',
+        sec: v => (v == null || v === 0) ? '' : v + 's',
+    };
+
+    // A — Grouped Bar
+    new Chart(document.getElementById('ch-grouped'), {
+        type: 'bar',
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { label: 'home',     backgroundColor: cssvar('--c-funnel-home'),     data: [80, 95, 92, 110, 125] },
+                { label: 'product',  backgroundColor: cssvar('--c-funnel-product'),  data: [60, 72, 68, 85, 96] },
+                { label: 'ATC',      backgroundColor: cssvar('--c-funnel-atc'),      data: [12, 14, 11, 18, 22] },
+                { label: 'purchase', backgroundColor: cssvar('--c-funnel-purchase'), data: [1, 2, 0, 3, 4] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                datalabels: { anchor: 'end', align: 'top', formatter: fmt.num }
+            },
+            scales: { y: { beginAtZero: true, grace: '15%' } }
+        }
+    });
+
+    // B — Stacked Bar
+    new Chart(document.getElementById('ch-stacked'), {
+        type: 'bar',
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { label: 'Social',  backgroundColor: cssvar('--c-channel-social'),  data: [120, 145, 132, 178, 201], stack: 's' },
+                { label: 'Paid',    backgroundColor: cssvar('--c-channel-paid'),    data: [45, 52, 48, 60, 55],     stack: 's' },
+                { label: 'Direct',  backgroundColor: cssvar('--c-channel-direct'),  data: [80, 75, 82, 95, 98],     stack: 's' },
+                { label: 'Organic', backgroundColor: cssvar('--c-channel-organic'), data: [10, 12, 15, 13, 18],     stack: 's' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                datalabels: {
+                    anchor: 'center', align: 'center',
+                    color: '#FFFFFF',
+                    display: ctx => ctx.dataset.data[ctx.dataIndex] > 30,
+                    formatter: fmt.num
+                }
+            },
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+        }
+    });
+
+    // C — Combo
+    new Chart(document.getElementById('ch-combo'), {
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { type: 'bar', label: 'Social',  backgroundColor: cssvar('--c-channel-social'),  data: [120, 145, 132, 178, 201], stack: 's', yAxisID: 'y' },
+                { type: 'bar', label: 'Paid',    backgroundColor: cssvar('--c-channel-paid'),    data: [45, 52, 48, 60, 55],     stack: 's', yAxisID: 'y' },
+                { type: 'bar', label: 'Direct',  backgroundColor: cssvar('--c-channel-direct'),  data: [80, 75, 82, 95, 98],     stack: 's', yAxisID: 'y' },
+                { type: 'line', label: 'Покупатели', borderColor: cssvar('--c-growth'), backgroundColor: cssvar('--c-growth'), borderWidth: 2, tension: 0.3, data: [4, 5, 4, 7, 8], yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' }, datalabels: { display: false } },
+            scales: {
+                x: { stacked: true },
+                y:  { stacked: true, beginAtZero: true, position: 'left' },
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // D — Line
+    new Chart(document.getElementById('ch-line'), {
+        type: 'line',
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { label: 'catalog→product', borderColor: cssvar('--c-funnel-product'), backgroundColor: cssvar('--c-funnel-product'), borderWidth: 2, tension: 0.3, data: [42.1, 49.6, 51.5, 47.8, 52.4] },
+                { label: 'product→ATC',     borderColor: cssvar('--c-funnel-atc'),     backgroundColor: cssvar('--c-funnel-atc'),     borderWidth: 2, tension: 0.3, data: [20.0, 19.4, 16.2, 21.2, 22.9] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                datalabels: { align: 'top', formatter: v => fmt.pct(v, 1) },
+                tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt.pct(ctx.parsed.y, 1) } }
+            },
+            scales: { y: { beginAtZero: true, grace: '15%', ticks: { callback: v => v + '%' } } }
+        }
+    });
+
+    // E — Bubble
+    new Chart(document.getElementById('ch-bubble'), {
+        type: 'bubble',
+        data: {
+            datasets: [
+                { label: 'ig',          backgroundColor: cssvar('--c-channel-social'),  data: [{x: 1234, y: 4.5, r: 18}] },
+                { label: 'meta (paid)', backgroundColor: cssvar('--c-channel-paid'),    data: [{x: 342, y: 0.9, r: 8}] },
+                { label: '(direct)',    backgroundColor: cssvar('--c-channel-direct'),  data: [{x: 523, y: 4.0, r: 12}] },
+                { label: 'google',      backgroundColor: cssvar('--c-channel-organic'), data: [{x: 89, y: 6.7, r: 5}] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' }, datalabels: { display: false } },
+            scales: {
+                x: { title: { display: true, text: 'Сессии на этапе' } },
+                y: { title: { display: true, text: 'Конверсия %' }, ticks: { callback: v => v + '%' } }
+            }
+        }
+    });
+
+    // F — Sparkline
+    new Chart(document.getElementById('ch-spark'), {
+        type: 'line',
+        data: {
+            labels: [0,1,2,3,4,5,6],
+            datasets: [{ data: [120, 145, 132, 178, 201, 188, 220], borderColor: cssvar('--c-channel-social'), borderWidth: 1.5, tension: 0.4, pointRadius: 0, fill: false }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } }
+        }
+    });
+    </script>
+</body>
+</html>

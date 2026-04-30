@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pinkspink — Styleguide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+    --c-channel-social: #6C5CE7;
+    --c-channel-paid: #00B894;
+    --c-channel-direct: #636E72;
+    --c-channel-organic: #0984E3;
+    --c-channel-referral: #FDCB6E;
+    --c-channel-email: #E17055;
+    --c-channel-other: #B2BEC3;
+    --c-funnel-home: #636E72;
+    --c-funnel-catalog: #2D3436;
+    --c-funnel-product: #6C5CE7;
+    --c-funnel-atc: #FDCB6E;
+    --c-funnel-checkout: #74B9FF;
+    --c-funnel-purchase: #00B894;
+    --c-growth: #00B894;
+    --c-decline: #E17055;
+    --c-neutral: #636E72;
+    --c-highlight: #6C5CE7;
+    --bg-page: #FAFAFA;
+    --bg-card: #FFFFFF;
+    --bg-muted: #F0F0F0;
+    --bg-hover: #F8F9FA;
+    --bg-alert: #FFEAE0;
+    --bg-border: #DFE6E9;
+    --bg-divider: #F0F0F0;
+    --bg-inverse: #2D3436;
+    --bg-inverse2: #636E72;
+    --tx-primary: #2D3436;
+    --tx-secondary: #636E72;
+    --tx-muted: #B2BEC3;
+    --tx-ondark: #FFFFFF;
+    --ff-mono: 'Ubuntu Mono', monospace;
+    --fs-kpi: 28px;
+    --fs-h2: 18px;
+    --fs-h3: 14px;
+    --fs-body: 13px;
+    --fs-caption: 11px;
+    --fs-chart-meta: 10px;
+    --fw-regular: 400;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+    --ls-label: 0.5px;
+    --mt-h2: 44px;
+    --mt-h3: 24px;
+    --mt-h4: 16px;
+    --tight-pair: 4px;
+    --content-gap: 8px;
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 24px;
+    --sp-6: 32px;
+    --r-sm: 3px;
+    --r-md: 4px;
+    --r-lg: 6px;
+    --r-xl: 8px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+    --sh-sticky: rgba(255,255,255,0.95);
+    --h-control: 28px;
+    --r-control: 2px;
+    --row-h-table: 28px;
+    --max-rows-table: 20;
+    --max-h-table: calc(var(--row-h-table) * (var(--max-rows-table) + 1));
+    --ch-xs: 60px;
+    --ch-sm: 180px;
+    --ch-md: 280px;
+    --ch-lg: 360px;
+}
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); }
+        h1 { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-6) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        .sub { color: var(--tx-secondary); font-size: var(--fs-body); margin-bottom: var(--sp-5); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-sm); }
+        .meta { color: var(--tx-secondary); font-size: var(--fs-caption); }
+
+        /* Color swatches */
+        .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        .sw { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; }
+        .sw-color { height: 60px; }
+        .sw-name { padding: var(--sp-2) var(--sp-3) 0; font-size: var(--fs-caption); font-weight: var(--fw-bold); }
+        .sw-val { padding: 0 var(--sp-3) 2px; font-size: var(--fs-caption); color: var(--tx-secondary); }
+        .sw-use { padding: 0 var(--sp-3) var(--sp-3); font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.4; }
+        .sw-use code { font-size: var(--fs-caption); padding: 0 2px; }
+
+        /* Buttons demo (Controls v1.0: .btn / .tab / .btn-sq + .is-active) */
+        .btn-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; padding: var(--sp-3); background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); margin-bottom: var(--sp-3); }
+        .btn-row .label { font-size: var(--fs-caption); color: var(--tx-secondary); margin-right: var(--sp-3); min-width: 140px; }
+        .btn { height: var(--h-control); padding: 0 var(--sp-3); border-radius: var(--r-control); font-size: var(--fs-body); color: var(--tx-secondary); background: var(--bg-muted); border: none; cursor: pointer; line-height: 1; }
+        .btn.is-hover { background: var(--bg-border); }
+        .btn.is-active { background: var(--bg-inverse); color: var(--tx-ondark); }
+        .tab { padding: var(--sp-2) var(--sp-3) var(--sp-1); font-size: var(--fs-body); border: none; border-bottom: 2px solid transparent; background: transparent; cursor: pointer; color: var(--tx-secondary); line-height: 1.4; }
+        .tab.is-hover { color: var(--tx-secondary); }
+        .tab.is-active { color: var(--tx-primary); border-bottom-color: var(--tx-primary); font-weight: var(--fw-semibold); }
+        .btn-sq { width: var(--h-control); height: var(--h-control); display: inline-flex; align-items: center; justify-content: center; font-size: var(--fs-body); font-weight: var(--fw-semibold); background: var(--bg-muted); color: var(--tx-secondary); border-radius: var(--r-control); }
+        .btn-sq.is-hover { background: var(--bg-border); }
+        .btn-sq.is-active { background: var(--bg-inverse); color: var(--tx-ondark); }
+        .bubble-filters-demo { display: flex; flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); background: var(--bg-card); border-radius: var(--r-lg); box-shadow: var(--sh-card); }
+        .bubble-filters-demo label { font-size: var(--fs-caption); display: flex; align-items: center; gap: var(--sp-1); }
+
+        /* Typography rows */
+        .ty-row { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; }
+        .ty-meta { color: var(--tx-secondary); font-size: var(--fs-caption); text-align: right; }
+        .ty-use { font-size: var(--fs-caption); margin-top: 2px; opacity: 0.85; }
+
+        /* Spacing rows */
+        .sp-row { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-2); padding: var(--sp-2) var(--sp-3); background: var(--bg-card); border-radius: var(--r-lg); box-shadow: var(--sh-card); }
+        .sp-bar { height: 16px; border-radius: var(--r-sm); flex-shrink: 0; }
+        .sp-use { font-size: var(--fs-caption); color: var(--tx-secondary); margin-left: var(--sp-2); }
+
+        /* Radius cards */
+        .rad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--sp-3); }
+        .rad-cell { background: var(--bg-card); padding: var(--sp-3); border-radius: var(--r-xl); box-shadow: var(--sh-card); text-align: center; }
+        .rad-box { width: 60px; height: 60px; background: var(--c-channel-social); margin: 0 auto var(--sp-2); }
+
+        /* Shadow cards */
+        .sh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--sp-4); }
+        .sh-cell { background: var(--bg-card); padding: var(--sp-4); border-radius: var(--r-xl); }
+        .sh-cell.card-sh { box-shadow: var(--sh-card); }
+
+        /* Semantic / state examples */
+        .sem-row { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
+        .sem-tag { padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill); font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
+        .sem-tag.growth   { background: var(--c-growth);    color: var(--tx-ondark); }
+        .sem-tag.decline  { background: var(--c-decline);   color: var(--tx-ondark); }
+        .sem-tag.neutral  { background: var(--c-neutral);   color: var(--tx-ondark); }
+        .sem-tag.highlight{ background: var(--c-highlight); color: var(--tx-ondark); }
+
+        /* Data tables */
+        .data-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-card); }
+        .data-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-2) var(--sp-3); font-size: var(--fs-caption); text-align: left; font-weight: var(--fw-semibold); }
+        .data-table td { padding: 6px var(--sp-3); font-size: var(--fs-caption); border-bottom: 1px solid var(--bg-divider); }
+        .data-table tr:hover { background: var(--bg-hover); }
+        .data-table .highlight { font-weight: var(--fw-bold); color: var(--c-highlight); }
+
+        /* KPI demo */
+        .kpi-demo { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-3); }
+        .cell-kpi { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); display: flex; flex-direction: column; }
+        .kpi-label { font-size: var(--fs-caption); text-transform: uppercase; color: var(--tx-secondary); letter-spacing: var(--ls-label); }
+        .kpi-value { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin: var(--sp-1) 0; }
+        .kpi-value-sm { font-size: var(--fs-h2); font-weight: var(--fw-bold); line-height: 1.1; margin: var(--sp-1) 0; }
+        .kpi-bench { font-size: var(--fs-caption); color: var(--tx-muted); }
+        .kpi-spark { background: var(--bg-muted); border-radius: var(--r-lg); margin-top: var(--sp-2); padding: var(--sp-1); flex: 1; min-height: 50px; }
+
+        /* KPI grid block (Сводка) */
+        .kpi-grid-demo { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 70px); gap: var(--sp-2); max-width: 460px; }
+        .kpi-grid-demo .kg { padding: var(--sp-2) var(--sp-3); }
+        .kpi-grid-demo .kg .kpi-label { font-size: var(--fs-caption); }
+        .kg-rps { grid-column: 1; grid-row: 1; }
+        .kg-rev { grid-column: 2; grid-row: 1; }
+        .kg-atc { grid-column: 1; grid-row: 2 / span 2; }
+        .kg-pr  { grid-column: 2; grid-row: 2 / span 2; }
+        .kg-c2p { grid-column: 1 / span 2; grid-row: 4; }
+
+        /* Chart preview */
+        .chart-wrap { position: relative; width: 100%; height: var(--ch-lg); background: var(--bg-card); border-radius: var(--r-xl); padding: var(--sp-3); box-shadow: var(--sh-card); margin-bottom: var(--sp-4); }
+
+        /* Surfaces — detailed cards */
+        .surf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        .surf-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; }
+        .surf-demo { height: 130px; padding: var(--sp-3); position: relative; display: flex; flex-direction: column; gap: var(--sp-1); justify-content: center; align-items: center; }
+        .surf-demo .demo-text { font-size: var(--fs-body); }
+        .surf-demo .demo-meta { font-size: var(--fs-caption); }
+        .surf-demo .mini-card { background: var(--bg-card); border-radius: var(--r-lg); box-shadow: var(--sh-card); padding: var(--sp-2) var(--sp-3); font-size: var(--fs-caption); color: var(--tx-primary); }
+        .surf-demo .mini-row { background: var(--bg-hover); border-radius: var(--r-sm); padding: 4px var(--sp-2); font-size: var(--fs-caption); color: var(--tx-primary); }
+        .surf-demo .mini-th { background: var(--bg-inverse); color: var(--tx-ondark); border-radius: var(--r-sm); padding: 4px var(--sp-2); font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
+        .surf-name { padding: var(--sp-2) var(--sp-3); font-size: var(--fs-caption); font-weight: var(--fw-bold); border-top: 1px solid var(--bg-divider); display: flex; justify-content: space-between; align-items: baseline; }
+        .surf-name .hex { color: var(--tx-secondary); font-weight: var(--fw-regular); }
+        .surf-meta { padding: var(--sp-2) var(--sp-3) var(--sp-3); font-size: var(--fs-caption); }
+        .surf-meta .row { display: grid; grid-template-columns: 70px 1fr; gap: var(--sp-2); padding: 2px 0; line-height: 1.4; }
+        .surf-meta .k { color: var(--tx-secondary); }
+        .surf-meta .v { color: var(--tx-primary); }
+    </style>
+</head>
+<body>
+    <h1>Pinkspink — Styleguide</h1>
+    <p class="sub">Все визуальные токены проекта. Источник правды — словарь <code>TOKENS</code> в <code>generate_report.py</code>.<br>
+    Чтобы что-то изменить: правишь значение в TOKENS → запускаешь <code>python generate_report.py --styleguide</code> для проверки и <code>--grain all</code> для пересборки отчётов.</p>
+
+    <h2>1. Цвета каналов</h2>
+    <div class="sw-grid">
+            <div class="sw">
+                <div class="sw-color" style="background:#6C5CE7"></div>
+                <div class="sw-name">--c-channel-social</div>
+                <div class="sw-val">#6C5CE7</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#00B894"></div>
+                <div class="sw-name">--c-channel-paid</div>
+                <div class="sw-val">#00B894</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#636E72"></div>
+                <div class="sw-name">--c-channel-direct</div>
+                <div class="sw-val">#636E72</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#0984E3"></div>
+                <div class="sw-name">--c-channel-organic</div>
+                <div class="sw-val">#0984E3</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#FDCB6E"></div>
+                <div class="sw-name">--c-channel-referral</div>
+                <div class="sw-val">#FDCB6E</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#E17055"></div>
+                <div class="sw-name">--c-channel-email</div>
+                <div class="sw-val">#E17055</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#B2BEC3"></div>
+                <div class="sw-name">--c-channel-other</div>
+                <div class="sw-val">#B2BEC3</div>
+                
+            </div></div>
+
+    <h2>2. Цвета воронки</h2>
+    <div class="sw-grid">
+            <div class="sw">
+                <div class="sw-color" style="background:#636E72"></div>
+                <div class="sw-name">--c-funnel-home</div>
+                <div class="sw-val">#636E72</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#2D3436"></div>
+                <div class="sw-name">--c-funnel-catalog</div>
+                <div class="sw-val">#2D3436</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#6C5CE7"></div>
+                <div class="sw-name">--c-funnel-product</div>
+                <div class="sw-val">#6C5CE7</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#FDCB6E"></div>
+                <div class="sw-name">--c-funnel-atc</div>
+                <div class="sw-val">#FDCB6E</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#74B9FF"></div>
+                <div class="sw-name">--c-funnel-checkout</div>
+                <div class="sw-val">#74B9FF</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#00B894"></div>
+                <div class="sw-name">--c-funnel-purchase</div>
+                <div class="sw-val">#00B894</div>
+                
+            </div></div>
+
+    <h2>3. Семантика</h2>
+    <div class="sem-row">
+        <span class="sem-tag growth">↑ +12.4%</span>
+        <span class="sem-tag decline">↓ −8.1%</span>
+        <span class="sem-tag neutral">— 0%</span>
+        <span class="sem-tag highlight">★ Подсветка</span>
+    </div>
+    <div class="sw-grid">
+            <div class="sw">
+                <div class="sw-color" style="background:#00B894"></div>
+                <div class="sw-name">--c-growth</div>
+                <div class="sw-val">#00B894</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#E17055"></div>
+                <div class="sw-name">--c-decline</div>
+                <div class="sw-val">#E17055</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#636E72"></div>
+                <div class="sw-name">--c-neutral</div>
+                <div class="sw-val">#636E72</div>
+                
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#6C5CE7"></div>
+                <div class="sw-name">--c-highlight</div>
+                <div class="sw-val">#6C5CE7</div>
+                
+            </div></div>
+
+    <h2>4. Поверхности</h2>
+    <p class="sub">Цвета фонов и бордеров. Каждая карточка показывает: <strong>как выглядит сама поверхность</strong> с типичным содержимым сверху, <strong>где</strong> она применяется, <strong>что</strong> на ней обычно лежит, и <strong>какой цвет текста</strong> с ней сочетается.</p>
+    <div class="surf-grid">
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#FAFAFA">
+                    <div class="mini-card">Карточка на фоне страницы</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-page</code>
+                    <span class="hex">#FAFAFA</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v">Фон всей страницы (<code>body</code>)</span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Все карточки <code>.cell</code>, таблицы, фильтры</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-primary</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#FFFFFF">
+                    <div class="demo-text" style="color:var(--tx-primary);font-weight:var(--fw-bold)">Заголовок 13px</div><div class="demo-meta" style="color:var(--tx-secondary)">Подпись .meta 11px</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-card</code>
+                    <span class="hex">#FFFFFF</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v">Карточки <code>.cell</code>, <code>.data-table</code>, <code>.filters</code>, <code>.bubble-filters</code></span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Заголовки h3/h4, графики, таблицы, KPI-числа</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-primary</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#F0F0F0">
+                    <button class="btn" style="background:var(--bg-muted)">.btn</button>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-muted</code>
+                    <span class="hex">#F0F0F0</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v">Default-фон <code>.btn</code>, <code>.btn-sq</code>, <code>.kpi-spark</code>, фон спарклайнов</span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Кнопки в неактивном состоянии, мини-графики</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-secondary</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#F8F9FA">
+                    <div class="mini-row">Строка таблицы под курсором</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-hover</code>
+                    <span class="hex">#F8F9FA</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v"><code>tr:hover</code> в <code>.data-table</code></span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Подсветка строки таблицы под курсором</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-primary</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#FFEAE0">
+                    <div class="demo-meta" style="color:var(--tx-secondary)">не задействовано</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-alert</code>
+                    <span class="hex">#FFEAE0</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v">Резерв — пока не используется</span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Будущие предупреждения / нотификации</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-primary</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#DFE6E9">
+                    <div style="background:var(--bg-card);border:1px solid var(--bg-border);border-radius:var(--r-md);padding:6px var(--sp-2);font-size:var(--fs-caption)">card · 1px solid border</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-border</code>
+                    <span class="hex">#DFE6E9</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v">Бордер <code>.sticky-header</code>, hover у <code>.btn-sq</code></span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Тонкие линии-разделители крупных областей</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-secondary</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#F0F0F0">
+                    <div style="font-size:var(--fs-caption)">Row 1</div><div style="border-top:1px solid var(--bg-divider);font-size:var(--fs-caption);padding-top:4px">Row 2</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-divider</code>
+                    <span class="hex">#F0F0F0</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v"><code>border-bottom</code> в строках таблицы и <code>.country-row</code></span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Очень тонкие разделители <em>внутри</em> блоков</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-secondary</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#2D3436">
+                    <div class="mini-th">КАНАЛ</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-inverse</code>
+                    <span class="hex">#2D3436</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v">Тёмные <code>&lt;th&gt;</code>, <code>.btn.is-active</code>, <code>.btn-sq.is-active</code></span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Заголовки таблиц, активные состояния кнопок</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-ondark</code></span></div>
+                </div>
+            </div>
+            <div class="surf-card">
+                <div class="surf-demo" style="background:#636E72">
+                    <div class="mini-th" style="background:var(--bg-inverse2)">th:hover</div>
+                </div>
+                <div class="surf-name">
+                    <code>--bg-inverse2</code>
+                    <span class="hex">#636E72</span>
+                </div>
+                <div class="surf-meta">
+                    <div class="row"><span class="k">Где:</span><span class="v"><code>th:hover</code> на тёмных таблицах</span></div>
+                    <div class="row"><span class="k">Сверху:</span><span class="v">Подсветка заголовка колонки при наведении</span></div>
+                    <div class="row"><span class="k">Текст:</span><span class="v"><code>--tx-ondark</code></span></div>
+                </div>
+            </div></div>
+
+    <h2>5. Текст</h2>
+    <p class="sub">Цвета текста на разных поверхностях.</p>
+    <div class="sw-grid">
+            <div class="sw">
+                <div class="sw-color" style="background:#2D3436"></div>
+                <div class="sw-name">--tx-primary</div>
+                <div class="sw-val">#2D3436</div>
+                <div class="sw-use">Основной текст body, h1-h3, brand</div>
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#636E72"></div>
+                <div class="sw-name">--tx-secondary</div>
+                <div class="sw-val">#636E72</div>
+                <div class="sw-use">.meta, h4, .btn, .header-meta</div>
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#B2BEC3"></div>
+                <div class="sw-name">--tx-muted</div>
+                <div class="sw-val">#B2BEC3</div>
+                <div class="sw-use">.agg-tag, .kpi-bench, .empty-row, scrollbar</div>
+            </div>
+            <div class="sw">
+                <div class="sw-color" style="background:#FFFFFF"></div>
+                <div class="sw-name">--tx-ondark</div>
+                <div class="sw-val">#FFFFFF</div>
+                <div class="sw-use">Текст на тёмных кнопках, на <code>&lt;th&gt;</code></div>
+            </div></div>
+
+    <h2>6. Типографика — шкала размеров</h2>
+    <p class="meta" style="margin-bottom:var(--sp-3)">Шрифт: <code>'Ubuntu Mono', monospace</code>. Каждая ступень показана с её <em>родным</em> весом — тем, который реально применяется в дашборде.</p>
+    
+        <div class="ty-row">
+            <span style="font-size:28px;font-weight:700">Pinkspink Analytics</span>
+            <div class="ty-meta">
+                <code>--fs-kpi</code> · 28px · <code>--fw-bold</code> (700)
+                <div class="ty-use">KPI value в .kpi-value (2×2) и .kpi-grid</div>
+            </div>
+        </div>
+        <div class="ty-row">
+            <span style="font-size:18px;font-weight:600">Pinkspink Analytics</span>
+            <div class="ty-meta">
+                <code>--fs-h2</code> · 18px · <code>--fw-semibold</code> (600)
+                <div class="ty-use">Заголовки секций, бренд в шапке, .metric .value</div>
+            </div>
+        </div>
+        <div class="ty-row">
+            <span style="font-size:14px;font-weight:600">Pinkspink Analytics</span>
+            <div class="ty-meta">
+                <code>--fs-h3</code> · 14px · <code>--fw-semibold</code> (600)
+                <div class="ty-use">Заголовки блоков внутри карточек (.block)</div>
+            </div>
+        </div>
+        <div class="ty-row">
+            <span style="font-size:13px;font-weight:400">Pinkspink Analytics</span>
+            <div class="ty-meta">
+                <code>--fs-body</code> · 13px · <code>--fw-regular</code> (400)
+                <div class="ty-use">Body, h4, .meta, .filters label, .btn, .delta, .country-row</div>
+            </div>
+        </div>
+        <div class="ty-row">
+            <span style="font-size:11px;font-weight:400">Pinkspink Analytics</span>
+            <div class="ty-meta">
+                <code>--fs-caption</code> · 11px · <code>--fw-regular</code> (400)
+                <div class="ty-use"><th>/<td>, .kpi-label, .kpi-bench, .header-meta, .agg-tag, datalabels</div>
+            </div>
+        </div>
+        <div class="ty-row">
+            <span style="font-size:10px;font-weight:400">Pinkspink Analytics</span>
+            <div class="ty-meta">
+                <code>--fs-chart-meta</code> · 10px · <code>--fw-regular</code> (400)
+                <div class="ty-use">Подписи делений осей и легенда на графиках, .delta-sm</div>
+            </div>
+        </div>
+
+    <h2>7. Типографика — веса</h2>
+    <p class="sub">Три толщины начертания. Используются на разных размерах в зависимости от роли (см. шкалу выше).</p>
+    
+        <div class="ty-row">
+            <span style="font-size:var(--fs-h2);font-weight:400">Pinkspink Analytics</span>
+            <div class="ty-meta"><code>--fw-regular</code> · 400</div>
+        </div>
+        <div class="ty-row">
+            <span style="font-size:var(--fs-h2);font-weight:600">Pinkspink Analytics</span>
+            <div class="ty-meta"><code>--fw-semibold</code> · 600</div>
+        </div>
+        <div class="ty-row">
+            <span style="font-size:var(--fs-h2);font-weight:700">Pinkspink Analytics</span>
+            <div class="ty-meta"><code>--fw-bold</code> · 700</div>
+        </div>
+
+    <h2>8. Кнопки и переключатели</h2>
+    <p class="sub">Три типа кнопок в дашборде: <code>.btn</code> (фильтры), <code>.tab</code> (вкладки навигации), <code>.btn-sq</code> (квадратные day/W/M в шапке). Активное состояние — <code>.is-active</code>.</p>
+
+    <div class="btn-row">
+        <span class="label"><code>.btn</code></span>
+        <button class="btn">default</button>
+        <button class="btn is-hover">hover</button>
+        <button class="btn is-active">active</button>
+    </div>
+    <div class="btn-row">
+        <span class="label"><code>.tab</code></span>
+        <button class="tab">default</button>
+        <button class="tab is-hover">hover</button>
+        <button class="tab is-active">active</button>
+    </div>
+    <div class="btn-row">
+        <span class="label"><code>.btn-sq</code></span>
+        <span class="btn-sq">D</span>
+        <span class="btn-sq is-hover">W</span>
+        <span class="btn-sq is-active">M</span>
+    </div>
+    <div class="btn-row">
+        <span class="label"><code>.bubble-filters</code></span>
+        <div class="bubble-filters-demo">
+            <label><input type="checkbox" checked> ig</label>
+            <label><input type="checkbox" checked> meta (paid)</label>
+            <label><input type="checkbox"> google</label>
+            <label><input type="checkbox" checked> (direct)</label>
+        </div>
+    </div>
+
+    <h2>9. Spacing (4/8 шкала)</h2>
+    
+        <div class="sp-row">
+            <div class="sp-bar" style="width:4px;background:var(--c-channel-social)"></div>
+            <code>--sp-1</code> <span class="meta">4px</span>
+            <span class="sp-use">Мелкие зазоры: gap у .tab-bar, padding-y в .btn-sq, margin у .agg-tag</span>
+        </div>
+        <div class="sp-row">
+            <div class="sp-bar" style="width:8px;background:var(--c-channel-social)"></div>
+            <code>--sp-2</code> <span class="meta">8px</span>
+            <span class="sp-use">Gap внутри блоков: .metrics, .kpi-grid, padding в .data-table th</span>
+        </div>
+        <div class="sp-row">
+            <div class="sp-bar" style="width:12px;background:var(--c-channel-social)"></div>
+            <code>--sp-3</code> <span class="meta">12px</span>
+            <span class="sp-use">Padding в .filters, gap между .data-table td, margin-bottom у .meta</span>
+        </div>
+        <div class="sp-row">
+            <div class="sp-bar" style="width:16px;background:var(--c-channel-social)"></div>
+            <code>--sp-4</code> <span class="meta">16px</span>
+            <span class="sp-use">Gap в .grid (12-кол. сетка), padding страницы, gap в .header-left/.slider</span>
+        </div>
+        <div class="sp-row">
+            <div class="sp-bar" style="width:24px;background:var(--c-channel-social)"></div>
+            <code>--sp-5</code> <span class="meta">24px</span>
+            <span class="sp-use">Margin-top у h2, padding-x у .main-container, margin-bottom у блоков</span>
+        </div>
+        <div class="sp-row">
+            <div class="sp-bar" style="width:32px;background:var(--c-channel-social)"></div>
+            <code>--sp-6</code> <span class="meta">32px</span>
+            <span class="sp-use">Резерв для крупных отступов между секциями</span>
+        </div>
+
+    <h2>10. Радиусы</h2>
+    <div class="rad-grid">
+        <div class="rad-cell">
+            <div class="rad-box" style="border-radius:3px"></div>
+            <code>--r-sm</code> <span class="meta">3px</span>
+        </div>
+        <div class="rad-cell">
+            <div class="rad-box" style="border-radius:4px"></div>
+            <code>--r-md</code> <span class="meta">4px</span>
+        </div>
+        <div class="rad-cell">
+            <div class="rad-box" style="border-radius:6px"></div>
+            <code>--r-lg</code> <span class="meta">6px</span>
+        </div>
+        <div class="rad-cell">
+            <div class="rad-box" style="border-radius:8px"></div>
+            <code>--r-xl</code> <span class="meta">8px</span>
+        </div>
+        <div class="rad-cell">
+            <div class="rad-box" style="border-radius:999px"></div>
+            <code>--r-pill</code> <span class="meta">999px</span>
+        </div></div>
+
+    <h2>11. Тени</h2>
+    <div class="sh-grid">
+        <div class="sh-cell card-sh"><code>--sh-card</code><br><span class="meta">0 1px 3px rgba(0,0,0,0.08)</span></div>
+    </div>
+
+    <h2>12. Таблица (пример)</h2>
+    <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>Канал</th><th>Сессии</th><th>ATC</th><th>Конверсия</th></tr></thead>
+        <tbody>
+            <tr><td>Social</td><td>1 234</td><td>56</td><td class="highlight">4.5%</td></tr>
+            <tr><td>Paid</td><td>342</td><td>3</td><td>0.9%</td></tr>
+            <tr><td>Direct</td><td>523</td><td>21</td><td class="highlight">4.0%</td></tr>
+        </tbody>
+    </table></div>
+
+    <h2>13. KPI-карточки — три варианта</h2>
+    <p class="sub">В дашборде используются три формата KPI: компактная 2×2 без графика, 2×2 со спарклайном внизу, и блок-сетка <code>.kpi-grid</code> на странице «Сводка» (карточки разной ширины/высоты). Цифры в них — это <code>--fs-kpi-xl</code> (28px) или <code>--fs-kpi-lg</code> (20px) в зависимости от плотности.</p>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-3);margin-bottom:var(--sp-2)">A — Компактная (без спарклайна)</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)">Для случаев, когда динамика не важна — только текущее значение и дельта.</p>
+    <div class="kpi-demo">
+        <div class="cell-kpi" style="height:140px">
+            <div class="kpi-label">Сессии</div>
+            <div class="kpi-value">12 845</div>
+            <div class="kpi-bench">vs 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+        </div>
+        <div class="cell-kpi" style="height:140px">
+            <div class="kpi-label">Доход</div>
+            <div class="kpi-value">$630</div>
+            <div class="kpi-bench">vs 4w avg: <span style="color:var(--c-decline)">−8.1%</span></div>
+        </div>
+        <div class="cell-kpi" style="height:140px">
+            <div class="kpi-label">Конверсия</div>
+            <div class="kpi-value">0.3%</div>
+            <div class="kpi-bench">vs 4w avg: <span style="color:var(--c-neutral)">— 0%</span></div>
+        </div>
+    </div>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-4);margin-bottom:var(--sp-2)">B — Со спарклайном</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)">Когда нужно показать тренд за период. Спарклайн рисуется в <code>.kpi-spark</code> (фон <code>--bg-muted</code>, радиус <code>--r-lg</code>).</p>
+    <div class="kpi-demo">
+        <div class="cell-kpi" style="height:200px">
+            <div class="kpi-label">Сессии</div>
+            <div class="kpi-value">12 845</div>
+            <div class="kpi-bench">vs 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+            <div class="kpi-spark"><div class="chart-wrap" style="position:relative;height:100%;padding:0;box-shadow:none;background:transparent"><canvas id="spark-1"></canvas></div></div>
+        </div>
+        <div class="cell-kpi" style="height:200px">
+            <div class="kpi-label">Доход</div>
+            <div class="kpi-value">$630</div>
+            <div class="kpi-bench">vs 4w avg: <span style="color:var(--c-decline)">−8.1%</span></div>
+            <div class="kpi-spark"><div class="chart-wrap" style="position:relative;height:100%;padding:0;box-shadow:none;background:transparent"><canvas id="spark-2"></canvas></div></div>
+        </div>
+    </div>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-4);margin-bottom:var(--sp-2)">C — Блок <code>.kpi-grid</code> (страница «Сводка»)</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)">Сетка из 5 карточек разной ширины/высоты — <code>--fs-kpi-lg</code> (20px), <code>--fs-tag</code> (10px) для лейблов. Все цифры рядом, на одном «дыхании».</p>
+    <div class="kpi-grid-demo">
+        <div class="cell-kpi kg kg-rps"><div class="kpi-label">Сессии</div><div class="kpi-value-sm">12 845</div></div>
+        <div class="cell-kpi kg kg-rev"><div class="kpi-label">Доход</div><div class="kpi-value-sm">$630</div></div>
+        <div class="cell-kpi kg kg-atc"><div class="kpi-label">ATC</div><div class="kpi-value-sm">2.1%</div><div class="kpi-bench" style="font-size:var(--fs-caption)">vs 4w: <span style="color:var(--c-growth)">+0.3pp</span></div></div>
+        <div class="cell-kpi kg kg-pr"><div class="kpi-label">Покупки</div><div class="kpi-value-sm">0.3%</div><div class="kpi-bench" style="font-size:var(--fs-caption)">vs 4w: <span style="color:var(--c-decline)">−0.1pp</span></div></div>
+        <div class="cell-kpi kg kg-c2p"><div class="kpi-label">Cart→Purchase</div><div class="kpi-value-sm">14.3%</div></div>
+    </div>
+
+    <h2>14. Графики — пять типов</h2>
+    <p class="sub">В дашборде используется 5 паттернов Chart.js. У каждого свои конвенции по подписям (datalabels), легенде и формату значений. Шрифт, цвет осей и сетки берутся из <code>TOKENS["chart"]</code> через <code>Chart.defaults</code> (применяется один раз при загрузке).</p>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-4);margin-bottom:var(--sp-2)">A — Grouped Bar (воронка по периодам)</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)"><strong>Где:</strong> блок «Динамика воронок».
+    <strong>Подписи:</strong> <code>anchor:'end'</code>, <code>align:'top'</code> — над столбиком, формат <code>v &gt; 0 ? v : ''</code> (нули прячем).
+    <strong>Легенда:</strong> сверху. <strong>Шкала Y:</strong> <code>beginAtZero:true</code>, <code>grace:'15%'</code> для воздуха над столбиками.</p>
+    <div class="chart-wrap"><canvas id="demo-grouped-bar"></canvas></div>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-4);margin-bottom:var(--sp-2)">B — Line с подписями (конверсия %)</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)"><strong>Где:</strong> «catalog→product», «product→ATC» и т.п. в воронке.
+    <strong>Подписи:</strong> <code>align:'top'</code>, формат <code>v.toFixed(1) + '%'</code>.
+    <strong>Tooltip:</strong> custom callback с <code>%</code>. <strong>Шкала Y:</strong> ticks с <code>v + '%'</code>.</p>
+    <div class="chart-wrap"><canvas id="demo-line"></canvas></div>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-4);margin-bottom:var(--sp-2)">C — Stacked Bar + Line (комбо, dual-axis)</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)"><strong>Где:</strong> Сессии по каналам (stacked) + Покупатели (линия) на одном графике.
+    <strong>Подписи:</strong> <code>display:false</code> для bar, или внутри столбиков (<code>color:#FFF</code>).
+    <strong>Оси:</strong> Y слева для bar, Y1 справа для line, <code>grid.drawOnChartArea:false</code> у Y1.</p>
+    <div class="chart-wrap"><canvas id="demo-stacked-line"></canvas></div>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-4);margin-bottom:var(--sp-2)">D — Bubble (эффективность source)</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)"><strong>Где:</strong> «Каталог→Товар», «Товар→Корзина» — соотношение объём × конверсия × размер.
+    <strong>Оси:</strong> X = сессии на этапе, Y = конверсия в следующий, размер пузыря = объём.
+    <strong>Подписи:</strong> по умолчанию выключены, label виден в tooltip.</p>
+    <div class="chart-wrap"><canvas id="demo-bubble"></canvas></div>
+
+    <h3 style="font-size:var(--fs-h3);margin-top:var(--sp-4);margin-bottom:var(--sp-2)">E — Sparkline (мини-линия в KPI)</h3>
+    <p class="meta" style="margin-bottom:var(--sp-2)"><strong>Где:</strong> внутри <code>.kpi-spark</code> в KPI-карточках.
+    <strong>Подписи и легенда:</strong> <code>display:false</code>.
+    <strong>Оси:</strong> скрыты (<code>display:false</code>). Только линия и точки. Нужна для тренда «глазом», не для считывания значений.</p>
+    <div style="background:var(--bg-muted);border-radius:var(--r-lg);padding:var(--sp-1);height:60px;width:240px"><div class="chart-wrap" style="height:100%;padding:0;box-shadow:none;background:transparent"><canvas id="demo-spark"></canvas></div></div>
+
+    <script>
+    // === Chart.js global setup (Charts v1.0) ===
+    Chart.register(ChartDataLabels);
+    Chart.defaults.animation = false;
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.responsive = true;
+
+    Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+    Chart.defaults.font.size   = 10;
+    Chart.defaults.color       = '#636E72';
+    Chart.defaults.borderColor = 'rgba(0,0,0,0.06)';
+    Chart.defaults.scale.grid.color  = 'rgba(0,0,0,0.06)';
+    Chart.defaults.scale.ticks.color = '#636E72';
+
+    Chart.defaults.plugins.legend.labels.font      = { size: 10 };
+    Chart.defaults.plugins.legend.labels.boxWidth  = 10;
+    Chart.defaults.plugins.legend.labels.boxHeight = 10;
+    Chart.defaults.plugins.legend.labels.padding   = 12;
+
+    Chart.defaults.plugins.datalabels       = Chart.defaults.plugins.datalabels || {};
+    Chart.defaults.plugins.datalabels.font  = { size: 11 };
+    Chart.defaults.plugins.datalabels.color = '#2D3436';
+
+    // Hover: показать значения ВСЕХ датасетов в этой x-позиции (override per-chart для bubble)
+    Chart.defaults.interaction = { mode: 'index', intersect: false };
+
+    // === Helpers (Charts v1.0) ===
+    const cssvar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    const fmt = {
+        num: v => (v == null || v === 0) ? '' : v.toLocaleString('ru-RU'),
+        pct: (v, dec=1) => (v == null || v === 0) ? '' : v.toFixed(dec) + '%',
+        sec: v => (v == null || v === 0) ? '' : v + 's',
+        cur: (v, c='$') => (v == null || v === 0) ? '' : c + v.toLocaleString('ru-RU')
+    };
+
+    const dlPad = {
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        borderRadius: 3,
+        padding: { top: 1, bottom: 1, left: 4, right: 4 }
+    };
+
+    function legendLabels(chart) {
+        return chart.data.datasets.map((ds, i) => {
+            const isLine = (ds.type === 'line') || (chart.config.type === 'line' && !ds.type);
+            const color = ds.borderColor || ds.backgroundColor;
+            return {
+                text: ds.label, fillStyle: color, strokeStyle: color,
+                lineWidth: isLine ? 2 : 0,
+                pointStyle: isLine ? 'line' : (chart.config.type === 'bubble' ? 'circle' : 'rect'),
+                hidden: !chart.isDatasetVisible(i),
+                datasetIndex: i
+            };
+        });
+    }
+
+    const legendPresets = {
+        bar:    { display: true, position: 'top', align: 'start', labels: { usePointStyle: true, pointStyle: 'rect',   boxWidth: 10, boxHeight: 10, padding: 12 } },
+        line:   { display: true, position: 'top', align: 'start', labels: { boxWidth: 32, boxHeight: 2, padding: 12, generateLabels: legendLabels } },
+        bubble: { display: true, position: 'top', align: 'start', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 10, boxHeight: 10, padding: 12 } },
+        mixed:  { display: true, position: 'top', align: 'start', labels: { boxWidth: 14, boxHeight: 8, padding: 12, generateLabels: legendLabels } },
+        none:   { display: false }
+    };
+
+    const dlPresets = {
+        barTop:    { anchor: 'end',    align: 'top',    color: cssvar('--tx-primary') },
+        barCenter: { anchor: 'center', align: 'center', color: cssvar('--tx-ondark')  },
+        line:      { align: 'top',                       color: cssvar('--tx-primary'), ...dlPad },
+        off:       { display: false }
+    };
+
+    const cssvar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    // A — Grouped Bar (funnel)
+    new Chart(document.getElementById('demo-grouped-bar'), {
+        type: 'bar',
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { label: 'home',     backgroundColor: cssvar('--c-funnel-home'),     data: [80, 95, 92, 110, 125] },
+                { label: 'catalog',  backgroundColor: cssvar('--c-funnel-catalog'),  data: [120, 145, 132, 178, 201] },
+                { label: 'product',  backgroundColor: cssvar('--c-funnel-product'),  data: [60, 72, 68, 85, 96] },
+                { label: 'ATC',      backgroundColor: cssvar('--c-funnel-atc'),      data: [12, 14, 11, 18, 22] },
+                { label: 'purchase', backgroundColor: cssvar('--c-funnel-purchase'), data: [1, 2, 1, 3, 4] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                datalabels: { anchor: 'end', align: 'top', formatter: v => v > 0 ? v : '' }
+            },
+            scales: { y: { beginAtZero: true, grace: '15%' } }
+        }
+    });
+
+    // B — Line с подписями
+    new Chart(document.getElementById('demo-line'), {
+        type: 'line',
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { label: 'catalog→product', borderColor: cssvar('--c-funnel-product'), backgroundColor: cssvar('--c-funnel-product'), tension: 0.3, data: [42.1, 49.6, 51.5, 47.8, 52.4] },
+                { label: 'product→ATC',     borderColor: cssvar('--c-funnel-atc'),     backgroundColor: cssvar('--c-funnel-atc'),     tension: 0.3, data: [20.0, 19.4, 16.2, 21.2, 22.9] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                datalabels: { align: 'top', formatter: v => v != null ? v.toFixed(1) + '%' : '' },
+                tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%' } }
+            },
+            scales: { y: { beginAtZero: true, grace: '15%', ticks: { callback: v => v + '%' } } }
+        }
+    });
+
+    // C — Stacked Bar + Line (dual axis)
+    new Chart(document.getElementById('demo-stacked-line'), {
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { type: 'bar', label: 'Social',  backgroundColor: cssvar('--c-channel-social'),  data: [120, 145, 132, 178, 201], stack: 's', yAxisID: 'y' },
+                { type: 'bar', label: 'Paid',    backgroundColor: cssvar('--c-channel-paid'),    data: [45, 52, 48, 60, 55],     stack: 's', yAxisID: 'y' },
+                { type: 'bar', label: 'Direct',  backgroundColor: cssvar('--c-channel-direct'),  data: [80, 75, 82, 95, 98],     stack: 's', yAxisID: 'y' },
+                { type: 'line', label: 'Покупатели', borderColor: cssvar('--c-growth'), borderWidth: 2, tension: 0.3, data: [4, 5, 4, 7, 8], yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' }, datalabels: { display: false } },
+            scales: {
+                x: { stacked: true },
+                y:  { stacked: true, beginAtZero: true, position: 'left' },
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // D — Bubble
+    new Chart(document.getElementById('demo-bubble'), {
+        type: 'bubble',
+        data: {
+            datasets: [
+                { label: 'ig',          backgroundColor: cssvar('--c-channel-social'),  data: [{x: 1234, y: 4.5, r: 18}] },
+                { label: 'meta (paid)', backgroundColor: cssvar('--c-channel-paid'),    data: [{x: 342, y: 0.9, r: 8}] },
+                { label: '(direct)',    backgroundColor: cssvar('--c-channel-direct'),  data: [{x: 523, y: 4.0, r: 12}] },
+                { label: 'google',      backgroundColor: cssvar('--c-channel-organic'), data: [{x: 89, y: 6.7, r: 5}] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' }, datalabels: { display: false } },
+            scales: {
+                x: { title: { display: true, text: 'Сессии на этапе' } },
+                y: { title: { display: true, text: 'Конверсия в след. этап, %' }, ticks: { callback: v => v + '%' } }
+            }
+        }
+    });
+
+    // E — Sparkline (mini-line, no axes/labels)
+    function spark(id, data, color) {
+        new Chart(document.getElementById(id), {
+            type: 'line',
+            data: {
+                labels: data.map((_, i) => i),
+                datasets: [{ data, borderColor: color, borderWidth: 1.5, tension: 0.4, pointRadius: 0, fill: false }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
+    spark('demo-spark', [120, 145, 132, 178, 201, 188, 220], cssvar('--c-channel-social'));
+    spark('spark-1',    [120, 145, 132, 178, 201, 188, 220], cssvar('--c-channel-social'));
+    spark('spark-2',    [60, 55, 65, 50, 45, 48, 42],         cssvar('--c-decline'));
+    </script>
+</body>
+</html>

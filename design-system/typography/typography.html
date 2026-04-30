@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Typography · Pinkspink Design System v1.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            /* === Typography v1.1 — источник правды для всего UI === */
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular:  400;
+            --fw-semibold: 600;
+            --fw-bold:     700;
+            --ls-label: 0.5px;
+
+            --fs-kpi:        28px;
+            --fs-h2:         18px;
+            --fs-h3:         14px;
+            --fs-body:       13px;
+            --fs-caption:    11px;
+            --fs-chart-meta: 10px;
+
+            /* v1.1: headings & spacing */
+            --mt-h2: 44px;     /* 250% × 18 = 45 → 44 (round even down) */
+            --mt-h3: 24px;     /* 175% × 14 = 24.5 → 24 */
+            --mt-h4: 16px;     /* 125% × 13 = 16.25 → 16 */
+            --tight-pair: 4px;
+            --content-gap: 8px;
+
+            /* Базовые цвета (минимально нужные для рендера спецификации) */
+            --c-channel-social: #6C5CE7;
+            --c-channel-paid:   #00B894;
+            --c-channel-direct: #636E72;
+            --c-channel-organic:#0984E3;
+            --c-funnel-product: #6C5CE7;
+            --c-funnel-atc:     #FDCB6E;
+            --c-funnel-purchase:#00B894;
+            --c-growth:    #00B894;
+            --c-decline:   #E17055;
+            --tx-primary:  #2D3436;
+            --tx-secondary:#636E72;
+            --tx-muted:    #B2BEC3;
+            --tx-ondark:   #FFFFFF;
+            --bg-page:     #FAFAFA;
+            --bg-card:     #FFFFFF;
+            --bg-muted:    #F0F0F0;
+            --bg-border:   #DFE6E9;
+            --bg-divider:  #F0F0F0;
+            --bg-inverse:  #2D3436;
+            --bg-hover:    #F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+        }
+
+        /* === Form-fix (одна строка, см. секцию 6) === */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1400px; margin: 0 auto; }
+
+        /* Заголовки страницы — используем токены из шкалы */
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+
+        /* Quick badges */
+        .v { font-family: var(--ff-mono); font-size: 11px; background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+
+        /* === Token cards === */
+        .tok-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 900px) { .tok-grid { grid-template-columns: 1fr; } }
+        .tok-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; }
+        .tok-head { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3) var(--sp-4); display: flex; justify-content: space-between; align-items: baseline; }
+        .tok-head .name { font-size: var(--fs-h3); font-weight: var(--fw-bold); }
+        .tok-head .meta { font-size: var(--fs-caption); color: var(--tx-muted); }
+        .tok-sample { padding: var(--sp-4); border-bottom: 1px solid var(--bg-divider); min-height: 80px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--sp-3); background: var(--bg-page); }
+        .tok-uses { padding: var(--sp-3) var(--sp-4); font-size: var(--fs-body); color: var(--tx-primary); line-height: 1.5; }
+        .tok-uses .h { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); margin-bottom: var(--sp-2); }
+        .tok-uses ul { margin: 0 0 var(--sp-2) var(--sp-4); padding: 0; }
+        .tok-uses ul li { margin-bottom: 4px; }
+
+        /* Sample classes */
+        .s-kpi     { font-size: var(--fs-kpi);     font-weight: var(--fw-bold); }
+        .s-h2      { font-size: var(--fs-h2);      font-weight: var(--fw-semibold); }
+        .s-h2-bold { font-size: var(--fs-h2);      font-weight: var(--fw-bold); }
+        .s-h3      { font-size: var(--fs-h3);      font-weight: var(--fw-semibold); }
+        .s-body    { font-size: var(--fs-body);    font-weight: var(--fw-regular); }
+        .s-caption { font-size: var(--fs-caption); font-weight: var(--fw-regular); }
+        .s-th      { font-size: var(--fs-caption); font-weight: var(--fw-semibold); background: var(--bg-inverse); color: var(--tx-ondark); padding: 4px 8px; border-radius: var(--r-md); }
+        .s-chart   { font-size: var(--fs-chart-meta); color: var(--tx-secondary); }
+
+        /* Weights demo */
+        .w-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 700px) { .w-grid { grid-template-columns: 1fr; } }
+        .w-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); text-align: center; }
+        .w-card .v-line { font-size: var(--fs-h2); margin: var(--sp-2) 0; }
+        .w-card .name   { font-family: var(--ff-mono); font-size: var(--fs-caption); color: var(--tx-secondary); }
+
+        /* Letter-spacing demo */
+        .ls-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+        .ls-side { display: flex; flex-direction: column; gap: var(--sp-1); }
+        .ls-lab  { font-size: var(--fs-caption); color: var(--tx-secondary); }
+        .ls-demo-on  { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .ls-demo-off { font-size: var(--fs-caption); text-transform: uppercase; color: var(--tx-secondary); }
+
+        /* Annotated mockup */
+        .annot-wrap { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-5); margin-bottom: var(--sp-4); }
+        .annot { display: flex; flex-direction: column; gap: var(--sp-3); }
+        .a-row { display: grid; grid-template-columns: 1fr 220px; gap: var(--sp-4); align-items: center; padding: var(--sp-3); background: var(--bg-page); border-radius: var(--r-lg); }
+        .a-content { display: flex; flex-direction: column; gap: var(--sp-2); align-items: flex-start; }
+        .a-tok { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-inverse); color: var(--tx-ondark); padding: 4px 8px; border-radius: var(--r-md); display: inline-block; font-weight: var(--fw-regular); }
+        .a-tok-meta { font-size: 10px; color: var(--tx-secondary); margin-top: 4px; }
+        .a-tok-side { text-align: right; }
+
+        .header-demo { display: flex; justify-content: space-between; align-items: center; padding: var(--sp-2) var(--sp-3); background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--bg-border); width: 100%; }
+        .header-demo .brand { font-size: var(--fs-h2); font-weight: var(--fw-bold); }
+        .header-demo .meta-text { font-size: var(--fs-caption); color: var(--tx-secondary); }
+
+        .kpi-demo { display: flex; flex-direction: column; gap: 4px; padding: var(--sp-3); background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--bg-border); }
+        .kpi-demo .l { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .kpi-demo .v-num { font-size: var(--fs-kpi); font-weight: var(--fw-bold); line-height: 1.1; }
+        .kpi-demo .b { font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        .table-demo { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--bg-border); }
+        .table-demo th { background: var(--bg-inverse); color: var(--tx-ondark); padding: 4px 8px; font-size: var(--fs-caption); text-align: left; font-weight: var(--fw-semibold); }
+        .table-demo td { padding: 4px 8px; font-size: var(--fs-caption); border-bottom: 1px solid var(--bg-divider); }
+
+        .metric-demo { display: flex; flex-direction: column; gap: 2px; padding: var(--sp-2) var(--sp-3); background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--bg-border); }
+        .metric-demo .l { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .metric-demo .v-num { font-size: var(--fs-h2); font-weight: var(--fw-semibold); }
+
+        .chart-demo { position: relative; height: 320px; padding: var(--sp-3); background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--bg-border); width: 100%; }
+        .chart-section .chart-demo { height: 360px; }
+
+        /* Form-fix demo */
+        .fix-demo { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .fix-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin: var(--sp-3) 0; }
+        @media (max-width: 700px) { .fix-pair { grid-template-columns: 1fr; } }
+        .fix-side { padding: var(--sp-3); border-radius: var(--r-lg); border: 1px solid var(--bg-border); }
+        .fix-side .lab { font-size: var(--fs-caption); text-transform: uppercase; color: var(--tx-secondary); margin-bottom: var(--sp-2); letter-spacing: var(--ls-label); }
+        .demo-btn-bug    { padding: 6px 14px; border-radius: var(--r-md); font-size: var(--fs-body); background: var(--bg-muted); color: var(--tx-secondary); border: none; cursor: default; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+        .demo-btn-fixed  { padding: 6px 14px; border-radius: var(--r-md); font-size: var(--fs-body); background: var(--bg-muted); color: var(--tx-secondary); border: none; cursor: default; }
+
+        /* Applying section */
+        .apply { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .apply pre { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; margin: var(--sp-2) 0; font-family: var(--ff-mono); }
+        .apply .step { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: var(--sp-3) 0 var(--sp-2); }
+        .apply .step .num { background: var(--c-channel-social); color: var(--tx-ondark); padding: 2px 8px; border-radius: var(--r-md); font-size: var(--fs-caption); margin-right: var(--sp-2); }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Typography <span class="v">v1.1</span></h1>
+    <p class="meta-line">Pinkspink Design System · Раздел типографики · 6 токенов размера, 3 веса, шрифт Ubuntu Mono</p>
+    <p class="doc">Спецификация типографики для аналитических дашбордов. Каждый токен покрывает несколько UI-ролей — благодаря этому шкала остаётся компактной (всего 6 размеров), но иерархия чётко выражена. Источник правды — <code>tokens.json</code>, текстовая версия — <code>tokens.md</code>, эта страница — визуальный референс.</p>
+
+    <h2 class="doc">1. Шкала размеров</h2>
+    <p class="doc">Шесть токенов покрывают весь UI: от главной KPI-цифры (28px) до подписей осей графиков (10px). Каждая карточка ниже показывает <strong>как выглядит токен</strong>, его <strong>размер и вес</strong>, и <strong>конкретные места применения</strong>.</p>
+
+    <div class="tok-grid">
+        <!-- 1: kpi -->
+        <div class="tok-card">
+            <div class="tok-head">
+                <span class="name">--fs-kpi</span>
+                <span class="meta">28px · bold (700)</span>
+            </div>
+            <div class="tok-sample">
+                <span class="s-kpi">12 845</span>
+                <span class="s-kpi" style="color:var(--c-growth)">$630</span>
+            </div>
+            <div class="tok-uses">
+                <div class="h">Где используется</div>
+                <ul>
+                    <li>Главное KPI-число в карточках 2×2 (<code>.kpi-value</code>) — Сессии, Доход, ATC</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 2: h2 -->
+        <div class="tok-card">
+            <div class="tok-head">
+                <span class="name">--fs-h2</span>
+                <span class="meta">18px · semibold / bold (для бренда)</span>
+            </div>
+            <div class="tok-sample">
+                <span class="s-h2">Воронки</span>
+                <span class="s-h2-bold">Pinkspink</span>
+                <span class="s-h2">31s</span>
+            </div>
+            <div class="tok-uses">
+                <div class="h">Где используется</div>
+                <ul>
+                    <li>Заголовки секций (<code>&lt;h2&gt;</code> внутри вкладок): Воронки, Сводка, Трафик</li>
+                    <li>Логотип / бренд в шапке (<code>font-weight: bold</code>)</li>
+                    <li>Числа в <code>.metric .value</code> — 3-кол. сетка слайдер-карточек</li>
+                    <li>KPI value в плотных сетках <code>.kpi-grid</code> (страница «Сводка»)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 3: h3 -->
+        <div class="tok-card">
+            <div class="tok-head">
+                <span class="name">--fs-h3</span>
+                <span class="meta">14px · semibold (600)</span>
+            </div>
+            <div class="tok-sample">
+                <span class="s-h3">Динамика мобильной воронки</span>
+            </div>
+            <div class="tok-uses">
+                <div class="h">Где используется</div>
+                <ul>
+                    <li>Заголовки блоков внутри карточек (<code>&lt;h3&gt;</code> в <code>.cell</code>)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 4: body -->
+        <div class="tok-card">
+            <div class="tok-head">
+                <span class="name">--fs-body</span>
+                <span class="meta">13px · regular (400)</span>
+            </div>
+            <div class="tok-sample">
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+                    <span class="s-body">Сессии: 12 845 · бенч 4w +12.4%</span>
+                    <span class="s-body" style="color:var(--tx-secondary)">Период: 2026-W01 — 2026-W08</span>
+                </div>
+            </div>
+            <div class="tok-uses">
+                <div class="h">Где используется</div>
+                <ul>
+                    <li>Основной body-текст внутри карточек</li>
+                    <li>Подзаголовки <code>h4</code> (синоним 13px)</li>
+                    <li><code>.meta</code>-параграфы — даты, периоды, описания</li>
+                    <li><code>.filters label</code> — подписи у фильтров</li>
+                    <li><code>.grain-btn</code> — кнопки переключения grain (day/week/month)</li>
+                    <li><code>.delta</code> — дельты со стрелками</li>
+                    <li><code>.country-row</code> — строки списка топ-стран</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 5: caption -->
+        <div class="tok-card">
+            <div class="tok-head">
+                <span class="name">--fs-caption</span>
+                <span class="meta">11px · regular / semibold для th</span>
+            </div>
+            <div class="tok-sample">
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+                    <span class="s-th">КАНАЛ · СЕССИИ · ATC</span>
+                    <span class="s-caption">1 234 · 56 · 4.5%</span>
+                    <span class="s-caption" style="text-transform:uppercase;letter-spacing:var(--ls-label);color:var(--tx-secondary)">КОНВЕРСИЯ</span>
+                </div>
+            </div>
+            <div class="tok-uses">
+                <div class="h">Где используется</div>
+                <ul>
+                    <li><code>&lt;th&gt;</code> заголовки таблиц (semibold, на тёмном фоне)</li>
+                    <li><code>&lt;td&gt;</code> содержимое таблиц</li>
+                    <li><code>.kpi-label</code> — UPPERCASE-лейблы в KPI-карточках (с <code>letter-spacing: var(--ls-label)</code>)</li>
+                    <li><code>.kpi-bench</code> — бенчмарки («vs 4w avg: +12.4%»)</li>
+                    <li><code>.header-meta</code> — подпись справа от логотипа в sticky-header</li>
+                    <li><code>.agg-tag</code> — теги-маркеры</li>
+                    <li><strong>Datalabels на графиках</strong> (Chart.js datalabels plugin)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 6: chart-meta -->
+        <div class="tok-card">
+            <div class="tok-head">
+                <span class="name">--fs-chart-meta</span>
+                <span class="meta">10px · regular (400)</span>
+            </div>
+            <div class="tok-sample">
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+                    <span class="s-chart">W04 · W05 · W06 · W07 · W08</span>
+                    <span class="s-chart">120 · 145 · 132 · 178 · 201</span>
+                    <span class="s-chart" style="font-style:italic">↑ оси и легенда графиков</span>
+                </div>
+            </div>
+            <div class="tok-uses">
+                <div class="h">Где используется</div>
+                <ul>
+                    <li>Подписи делений оси X и оси Y (<code>scales.*.ticks.font.size</code>)</li>
+                    <li>Текст легенды на графиках (<code>plugins.legend.labels.font.size</code>)</li>
+                </ul>
+                <p style="font-size:var(--fs-caption);color:var(--tx-secondary);margin-top:var(--sp-2);line-height:1.5"><strong>Зачем отдельный токен:</strong> datalabels (числа над/в столбиках) — это сам контент графика, а оси и легенда — обвязка. Иерархия: контент (11px) крупнее обвязки (10px), значения выделяются над фоном.</p>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="doc">2. Headings & Spacing <span class="badge" style="vertical-align:middle">v1.1</span></h2>
+    <p class="doc">Универсальные правила отступов вокруг заголовков в нормальном flow. <code>line-height: 1.25</code> на body. Margin-top заголовка считается как <strong>процент от его font-size, округление вниз до ближайшего чётного</strong>.</p>
+
+    <table class="tk-table" style="margin-bottom: var(--sp-4)">
+        <thead><tr><th>Токен</th><th>Значение</th><th>Формула</th></tr></thead>
+        <tbody>
+            <tr><td><code>--mt-h2</code></td><td>44px</td><td>250% × 18 = 45 → 44 (round even down)</td></tr>
+            <tr><td><code>--mt-h3</code></td><td>24px</td><td>175% × 14 = 24.5 → 24</td></tr>
+            <tr><td><code>--mt-h4</code></td><td>16px</td><td>125% × 13 = 16.25 → 16</td></tr>
+            <tr><td><code>--tight-pair</code></td><td>4px</td><td>Зазор заголовок ↔ описание</td></tr>
+            <tr><td><code>--content-gap</code></td><td>8px</td><td>Зазор .meta ↔ контент</td></tr>
+        </tbody>
+    </table>
+
+    <p class="doc"><strong>Живой пример</strong> с применённой шкалой и 3-строчной подписью:</p>
+
+    <style>
+        .heading-demo { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); max-width: 760px; }
+        .heading-demo > :first-child { margin-top: 0; }
+        .heading-demo h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--mt-h2) 0 0; line-height: 1.25; }
+        .heading-demo h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: var(--mt-h3) 0 0; line-height: 1.25; }
+        .heading-demo h4 { font-size: var(--fs-body); font-weight: var(--fw-semibold); margin: var(--mt-h4) 0 0; color: var(--tx-secondary); line-height: 1.25; }
+        .heading-demo .meta { font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.25; margin: 0 0 var(--content-gap); }
+        .heading-demo h2 + .meta, .heading-demo h3 + .meta, .heading-demo h4 + .meta { margin-top: var(--tight-pair); }
+        .heading-demo .demo-content { background: var(--bg-muted); border-radius: var(--r-md); padding: var(--sp-2); font-size: var(--fs-caption); color: var(--tx-secondary); text-align: center; }
+    </style>
+
+    <div class="heading-demo">
+        <h2>Карточек за сессию — разрез по странам и source</h2>
+        <p class="meta">Mobile, последняя полная неделя. Сколько карточек товара открывает один пользователь за сессию. Дельта vs avg прошлых 4 недель показывает динамику относительно стабильного периода.</p>
+        <div class="demo-content">[ контент: table / grid / chart ]</div>
+
+        <h3>По странам</h3>
+        <p class="meta">∆ vs avg прошлых 4 недель</p>
+        <div class="demo-content">[ table ]</div>
+
+        <h3>По source</h3>
+        <p class="meta">∆ vs avg прошлых 4 недель</p>
+        <div class="demo-content">[ table ]</div>
+
+        <h4>Топ 5 стран</h4>
+        <p class="meta">Mobile, последняя неделя</p>
+        <div class="demo-content">[ список ]</div>
+    </div>
+
+    <p class="doc"><strong>Принципы:</strong></p>
+    <ul class="rules">
+        <li>Заголовки имеют ТОЛЬКО <code>margin-top</code> (не <code>margin-bottom</code>) — нижний зазор управляется элементом ниже</li>
+        <li>Если за заголовком <code>.meta</code> → tight pair (4px) через правило <code>h2+.meta</code> и т.п.</li>
+        <li><code>.meta</code> унифицирован на 11px caption (v1.1) — один размер для всех описаний</li>
+        <li><code>line-height: 1.25</code> на body — наследуется заголовками и .meta. Не аффектит контролы (явные line-heights) и графики (canvas)</li>
+    </ul>
+
+    <h2 class="doc">3. Графики — иерархия размеров</h2>
+    <p class="doc">На графиках работают три размера сразу: <strong>datalabels</strong> (значения над столбиками) — на <code>--fs-caption</code> (11px), <strong>оси</strong> (X/Y tick labels) и <strong>легенда</strong> — на <code>--fs-chart-meta</code> (10px). Это намеренно: сами цифры читаются хорошо, оси и легенда уходят в фон и не «съедают» пространство.</p>
+
+    <div class="chart-section">
+        <div class="chart-demo"><canvas id="chart-demo"></canvas></div>
+    </div>
+
+    <h2 class="doc">4. Веса — три уровня</h2>
+    <p class="doc">Используются три толщины начертания. Применяются на разных размерах в зависимости от роли (см. список ролей у каждого токена выше).</p>
+
+    <div class="w-grid">
+        <div class="w-card">
+            <div class="name">--fw-regular · 400</div>
+            <div class="v-line" style="font-weight: var(--fw-regular)">Pinkspink Analytics</div>
+            <div class="name" style="color:var(--tx-muted)">body, captions, описания</div>
+        </div>
+        <div class="w-card">
+            <div class="name">--fw-semibold · 600</div>
+            <div class="v-line" style="font-weight: var(--fw-semibold)">Pinkspink Analytics</div>
+            <div class="name" style="color:var(--tx-muted)">h2, h3, table th, .metric .value</div>
+        </div>
+        <div class="w-card">
+            <div class="name">--fw-bold · 700</div>
+            <div class="v-line" style="font-weight: var(--fw-bold)">Pinkspink Analytics</div>
+            <div class="name" style="color:var(--tx-muted)">KPI value, логотип, .highlight</div>
+        </div>
+    </div>
+
+    <h2 class="doc">5. Letter-spacing</h2>
+    <p class="doc">Один токен — <code>--ls-label</code> · 0.5px — применяется к UPPERCASE-лейблам, чтобы буквы «дышали» и не слипались.</p>
+
+    <div class="ls-card">
+        <div class="ls-side">
+            <span class="ls-lab">С letter-spacing (правильно)</span>
+            <span class="ls-demo-on">сессии · конверсия · доход</span>
+            <span class="ls-demo-on" style="margin-top:var(--sp-1)">канал · страна · период</span>
+        </div>
+        <div class="ls-side">
+            <span class="ls-lab">Без letter-spacing (буквы слипаются)</span>
+            <span class="ls-demo-off">сессии · конверсия · доход</span>
+            <span class="ls-demo-off" style="margin-top:var(--sp-1)">канал · страна · период</span>
+        </div>
+    </div>
+
+    <h2 class="doc">6. Аннотированный мокап</h2>
+    <p class="doc">Реальные UI-элементы дашборда с подписями токенов рядом. Под каждым элементом видно, какая комбинация токенов на нём работает.</p>
+
+    <div class="annot-wrap">
+        <div class="annot">
+
+            <div class="a-row">
+                <div class="a-content">
+                    <div class="header-demo">
+                        <span class="brand">Pinkspink</span>
+                        <span class="meta-text">2026-W01 — W08 · 8 нед.</span>
+                    </div>
+                </div>
+                <div class="a-tok-side">
+                    <div><span class="a-tok">--fs-h2</span> логотип / bold</div>
+                    <div class="a-tok-meta">+ <span class="a-tok" style="background:var(--c-channel-social)">--fs-caption</span> подпись справа</div>
+                </div>
+            </div>
+
+            <div class="a-row">
+                <div class="a-content">
+                    <div style="font-size: var(--fs-h2); font-weight: var(--fw-semibold);">Воронки</div>
+                </div>
+                <div class="a-tok-side">
+                    <span class="a-tok">--fs-h2</span>
+                    <div class="a-tok-meta">18px / semibold · заголовок секции (h2)</div>
+                </div>
+            </div>
+
+            <div class="a-row">
+                <div class="a-content">
+                    <div style="font-size: var(--fs-h3); font-weight: var(--fw-semibold);">Динамика мобильной воронки <span style="font-size:var(--fs-caption);color:var(--tx-muted);font-weight:var(--fw-regular)">last 8w</span></div>
+                </div>
+                <div class="a-tok-side">
+                    <span class="a-tok">--fs-h3</span>
+                    <div class="a-tok-meta">14px / semibold · заголовок блока</div>
+                    <div class="a-tok-meta">+ <span class="a-tok" style="background:var(--c-channel-social)">--fs-caption</span> agg-tag</div>
+                </div>
+            </div>
+
+            <div class="a-row">
+                <div class="a-content">
+                    <div style="font-size: var(--fs-body); color: var(--tx-secondary);">Период: 2026-W01 — 2026-W08 · 8 недель данных</div>
+                    <div style="font-size: var(--fs-body);">Сессии: 12 845 · бенч 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+                </div>
+                <div class="a-tok-side">
+                    <span class="a-tok">--fs-body</span>
+                    <div class="a-tok-meta">13px / regular · описание + body</div>
+                </div>
+            </div>
+
+            <div class="a-row">
+                <div class="a-content" style="flex-direction: row; gap: var(--sp-3);">
+                    <div class="kpi-demo">
+                        <div class="l">Сессии</div>
+                        <div class="v-num">12 845</div>
+                        <div class="b">vs 4w avg: <span style="color:var(--c-growth)">+12.4%</span></div>
+                    </div>
+                    <div class="kpi-demo">
+                        <div class="l">Доход</div>
+                        <div class="v-num">$630</div>
+                        <div class="b">vs 4w avg: <span style="color:var(--c-decline)">−8.1%</span></div>
+                    </div>
+                </div>
+                <div class="a-tok-side">
+                    <div><span class="a-tok">--fs-caption</span> label (UPPERCASE)</div>
+                    <div class="a-tok-meta">+ <span class="a-tok" style="background:var(--c-channel-social)">--fs-kpi</span> value 28px / bold</div>
+                    <div class="a-tok-meta">+ <span class="a-tok" style="background:var(--c-channel-social)">--fs-caption</span> bench</div>
+                </div>
+            </div>
+
+            <div class="a-row">
+                <div class="a-content" style="width:100%">
+                    <table class="table-demo">
+                        <thead><tr><th>Канал</th><th>Сессии</th><th>ATC</th><th>Конверсия</th></tr></thead>
+                        <tbody>
+                            <tr><td>Social</td><td>1 234</td><td>56</td><td>4.5%</td></tr>
+                            <tr><td>Paid</td><td>342</td><td>3</td><td>0.9%</td></tr>
+                            <tr><td>Direct</td><td>523</td><td>21</td><td>4.0%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="a-tok-side">
+                    <span class="a-tok">--fs-caption</span>
+                    <div class="a-tok-meta">11px · и для th, и для td</div>
+                    <div class="a-tok-meta">th = semibold, td = regular</div>
+                </div>
+            </div>
+
+            <div class="a-row">
+                <div class="a-content">
+                    <div class="metric-demo">
+                        <div class="l">Медиана сессии</div>
+                        <div class="v-num">31s</div>
+                    </div>
+                </div>
+                <div class="a-tok-side">
+                    <div><span class="a-tok">--fs-h2</span> 18px / semibold</div>
+                    <div class="a-tok-meta">+ <span class="a-tok" style="background:var(--c-channel-social)">--fs-caption</span> label</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <h2 class="doc">7. Фикс шрифта на формах</h2>
+    <p class="doc">Form-элементы (<code>&lt;button&gt;</code>, <code>&lt;input&gt;</code>, <code>&lt;select&gt;</code>, <code>&lt;textarea&gt;</code>) <strong>не наследуют</strong> <code>font-family</code> от <code>body</code> в большинстве браузеров — применяется системный sans-serif. На моноширинном дашборде это смотрится чужеродно: всё вокруг — Ubuntu Mono, а кнопки — Helvetica.</p>
+
+    <div class="fix-demo">
+        <div class="fix-pair">
+            <div class="fix-side">
+                <div class="lab">Без фикса (баг)</div>
+                <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap">
+                    <button class="demo-btn-bug">day</button>
+                    <button class="demo-btn-bug">week</button>
+                    <button class="demo-btn-bug">month</button>
+                </div>
+                <div style="font-size:var(--fs-caption);color:var(--tx-secondary);margin-top:var(--sp-2)">↑ system sans-serif (Helvetica/Arial)</div>
+            </div>
+            <div class="fix-side">
+                <div class="lab">С фиксом</div>
+                <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap">
+                    <button class="demo-btn-fixed">day</button>
+                    <button class="demo-btn-fixed">week</button>
+                    <button class="demo-btn-fixed">month</button>
+                </div>
+                <div style="font-size:var(--fs-caption);color:var(--tx-secondary);margin-top:var(--sp-2)">↑ Ubuntu Mono — наследуется от body</div>
+            </div>
+        </div>
+
+        <p style="font-size:var(--fs-body);color:var(--tx-primary);margin-top:var(--sp-3)"><strong>Фикс — одна строка CSS:</strong></p>
+        <pre style="background:var(--bg-inverse);color:var(--tx-ondark);padding:var(--sp-3);border-radius:var(--r-lg);font-size:var(--fs-caption);font-family:var(--ff-mono);margin-top:var(--sp-2)">* { font-family: inherit; }</pre>
+        <p style="font-size:var(--fs-body);color:var(--tx-secondary);margin-top:var(--sp-2)">Универсальный селектор заставляет ВСЕ элементы наследовать <code>font-family</code> от родителя. <code>body</code> выставляет Ubuntu Mono → каскадно применяется ко всему, включая form-элементы.</p>
+    </div>
+
+    <h2 class="doc">8. Применение в новом проекте</h2>
+    <p class="doc">Чтобы развернуть эту шкалу в любом другом дашборде — три шага:</p>
+
+    <div class="apply">
+        <div class="step"><span class="num">1</span>Подключить шрифт в <code>&lt;head&gt;</code></div>
+        <pre>&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;
+&lt;link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet"&gt;</pre>
+
+        <div class="step"><span class="num">2</span>Скопировать <code>:root</code> блок в <code>&lt;style&gt;</code></div>
+        <pre>:root {
+    --ff-mono: 'Ubuntu Mono', monospace;
+    --fw-regular:  400;
+    --fw-semibold: 600;
+    --fw-bold:     700;
+    --ls-label: 0.5px;
+    --fs-kpi:        28px;
+    --fs-h2:         18px;
+    --fs-h3:         14px;
+    --fs-body:       13px;
+    --fs-caption:    11px;
+    --fs-chart-meta: 10px;
+
+    /* v1.1: heading spacing */
+    --mt-h2: 44px;        /* 250% × 18 = 45 → 44 */
+    --mt-h3: 24px;        /* 175% × 14 = 24.5 → 24 */
+    --mt-h4: 16px;        /* 125% × 13 = 16.25 → 16 */
+    --tight-pair: 4px;
+    --content-gap: 8px;
+}
+* { font-family: inherit; }
+body { font-family: var(--ff-mono); line-height: 1.25; }
+
+h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--mt-h2) 0 0; line-height: 1.25; }
+h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: var(--mt-h3) 0 0; line-height: 1.25; }
+h4 { font-size: var(--fs-body); font-weight: var(--fw-semibold); margin: var(--mt-h4) 0 0; color: var(--tx-secondary); line-height: 1.25; }
+
+.meta { font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.25; margin: 0 0 var(--content-gap); }
+h2 + .meta, h3 + .meta, h4 + .meta { margin-top: var(--tight-pair); }</pre>
+
+        <div class="step"><span class="num">3</span>Применять через <code>var(--...)</code></div>
+        <pre>h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); }
+.kpi-value { font-size: var(--fs-kpi); font-weight: var(--fw-bold); }
+.kpi-label { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--ls-label); }
+table th { font-size: var(--fs-caption); font-weight: var(--fw-semibold); }
+table td { font-size: var(--fs-caption); }</pre>
+
+        <div class="step"><span class="num">4</span>Для Chart.js — поднять глобальные defaults</div>
+        <pre>Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+Chart.defaults.font.size = 10;  // = --fs-chart-meta (оси и легенда)
+Chart.defaults.plugins.datalabels = Chart.defaults.plugins.datalabels || {};
+Chart.defaults.plugins.datalabels.font = { size: 11 };  // = --fs-caption</pre>
+    </div>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Typography v1.1 · 2026-04-29</p>
+
+    <script>
+    // Chart.js defaults — те же значения, что в реальном дашборде
+    Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+    Chart.defaults.color = '#636E72';
+    Chart.defaults.font.size = 10; // --fs-chart-meta (оси и легенда)
+    Chart.defaults.scale.grid.color = 'rgba(0,0,0,0.06)';
+    Chart.defaults.plugins.legend.labels.font = { size: 10 };
+    Chart.defaults.plugins.datalabels = Chart.defaults.plugins.datalabels || {};
+    Chart.defaults.plugins.datalabels.font = { size: 11 }; // --fs-caption (datalabels крупнее обвязки)
+
+    new Chart(document.getElementById('chart-demo'), {
+        type: 'bar',
+        data: {
+            labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+            datasets: [
+                { label: 'home',     backgroundColor: '#636E72', data: [80, 95, 92, 110, 125] },
+                { label: 'product',  backgroundColor: '#6C5CE7', data: [60, 72, 68, 85, 96] },
+                { label: 'ATC',      backgroundColor: '#FDCB6E', data: [12, 14, 11, 18, 22] },
+                { label: 'purchase', backgroundColor: '#00B894', data: [1, 2, 1, 3, 4] }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                datalabels: { anchor: 'end', align: 'top', formatter: v => v > 0 ? v : '' }
+            },
+            scales: { y: { beginAtZero: true, grace: '15%' } }
+        }
+    });
+    </script>
+</body>
+</html>

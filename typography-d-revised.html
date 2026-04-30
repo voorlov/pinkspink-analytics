@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pinkspink — Вариант D (уточнённый)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            --c-channel-social: #6C5CE7;
+            --c-channel-paid:   #00B894;
+            --c-channel-direct: #636E72;
+            --c-channel-organic:#0984E3;
+            --c-funnel-product: #6C5CE7;
+            --c-funnel-atc:     #FDCB6E;
+            --c-funnel-purchase:#00B894;
+            --c-growth:    #00B894;
+            --c-decline:   #E17055;
+            --tx-primary:  #2D3436;
+            --tx-secondary:#636E72;
+            --tx-muted:    #B2BEC3;
+            --tx-ondark:   #FFFFFF;
+            --bg-page:     #FAFAFA;
+            --bg-card:     #FFFFFF;
+            --bg-muted:    #F0F0F0;
+            --bg-border:   #DFE6E9;
+            --bg-divider:  #F0F0F0;
+            --bg-inverse:  #2D3436;
+            --bg-hover:    #F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ff-mono: 'Ubuntu Mono', monospace;
+
+            /* === ВАРИАНТ D — 6 токенов, твои правки === */
+            --fs-kpi:        28px;
+            --fs-h2:         18px;  /* было 20, теперь 18 */
+            --fs-h3:         14px;
+            --fs-body:       13px;
+            --fs-caption:    11px;
+            --fs-chart-meta: 10px;  /* НОВОЕ: оси и легенда */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1400px; margin: 0 auto; }
+        h1.doc { font-size: 28px; font-weight: 700; margin-bottom: var(--sp-2); }
+        h2.doc { font-size: 18px; font-weight: 600; margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc { font-size: 14px; font-weight: 700; margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc  { font-size: 13px; color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: 11px; background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+
+        /* Diff cards */
+        .diff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        .diff-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); }
+        .diff-card .lab { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tx-secondary); }
+        .diff-card .pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--sp-2); margin: var(--sp-2) 0; }
+        .diff-card .arrow { color: var(--tx-muted); font-size: 16px; }
+        .diff-card .before, .diff-card .after { padding: var(--sp-2); border-radius: var(--r-md); text-align: center; }
+        .diff-card .before { background: var(--bg-muted); color: var(--tx-secondary); }
+        .diff-card .after  { background: rgba(108, 92, 231, 0.1); color: var(--tx-primary); }
+        .diff-card .desc { font-size: 11px; color: var(--tx-secondary); }
+        .diff-card.removed .after { background: rgba(225, 112, 85, 0.1); }
+        .diff-card.removed .desc strong { color: var(--c-decline); }
+
+        /* Chart preview grid */
+        .chart-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 1100px) { .chart-preview-grid { grid-template-columns: 1fr; } }
+        .chart-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); }
+        .chart-card .h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--sp-2); }
+        .chart-card .name { font-size: 14px; font-weight: 700; }
+        .chart-card .meta { font-size: 11px; color: var(--tx-secondary); }
+        .chart-card .canvas-wrap { position: relative; height: 280px; }
+        .chart-card.recommended { border: 2px solid var(--c-channel-social); }
+        .chart-card.recommended .name::after { content: ' · РЕК.'; color: var(--c-channel-social); font-size: 10px; vertical-align: middle; }
+
+        /* Token cards (final scale) */
+        .tok-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 900px) { .tok-grid { grid-template-columns: 1fr; } }
+        .tok-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; }
+        .tok-head { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3) var(--sp-4); display: flex; justify-content: space-between; align-items: baseline; }
+        .tok-head .name { font-size: 14px; font-weight: 700; }
+        .tok-head .meta { font-size: 11px; color: var(--tx-muted); }
+        .tok-sample { padding: var(--sp-4); border-bottom: 1px solid var(--bg-divider); min-height: 70px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--sp-3); background: var(--bg-page); }
+        .tok-uses { padding: var(--sp-3) var(--sp-4); font-size: 12px; color: var(--tx-secondary); line-height: 1.5; }
+        .tok-uses ul { margin-left: var(--sp-4); }
+
+        /* Sample classes */
+        .s-kpi     { font-size: var(--fs-kpi);     font-weight: var(--fw-bold); }
+        .s-h2      { font-size: var(--fs-h2);      font-weight: var(--fw-semibold); }
+        .s-h2-bold { font-size: var(--fs-h2);      font-weight: var(--fw-bold); }
+        .s-h3      { font-size: var(--fs-h3);      font-weight: var(--fw-semibold); }
+        .s-body    { font-size: var(--fs-body);    font-weight: var(--fw-regular); }
+        .s-caption { font-size: var(--fs-caption); font-weight: var(--fw-regular); }
+        .s-th      { font-size: var(--fs-caption); font-weight: var(--fw-semibold); background: var(--bg-inverse); color: var(--tx-ondark); padding: 4px 8px; border-radius: var(--r-md); }
+        .s-chart   { font-size: var(--fs-chart-meta); color: var(--tx-secondary); }
+
+        /* Font issue demo */
+        .font-bug { background: rgba(225, 112, 85, 0.08); border: 1px dashed var(--c-decline); border-radius: var(--r-xl); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .font-bug h3 { font-size: 14px; font-weight: 700; color: var(--c-decline); margin-bottom: var(--sp-2); }
+        .font-bug-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin: var(--sp-2) 0; }
+        .font-bug-side { padding: var(--sp-3); background: var(--bg-card); border-radius: var(--r-lg); }
+        .font-bug-lab { font-size: 10px; text-transform: uppercase; color: var(--tx-secondary); margin-bottom: var(--sp-1); }
+        .demo-btn-bug    { padding: 4px 12px; border-radius: 4px; font-size: 13px; background: #F0F0F0; color: #636E72; border: none; cursor: pointer; font-family: -apple-system, sans-serif; }
+        .demo-btn-fixed  { padding: 4px 12px; border-radius: 4px; font-size: 13px; background: #F0F0F0; color: #636E72; border: none; cursor: pointer; font-family: 'Ubuntu Mono', monospace; }
+
+        /* Final accept */
+        .accept { background: linear-gradient(135deg, var(--c-channel-social), #00B894); color: var(--tx-ondark); padding: var(--sp-5); border-radius: var(--r-xl); margin-top: var(--sp-5); }
+        .accept h2 { font-size: 18px; font-weight: 700; margin-bottom: var(--sp-2); border: none; padding: 0; color: var(--tx-ondark); }
+        .accept p { color: var(--tx-ondark); opacity: 0.95; font-size: 13px; line-height: 1.5; }
+        .accept code { background: rgba(255,255,255,0.2); color: var(--tx-ondark); }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Вариант D — твои уточнения к C</h1>
+    <p class="doc">Применил твои правки к варианту C: <strong>h2 / brand / metric</strong> сливаются на <strong>18px</strong> (не 20), <strong>h1 убираем</strong> (раз вкладки и так понятно показывают где ты), <strong>оси и легенда графиков</strong> вынесены в отдельный токен <code>--fs-chart-meta</code> (мельче, чем datalabels). Плюс нашёл баг с шрифтом на кнопках — внизу.</p>
+
+    <h2 class="doc">Что меняется (4 точки)</h2>
+
+    <div class="diff-grid">
+        <div class="diff-card removed">
+            <div class="lab">Заголовок страницы (h1)</div>
+            <div class="pair">
+                <div class="before"><span style="font-size:32px;font-weight:700">Аналитика</span></div>
+                <div class="arrow">→</div>
+                <div class="after" style="display:flex;align-items:center;justify-content:center;color:var(--c-decline)">убран</div>
+            </div>
+            <div class="desc"><strong>−1 токен.</strong> Элемент <code>&lt;h1&gt;</code> удаляется из шапки. Активная вкладка и так видна по подсветке таб-кнопки.</div>
+        </div>
+
+        <div class="diff-card">
+            <div class="lab">h2 / brand / metric → 18px</div>
+            <div class="pair">
+                <div class="before">
+                    <span style="font-size:20px;font-weight:600;display:block">Воронки</span>
+                    <span style="font-size:16px;font-weight:700;display:block">Pinkspink</span>
+                    <span style="font-size:18px;font-weight:600;display:block">31s</span>
+                </div>
+                <div class="arrow">→</div>
+                <div class="after">
+                    <span style="font-size:18px;font-weight:600;display:block">Воронки</span>
+                    <span style="font-size:18px;font-weight:700;display:block">Pinkspink</span>
+                    <span style="font-size:18px;font-weight:600;display:block">31s</span>
+                </div>
+            </div>
+            <div class="desc">Все три «средне-крупных» элемента приходят к 18px. Section head <strong>−2px</strong>, logo <strong>+2px</strong>, metric <strong>0</strong>.</div>
+        </div>
+
+        <div class="diff-card">
+            <div class="lab">Подписи осей и легенда</div>
+            <div class="pair">
+                <div class="before"><span style="font-size:11px">W04 W05 W06<br>120 145 132</span></div>
+                <div class="arrow">→</div>
+                <div class="after"><span style="font-size:10px">W04 W05 W06<br>120 145 132</span></div>
+            </div>
+            <div class="desc"><strong>11 → 10px.</strong> Освобождает место для самих данных. Datalabels (значения) остаются на 11px → выделяются.</div>
+        </div>
+
+        <div class="diff-card">
+            <div class="lab">.meta, table td, datalabels, agg-tag</div>
+            <div class="pair">
+                <div class="before"><span style="font-size:12px">Период · 1 234 · 12.4%</span></div>
+                <div class="arrow">→</div>
+                <div class="after"><span style="font-size:13px">Период</span> · <span style="font-size:11px">1 234 · 12.4%</span></div>
+            </div>
+            <div class="desc">.meta 12→13 (как body), td/tag/datalabel 12-10→11 (как caption). То же, что в C.</div>
+        </div>
+    </div>
+
+    <h2 class="doc">Подписи осей — 9px vs 10px vs 11px (выбери)</h2>
+    <p class="doc">Три варианта рядом. Один и тот же график, разный размер только у осей и легенды (datalabels=11 везде одинаково). Смотри глазами — где осей становится «не съедают пространство», но ещё читаются.</p>
+
+    <div class="chart-preview-grid">
+        <div class="chart-card">
+            <div class="h">
+                <span class="name">9px</span>
+                <span class="meta">очень компактно</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="chart-9"></canvas></div>
+        </div>
+        <div class="chart-card recommended">
+            <div class="h">
+                <span class="name">10px</span>
+                <span class="meta">баланс</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="chart-10"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="h">
+                <span class="name">11px</span>
+                <span class="meta">текущий C</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="chart-11"></canvas></div>
+        </div>
+    </div>
+
+    <h2 class="doc">Финальная шкала — 6 токенов</h2>
+
+    <div class="tok-grid">
+        <div class="tok-card">
+            <div class="tok-head"><span class="name">--fs-kpi</span><span class="meta">28px / bold</span></div>
+            <div class="tok-sample"><span class="s-kpi">12 845</span></div>
+            <div class="tok-uses"><strong>Главное KPI-число</strong> в карточках 2×2 (.kpi-value). Без изменений.</div>
+        </div>
+
+        <div class="tok-card">
+            <div class="tok-head"><span class="name">--fs-h2</span><span class="meta">18px / semibold (logo: bold)</span></div>
+            <div class="tok-sample">
+                <span class="s-h2">Воронки</span>
+                <span class="s-h2-bold">Pinkspink</span>
+                <span class="s-h2">31s</span>
+            </div>
+            <div class="tok-uses">
+                <strong>Заголовки секций</strong> внутри вкладок (Воронки, Сводка) <span style="color:var(--c-decline)">было 20</span><br>
+                <strong>Логотип Pinkspink</strong> в шапке <span style="color:var(--c-decline)">было 16</span><br>
+                <strong>Числа в .metric .value</strong> (3-кол. сетка слайдера) <span style="color:var(--tx-muted)">было 18, не меняется</span><br>
+                <strong>KPI value в .kpi-grid</strong> (Сводка) <span style="color:var(--c-decline)">было 20</span>
+            </div>
+        </div>
+
+        <div class="tok-card">
+            <div class="tok-head"><span class="name">--fs-h3</span><span class="meta">14px / semibold</span></div>
+            <div class="tok-sample"><span class="s-h3">Динамика мобильной воронки</span></div>
+            <div class="tok-uses"><strong>Заголовки блоков</strong> внутри карточек (.cell), .title-area. Без изменений.</div>
+        </div>
+
+        <div class="tok-card">
+            <div class="tok-head"><span class="name">--fs-body</span><span class="meta">13px / regular</span></div>
+            <div class="tok-sample"><span class="s-body">Сессии: 12 845 · бенч 4w +12.4%</span></div>
+            <div class="tok-uses">
+                Body-текст, h4-подзаголовки, <strong>.meta</strong> (даты <span style="color:var(--c-decline)">было 12</span>),
+                .filters label, .grain-btn, .delta, .country-row.
+            </div>
+        </div>
+
+        <div class="tok-card">
+            <div class="tok-head"><span class="name">--fs-caption</span><span class="meta">11px / regular (th: semibold)</span></div>
+            <div class="tok-sample">
+                <span class="s-th">КАНАЛ</span>
+                <span class="s-caption">1 234 · 4.5%</span>
+            </div>
+            <div class="tok-uses">
+                <strong>&lt;th&gt; и &lt;td&gt;</strong> в таблицах <span style="color:var(--c-decline)">td было 12</span>,
+                .kpi-label (UPPERCASE), .kpi-bench, .header-meta,
+                <strong>datalabels</strong> на графиках <span style="color:var(--c-decline)">было 10</span>,
+                .agg-tag <span style="color:var(--c-decline)">было 10</span>.
+            </div>
+        </div>
+
+        <div class="tok-card">
+            <div class="tok-head"><span class="name">--fs-chart-meta</span><span class="meta">10px / regular</span></div>
+            <div class="tok-sample">
+                <span class="s-chart">W04 · W05 · W06 · W07 · W08 · 120 · 145 · 132</span>
+            </div>
+            <div class="tok-uses">
+                <strong>НОВЫЙ.</strong> Подписи осей (X tick labels, Y tick labels) и текст легенды на графиках.
+                <span style="color:var(--c-decline)">Раньше осей: 11, легенды: 12 (defaults Chart.js).</span>
+                Datalabels остаются на 11 → значения чётко выделяются над «обвязкой».
+            </div>
+        </div>
+    </div>
+
+    <h2 class="doc">Баг шрифта на кнопках — нашёл причину</h2>
+
+    <div class="font-bug">
+        <h3>⚠ form-элементы не наследуют font-family от body</h3>
+        <p class="doc">В дашборде <code>body</code> объявлен с <code>font-family: 'Ubuntu Mono'</code>. Но <code>&lt;button&gt;</code>, <code>&lt;input&gt;</code>, <code>&lt;select&gt;</code> — это «replaced elements», у них свой user-agent шрифт (системный sans-serif). Вот почему кнопки day/week/month и табы выглядят «не так» — это Helvetica/Arial, а не Ubuntu Mono.</p>
+
+        <div class="font-bug-pair">
+            <div class="font-bug-side">
+                <div class="font-bug-lab">Сейчас (баг)</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button class="demo-btn-bug">day</button>
+                    <button class="demo-btn-bug">week</button>
+                    <button class="demo-btn-bug">month</button>
+                </div>
+                <div style="font-size:11px;color:var(--tx-secondary);margin-top:8px">↑ system sans-serif (Helvetica/Arial)</div>
+            </div>
+            <div class="font-bug-side">
+                <div class="font-bug-lab">После фикса</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button class="demo-btn-fixed">day</button>
+                    <button class="demo-btn-fixed">week</button>
+                    <button class="demo-btn-fixed">month</button>
+                </div>
+                <div style="font-size:11px;color:var(--tx-secondary);margin-top:8px">↑ Ubuntu Mono (как остальное)</div>
+            </div>
+        </div>
+
+        <p class="doc" style="margin-top:var(--sp-2);margin-bottom:0">Фикс — одна строка в CSS: <code>* { font-family: inherit; }</code> или <code>button, input, select { font-family: inherit; }</code>. Применю одновременно с типографикой.</p>
+    </div>
+
+    <div class="accept">
+        <h2>Принимаем D + 10px для осей?</h2>
+        <p>Если ОК — скажи «<strong>D, оси 10px</strong>» (или другую цифру 9 / 10 / 11). После этого: <code>TOKENS["type"]["scale"]</code> сожмётся до 6 ключей (<code>kpi · h2 · h3 · body · caption · chart-meta</code>), <code>&lt;h1&gt;</code> уйдёт из дашборда, фикс шрифта кнопок встанет в <code>*</code>-селектор, Chart.defaults подхватит новый <code>--fs-chart-meta</code> для осей и легенды. Затем пересоберу <code>report_week.html</code> и <code>styleguide.html</code>.</p>
+    </div>
+
+    <script>
+    Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+    Chart.defaults.color = '#636E72';
+    Chart.defaults.scale.grid.color = 'rgba(0,0,0,0.06)';
+    Chart.defaults.plugins.datalabels = Chart.defaults.plugins.datalabels || {};
+
+    function chartWith(canvasId, axisSize, datalabelSize) {
+        return new Chart(document.getElementById(canvasId), {
+            type: 'bar',
+            data: {
+                labels: ['W04', 'W05', 'W06', 'W07', 'W08'],
+                datasets: [
+                    { label: 'home',     backgroundColor: '#636E72', data: [80, 95, 92, 110, 125] },
+                    { label: 'product',  backgroundColor: '#6C5CE7', data: [60, 72, 68, 85, 96] },
+                    { label: 'ATC',      backgroundColor: '#FDCB6E', data: [12, 14, 11, 18, 22] },
+                    { label: 'purchase', backgroundColor: '#00B894', data: [1, 2, 1, 3, 4] }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: axisSize } } },
+                    datalabels: {
+                        anchor: 'end', align: 'top',
+                        font: { size: datalabelSize },
+                        formatter: v => v > 0 ? v : ''
+                    }
+                },
+                scales: {
+                    x: { ticks: { font: { size: axisSize } } },
+                    y: { beginAtZero: true, grace: '15%', ticks: { font: { size: axisSize } } }
+                }
+            }
+        });
+    }
+
+    chartWith('chart-9',  9,  11);
+    chartWith('chart-10', 10, 11);
+    chartWith('chart-11', 11, 11);
+    </script>
+</body>
+</html>

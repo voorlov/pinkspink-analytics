@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Tables · Pinkspink Design System v1.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* === Typography v1.1 === */
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ls-label: 0.5px;
+            --fs-kpi: 28px; --fs-h2: 18px; --fs-h3: 14px;
+            --fs-body: 13px; --fs-caption: 11px; --fs-chart-meta: 10px;
+            --mt-h2: 44px; --mt-h3: 24px; --mt-h4: 16px;
+            --tight-pair: 4px; --content-gap: 8px;
+
+            /* === Controls v1.0 === */
+            --h-control: 28px; --r-control: 2px;
+
+            /* === Tables v1.0 === */
+            --row-h-table: 28px;                                              /* = --h-control */
+            --max-rows-table: 20;
+            --max-h-table: calc(var(--row-h-table) * (var(--max-rows-table) + 1));  /* 588px */
+
+            /* Цвета */
+            --c-channel-social: #6C5CE7;
+            --c-growth: #00B894; --c-decline: #E17055; --c-highlight: #6C5CE7;
+            --tx-primary:#2D3436; --tx-secondary:#636E72; --tx-muted:#B2BEC3; --tx-ondark:#FFFFFF;
+            --bg-page:#FAFAFA; --bg-card:#FFFFFF; --bg-muted:#F0F0F0; --bg-border:#DFE6E9; --bg-divider:#F0F0F0; --bg-inverse:#2D3436; --bg-inverse2:#636E72; --bg-hover:#F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1300px; margin: 0 auto; line-height: 1.25; }
+
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); line-height: 1.25; }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--mt-h2) 0 0; line-height: 1.25; }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--mt-h3) 0 0; line-height: 1.25; }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); margin: var(--tight-pair) 0 var(--content-gap); line-height: 1.25; }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+        pre { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; font-family: var(--ff-mono); margin: var(--sp-2) 0 var(--sp-3); }
+        .badge { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+
+        /* === ФИНАЛЬНЫЕ компоненты Tables v1.0 === */
+
+        /* v1.1 — naked: фон/скругление/тень приходят от внешнего .block (или другой карточки-обёртки) */
+        .data-table-wrap {
+            max-height: var(--max-h-table);
+            overflow-y: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: var(--bg-inverse);
+            color: var(--tx-ondark);
+            height: var(--row-h-table);
+            padding: 0 var(--sp-3);
+            font-size: var(--fs-caption);
+            font-weight: var(--fw-semibold);
+            text-align: left;
+            line-height: 1.25;
+        }
+
+        .data-table td {
+            height: var(--row-h-table);
+            padding: 0 var(--sp-3);
+            font-size: var(--fs-caption);
+            line-height: 1.25;
+            border-bottom: 1px solid var(--bg-divider);
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover { background: var(--bg-hover); }
+        .data-table .highlight {
+            font-weight: var(--fw-bold);
+            color: var(--c-highlight);
+        }
+
+        .data-table-wrap::-webkit-scrollbar { width: 6px; }
+        .data-table-wrap::-webkit-scrollbar-track { background: transparent; }
+        .data-table-wrap::-webkit-scrollbar-thumb {
+            background: var(--tx-muted);
+            border-radius: var(--r-control);
+        }
+
+        .delta-up   { color: var(--c-growth); }
+        .delta-down { color: var(--c-decline); }
+
+        /* Token table */
+        .tk-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-card); margin-bottom: var(--sp-4); font-size: var(--fs-caption); }
+        .tk-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-2) var(--sp-3); text-align: left; font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: var(--ls-label); }
+        .tk-table td { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--bg-divider); vertical-align: top; }
+        .tk-table tr:last-child td { border-bottom: none; }
+        .tk-table .desc { color: var(--tx-secondary); }
+
+        /* Layout */
+        .summary-box { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .summary-box ul { font-size: var(--fs-body); color: var(--tx-primary); line-height: 1.7; margin-left: var(--sp-4); }
+        .apply { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .apply .step { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: var(--sp-3) 0 var(--sp-2); }
+        .apply .step .num { background: var(--c-channel-social); color: var(--tx-ondark); padding: 2px 8px; border-radius: var(--r-control); font-size: var(--fs-caption); margin-right: var(--sp-2); }
+
+        .case-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-3); }
+        .case-card .case-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--sp-2); }
+        .case-card .case-name { font-size: var(--fs-h3); font-weight: var(--fw-bold); }
+        .case-card .case-meta { font-size: var(--fs-caption); color: var(--tx-secondary); }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Tables <span class="badge">v1.1</span></h1>
+    <p class="meta-line">Pinkspink Design System · Таблицы · Auto-fit + scroll-on-overflow · 2026-04-29</p>
+    <p class="doc">Спецификация таблиц. Auto-fit высота по контенту до 20 строк. Свыше — внутренний scroll со sticky-header. Высота строки 28px = высоте контролов. <strong>v1.1:</strong> <code>.data-table-wrap</code> — naked, карточка приходит от <code>.block</code>-обёртки (см. Blocks v1.1). Полное соответствие <a href="../typography/" style="color:var(--c-channel-social)">Typography v1.1</a>, <a href="../controls/" style="color:var(--c-channel-social)">Controls v1.0</a>, <a href="../blocks/" style="color:var(--c-channel-social)">Blocks v1.1</a>. Источник правды — <code>tokens.json</code>.</p>
+
+    <h2 class="doc">1. Базовые токены</h2>
+    <table class="tk-table">
+        <thead><tr><th>Токен</th><th>Значение</th><th>Что это</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><code>--row-h-table</code></td>
+                <td>28px (= <code>--h-control</code>)</td>
+                <td class="desc">Высота строки. Совпадает с высотой контролов — таблицы и фильтры пиксель-в-пиксель.</td>
+            </tr>
+            <tr>
+                <td><code>--max-rows-table</code></td>
+                <td>20</td>
+                <td class="desc">Максимум видимых строк до появления внутреннего scroll.</td>
+            </tr>
+            <tr>
+                <td><code>--max-h-table</code></td>
+                <td>588px (= 21 × 28)</td>
+                <td class="desc">Вычисляемая max-height обёртки. (20 строк + 1 header) × 28.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <pre>:root {
+    --row-h-table: 28px;
+    --max-rows-table: 20;
+    --max-h-table: calc(var(--row-h-table) * (var(--max-rows-table) + 1));  /* 588px */
+}</pre>
+
+    <h2 class="doc">2. Поведение — три случая</h2>
+
+    <h3 class="doc">A · Короткая таблица (3 строки)</h3>
+    <p class="doc">Высота по контенту: 4 × 28 = 112px. Никаких пустот, никакого scroll.</p>
+
+    <div class="case-card">
+        <div class="case-head">
+            <span class="case-name">Каналы · 3 строки</span>
+            <span class="case-meta">высота 112px (4 × 28)</span>
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Канал</th><th>Сессии</th><th>ATC</th><th>Конверсия</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Social</td><td>1 234</td><td>56</td><td class="highlight">4.5%</td></tr>
+                    <tr><td>Paid</td><td>342</td><td>3</td><td>0.9%</td></tr>
+                    <tr><td>Direct</td><td>523</td><td>21</td><td class="highlight">4.0%</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h3 class="doc">B · Средняя таблица (10 строк, под лимитом)</h3>
+    <p class="doc">Не превышает 20 строк → без scroll. Высота 11 × 28 = 308px.</p>
+
+    <div class="case-card">
+        <div class="case-head">
+            <span class="case-name">Топ стран · 10 строк</span>
+            <span class="case-meta">высота 308px (11 × 28)</span>
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Страна</th><th>Сессии</th><th>ATC</th><th>Конверсия</th></tr>
+                </thead>
+                <tbody id="medium-rows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <h3 class="doc">C · Длинная таблица (30 строк, выше лимита)</h3>
+    <p class="doc">Превышает 20 строк → max-height 588px + внутренний scroll. <strong>Попробуй прокрутить</strong> — заголовки колонок остаются sticky наверху.</p>
+
+    <div class="case-card">
+        <div class="case-head">
+            <span class="case-name">Источники · 30 строк</span>
+            <span class="case-meta">max-height 588px · sticky thead · scroll внутри</span>
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Source</th><th>Сессии</th><th>ATC</th><th>Покупки</th></tr>
+                </thead>
+                <tbody id="long-rows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <h2 class="doc">3. Анатомия — структура и CSS</h2>
+
+    <p class="doc">Все таблицы — короткие или длинные — используют одну разметку:</p>
+
+    <pre>&lt;div class="data-table-wrap"&gt;
+    &lt;table class="data-table"&gt;
+        &lt;thead&gt;
+            &lt;tr&gt;
+                &lt;th&gt;Колонка 1&lt;/th&gt;
+                &lt;th&gt;Колонка 2&lt;/th&gt;
+            &lt;/tr&gt;
+        &lt;/thead&gt;
+        &lt;tbody&gt;
+            &lt;tr&gt;
+                &lt;td&gt;Данные&lt;/td&gt;
+                &lt;td class="highlight"&gt;Акцент&lt;/td&gt;
+            &lt;/tr&gt;
+        &lt;/tbody&gt;
+    &lt;/table&gt;
+&lt;/div&gt;</pre>
+
+    <p class="doc"><strong>Полный CSS</strong> для копирования:</p>
+
+    <pre>.data-table-wrap {
+    max-height: var(--max-h-table);              /* 588px */
+    overflow-y: auto;
+    /* Naked: фон/скругление/тень приходят от .block-обёртки */
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    position:    sticky;                          /* sticky header при scroll */
+    top:         0;
+    z-index:     1;
+    background:  var(--bg-inverse);
+    color:       var(--tx-ondark);
+    height:      var(--row-h-table);              /* 28px */
+    padding:     0 var(--sp-3);                   /* horizontal только */
+    font-size:   var(--fs-caption);               /* 11px */
+    font-weight: var(--fw-semibold);              /* 600 */
+    text-align:  left;
+    line-height: 1.25;
+}
+
+.data-table td {
+    height:         var(--row-h-table);           /* 28px */
+    padding:        0 var(--sp-3);
+    font-size:      var(--fs-caption);            /* 11px */
+    line-height:    1.25;
+    border-bottom:  1px solid var(--bg-divider);
+    vertical-align: middle;                       /* центрирование */
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover { background: var(--bg-hover); }
+.data-table .highlight {
+    font-weight: var(--fw-bold);
+    color:       var(--c-highlight);
+}
+
+/* Тонкий scrollbar */
+.data-table-wrap::-webkit-scrollbar { width: 6px; }
+.data-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.data-table-wrap::-webkit-scrollbar-thumb {
+    background:    var(--tx-muted);
+    border-radius: var(--r-control);
+}</pre>
+
+    <h2 class="doc">4. Принципы</h2>
+    <div class="summary-box">
+        <ul>
+            <li><strong>Auto-fit</strong> — таблица сама определяет размер контейнера до 20 строк.</li>
+            <li><strong>Внутренний scroll</strong> при превышении — заголовки sticky.</li>
+            <li><strong>Компактность по дефолту</strong> — никаких opt-in modifier'ов (<code>.tbl-compact</code> упразднён).</li>
+            <li><strong>Высота строки 28px = высоте контролов</strong> — единый ритм через всю UI.</li>
+            <li><strong>Тонкий scrollbar 6px</strong> — не съедает место.</li>
+            <li><strong>Никаких grid-cell обёрток</strong> с фиксированной высотой — обычный flow.</li>
+        </ul>
+    </div>
+
+    <h2 class="doc">5. Соответствие другим разделам</h2>
+    <div class="summary-box">
+        <table class="tk-table" style="margin: 0">
+            <thead><tr><th>Раздел</th><th>Совместимость</th><th>Комментарий</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>Typography v1.1</strong></td>
+                    <td class="desc">✓ полная</td>
+                    <td class="desc">Размеры из <code>--fs-caption</code> (11px), line-height 1.25, font-family наследуется через body.</td>
+                </tr>
+                <tr>
+                    <td><strong>Controls v1.0</strong></td>
+                    <td class="desc">✓ полная</td>
+                    <td class="desc"><code>--row-h-table</code> = <code>--h-control</code> = 28px. Таблицы и контролы (<code>.btn</code>, <code>.btn-sq</code>, <code>.check</code>) на одной высотной шкале.</td>
+                </tr>
+                <tr>
+                    <td><strong>Charts v1.0</strong></td>
+                    <td class="desc">✓ полная</td>
+                    <td class="desc">Tables и charts живут в разных контейнерах, не пересекаются.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="doc">6. Применение в новом проекте</h2>
+    <div class="apply">
+        <div class="step"><span class="num">1</span>Применить Typography v1.1 + Controls v1.0</div>
+        <p class="doc">См. соседние папки <code>typography/</code> и <code>controls/</code>. Без них таблицы не получат правильный шрифт и высотный ритм.</p>
+
+        <div class="step"><span class="num">2</span>Добавить токены таблиц в <code>:root</code></div>
+        <pre>:root {
+    --row-h-table: 28px;
+    --max-rows-table: 20;
+    --max-h-table: calc(var(--row-h-table) * (var(--max-rows-table) + 1));
+}</pre>
+
+        <div class="step"><span class="num">3</span>Скопировать CSS из секции «Анатомия»</div>
+
+        <div class="step"><span class="num">4</span>Использовать структуру</div>
+        <pre>&lt;div class="data-table-wrap"&gt;
+    &lt;table class="data-table"&gt;
+        &lt;thead&gt;...&lt;/thead&gt;
+        &lt;tbody&gt;...&lt;/tbody&gt;
+    &lt;/table&gt;
+&lt;/div&gt;</pre>
+        <p class="doc">Все таблицы — короткие или длинные — используют одну и ту же разметку. Высота определяется автоматически: до 20 строк по контенту, дальше scroll.</p>
+    </div>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Tables v1.0 · 2026-04-29</p>
+
+    <script>
+    // Безопасное создание строк через DOM API (без innerHTML)
+    function makeRow(cells, highlightLast) {
+        const tr = document.createElement('tr');
+        cells.forEach((c, i) => {
+            const td = document.createElement('td');
+            td.textContent = c;
+            if (i === cells.length - 1 && highlightLast) {
+                const numeric = parseFloat(String(c));
+                if (numeric > 4) td.className = 'highlight';
+            }
+            tr.appendChild(td);
+        });
+        return tr;
+    }
+
+    function fillTbody(id, rows, highlightLast) {
+        const tbody = document.getElementById(id);
+        if (!tbody) return;
+        rows.forEach(cells => tbody.appendChild(makeRow(cells, highlightLast)));
+    }
+
+    const countries = [
+        ['🇯🇵 Japan', '1 234', 56, '4.5%'],
+        ['🇺🇸 United States', '845', 32, '3.8%'],
+        ['🇩🇪 Germany', '412', 18, '4.4%'],
+        ['🇫🇷 France', '298', 12, '4.0%'],
+        ['🇬🇧 United Kingdom', '245', 8, '3.3%'],
+        ['🇮🇹 Italy', '188', 7, '3.7%'],
+        ['🇪🇸 Spain', '156', 5, '3.2%'],
+        ['🇳🇱 Netherlands', '142', 6, '4.2%'],
+        ['🇧🇷 Brazil', '124', 4, '3.2%'],
+        ['🇲🇽 Mexico', '98', 3, '3.1%']
+    ];
+    fillTbody('medium-rows', countries, true);
+
+    const sources = ['ig', 'meta (paid)', '(direct)', 'google', 'l.instagram.com', 'facebook', 'youtube', 'tiktok', 'omnisend', 'bing', 'yahoo', 'pinterest', 'twitter', 'reddit', 'jp.pinkspink.company', 'm.facebook.com', 'ya.ru', 'duckduckgo', 'ecosia.org', 'baidu', 'naver', 'snapchat', 'discord', 'telegram', 'whatsapp', 'linkedin', 'medium', 'vk.com', 'ok.ru', 'mail.ru'];
+    const longRows = sources.map((source, i) => {
+        const sessions = 2000 - i * 50 + (i * 7) % 100;
+        const atc = Math.floor(sessions * 0.04);
+        const purchases = Math.floor(atc * 0.15);
+        return [source, sessions.toLocaleString('ru-RU'), atc, purchases];
+    });
+    fillTbody('long-rows', longRows, false);
+    </script>
+</body>
+</html>

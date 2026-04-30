@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pinkspink — Headings & Spacing (предложение)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ls-label: 0.5px;
+            --fs-kpi: 28px; --fs-h2: 18px; --fs-h3: 14px;
+            --fs-body: 13px; --fs-caption: 11px; --fs-chart-meta: 10px;
+
+            --c-channel-social: #6C5CE7;
+            --c-growth: #00B894; --c-decline: #E17055;
+            --tx-primary:#2D3436; --tx-secondary:#636E72; --tx-muted:#B2BEC3; --tx-ondark:#FFFFFF;
+            --bg-page:#FAFAFA; --bg-card:#FFFFFF; --bg-muted:#F0F0F0; --bg-border:#DFE6E9; --bg-divider:#F0F0F0; --bg-inverse:#2D3436; --bg-hover:#F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1300px; margin: 0 auto; }
+
+        /* Doc-уровневые стили (для обёртки) */
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+        pre { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; font-family: var(--ff-mono); margin: var(--sp-2) 0 var(--sp-3); }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+        .badge { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+
+        /* Issues и rules таблицы */
+        .audit { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; margin-bottom: var(--sp-4); }
+        .audit-row { display: grid; grid-template-columns: 130px 1fr; gap: var(--sp-3); padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--bg-divider); font-size: var(--fs-caption); align-items: baseline; }
+        .audit-row:last-child { border-bottom: none; }
+        .audit-row.head { background: var(--bg-muted); font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--tx-secondary); }
+        .audit-row .k { color: var(--tx-secondary); font-weight: var(--fw-semibold); }
+        .audit-row .v { color: var(--tx-primary); }
+        .audit-row .v code { font-size: 10px; }
+
+        /* Issue card */
+        .iss { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2); border-left: 4px solid var(--c-decline); }
+        .iss .lab { font-size: 10px; text-transform: uppercase; letter-spacing: var(--ls-label); color: var(--c-decline); margin-bottom: 4px; }
+        .iss .title { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin-bottom: var(--sp-1); }
+        .iss .desc { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; }
+        .iss .desc strong { color: var(--tx-primary); }
+
+        /* Before / after blocks for live demos */
+        .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+        @media (max-width: 900px) { .ba-grid { grid-template-columns: 1fr; } }
+        .ba-col { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); position: relative; }
+        .ba-col.before { border-left: 4px solid var(--c-decline); }
+        .ba-col.after  { border-left: 4px solid var(--c-growth); }
+        .ba-lab { font-size: 10px; text-transform: uppercase; letter-spacing: var(--ls-label); margin-bottom: var(--sp-3); }
+        .ba-col.before .ba-lab { color: var(--c-decline); }
+        .ba-col.after  .ba-lab { color: var(--c-growth); }
+
+        /* Демо-площадка с явной визуализацией отступов через outlined boxes */
+        .demo-section { background: var(--bg-page); border: 1px dashed var(--bg-border); border-radius: var(--r-md); padding: var(--sp-3); position: relative; }
+        .demo-section::before { content: 'demo-section (фон страницы)'; position: absolute; top: -8px; left: 12px; background: var(--bg-card); padding: 0 6px; font-size: 10px; color: var(--tx-muted); }
+
+        /* === Cur (текущие правила в дашборде, для левой колонки) === */
+        .cur h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; }
+        .cur h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin-bottom: var(--sp-2); }
+        .cur h4 { font-size: var(--fs-body); font-weight: var(--fw-semibold); margin: var(--sp-3) 0 6px; color: var(--tx-secondary); }
+        .cur .meta { color: var(--tx-secondary); font-size: var(--fs-body); margin-bottom: var(--sp-3); }
+        .cur .title-area { display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: var(--sp-1); }
+        .cur .title-area h3 { font-size: var(--fs-body); font-weight: var(--fw-bold); margin: 0 0 2px 0; }
+        .cur .title-area .meta { margin: 0; font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.3; }
+
+        /* === New (предлагаемые правила) === */
+        .new h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-6) 0 var(--sp-1); padding: 0; }
+        .new h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: var(--sp-4) 0 var(--sp-1); }
+        .new h4 { font-size: var(--fs-body); font-weight: var(--fw-semibold); margin: var(--sp-2) 0 var(--sp-1); color: var(--tx-secondary); }
+        .new .meta { color: var(--tx-secondary); font-size: var(--fs-body); margin-bottom: var(--sp-3); }
+        .new .meta-sm { color: var(--tx-secondary); font-size: var(--fs-caption); line-height: 1.3; margin-bottom: var(--sp-3); }
+        .new h2 + .meta, .new h3 + .meta, .new h4 + .meta { margin-top: 0; }
+        .new h2 + .meta-sm, .new h3 + .meta-sm, .new h4 + .meta-sm { margin-top: 0; }
+        .new .title-area { display: flex; flex-direction: column; padding-bottom: var(--sp-1); }
+        .new .title-area h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: 0 0 2px 0; }
+        .new .title-area .meta { margin: 0; font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.3; }
+
+        /* Mock content blocks */
+        .mock-content { background: var(--bg-muted); border-radius: var(--r-md); padding: var(--sp-3); font-size: var(--fs-caption); color: var(--tx-secondary); text-align: center; }
+        .mock-table { width: 100%; border-collapse: collapse; background: var(--bg-card); font-size: var(--fs-caption); border: 1px solid var(--bg-border); border-radius: var(--r-md); overflow: hidden; }
+        .mock-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: 4px 8px; font-size: var(--fs-caption); text-align: left; font-weight: var(--fw-semibold); }
+        .mock-table td { padding: 4px 8px; border-bottom: 1px solid var(--bg-divider); }
+
+        /* Card mock for title-area demos */
+        .mock-cell { background: var(--bg-card); border: 1px solid var(--bg-border); border-radius: var(--r-md); padding: var(--sp-3); margin-bottom: var(--sp-2); }
+        .mock-chart { background: var(--bg-muted); height: 80px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; font-size: var(--fs-caption); color: var(--tx-muted); }
+
+        /* Spacing visualization helpers */
+        .gap-vis { background: rgba(108,92,231,0.08); position: relative; }
+        .gap-vis::after { content: attr(data-gap); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 9px; color: var(--c-channel-social); font-weight: var(--fw-bold); }
+
+        /* Token table */
+        .tk-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-card); margin-bottom: var(--sp-4); font-size: var(--fs-caption); }
+        .tk-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-2) var(--sp-3); text-align: left; font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: var(--ls-label); }
+        .tk-table td { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--bg-divider); vertical-align: top; }
+        .tk-table tr:last-child td { border-bottom: none; }
+        .tk-table .desc { color: var(--tx-secondary); }
+        .tk-table .changed { color: var(--c-decline); font-weight: var(--fw-bold); }
+        .tk-table .keep { color: var(--tx-muted); }
+
+        /* Question cards */
+        .q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        @media (max-width: 900px) { .q-grid { grid-template-columns: 1fr; } }
+        .q-card { background: linear-gradient(135deg, var(--c-channel-social), var(--c-growth)); color: var(--tx-ondark); border-radius: var(--r-xl); padding: var(--sp-4); }
+        .q-card .num { font-size: var(--fs-h2); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        .q-card .title { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin-bottom: var(--sp-2); }
+        .q-card .desc { font-size: var(--fs-body); opacity: 0.95; line-height: 1.5; }
+        .q-card code { background: rgba(255,255,255,0.2); color: var(--tx-ondark); }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Headings & Spacing <span class="badge">v0 · обзор</span></h1>
+    <p class="meta-line">Pinkspink Design System · Дополнение к Typography v1.0 · 2026-04-29</p>
+    <p class="doc">Сейчас отступы вокруг заголовков разъезжаются. В дашборде есть inline-overrides (<code>style="margin-top:32px"</code>), хардкод-цифры (6px вне токенов), и пара заголовков с разными правилами для одного селектора (<code>h3</code> глобально и <code>.title-area h3</code>). Этот файл — обзор + предложение единых правил. Если согласуем — добавлю в Typography v1.0 как отдельную секцию «Headings & Spacing».</p>
+
+    <h2 class="doc">1. Что в дашборде сейчас (для напоминания)</h2>
+
+    <table class="tk-table">
+        <thead>
+            <tr><th>Элемент</th><th>Шрифт</th><th>margin-top</th><th>margin-bottom</th><th>Прочее</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>h1</code></td><td>kpi 28 / bold</td><td>0</td><td><code>--sp-2</code> 8</td><td class="desc">не используется</td></tr>
+            <tr><td><code>h2</code></td><td>h2 18 / semibold</td><td><code>--sp-5</code> 24</td><td><code>--sp-3</code> 12</td><td class="desc"><strong>padding-bottom: 6px</strong> хардкод (без border)</td></tr>
+            <tr><td><code>h3</code></td><td>h3 14 / semibold</td><td><strong class="changed">0</strong></td><td><code>--sp-2</code> 8</td><td class="desc">полагается на mb предыдущего элемента</td></tr>
+            <tr><td><code>h4</code></td><td>body 13 / semibold</td><td><code>--sp-3</code> 12</td><td><strong class="changed">6px</strong></td><td class="desc">хардкод (вне 4/8/12 шкалы)</td></tr>
+            <tr><td><code>.meta</code> (глобальная)</td><td>body 13 / regular</td><td>0</td><td><code>--sp-3</code> 12</td><td class="desc">color secondary</td></tr>
+            <tr><td><code>.title-area h3</code></td><td><strong class="changed">body 13 / bold</strong></td><td>0</td><td>2px</td><td class="desc">переопределение шрифта (другой размер для того же тэга!)</td></tr>
+            <tr><td><code>.title-area .meta</code></td><td>caption 11 / regular</td><td>0</td><td>0</td><td class="desc">меньший размер для подписи в карточке</td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="doc">2. Восемь проблем</h2>
+
+    <div class="iss">
+        <div class="lab">Issue 1</div>
+        <div class="title">h2 имеет <code>padding-bottom: 6px</code> без border</div>
+        <div class="desc">В styleguide у h2 есть <code>border-bottom: 2px solid</code> — там 6px нужны как отступ от черты. В дашборде черты нет, а 6px остались — лишняя пустота между h2 и .meta.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 2</div>
+        <div class="title">h4 margin-bottom: 6px (хардкод)</div>
+        <div class="desc">Все остальные отступы в дашборде из шкалы 4/8/12/16/24/32. Только у h4 — 6. Должно быть либо <code>--sp-1</code> 4, либо <code>--sp-2</code> 8.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 3</div>
+        <div class="title">h3 без margin-top</div>
+        <div class="desc">Когда перед h3 идёт элемент со сброшенным margin (например, <code>* { margin: 0 }</code> на form-элементах) — h3 «прилипает» сверху. Сейчас работает только потому что предыдущие .meta даёт <code>margin-bottom: 12</code>.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 4</div>
+        <div class="title">Inline <code>style="margin-top:32px"</code> на двух h2</div>
+        <div class="desc">В <code>report_week.html</code> найдено 2 места: «Scroll Rate по сайту», «Cohort Retention». Дефолтных 24px не хватает после графиков с большой нижней областью. Сигнал: либо нужно везде 32, либо проблема в том что большие графики не дают своих margin'ов снизу.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 5</div>
+        <div class="title">.title-area h3 переопределяет шрифт</div>
+        <div class="desc">Глобальный h3 = <code>14 / semibold</code>. В <code>.title-area</code> h3 = <code>13 / bold</code>. <strong>Один тэг — два разных вида.</strong> Это нарушает иерархию: внешние block-headings 14px, внутренние 13px.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 6</div>
+        <div class="title">Двойственный <code>.meta</code></div>
+        <div class="desc">Глобальный <code>.meta</code> = 13 / mb 12. В <code>.title-area</code> <code>.meta</code> = 11 / без mb. Один селектор — два смысла. Каскад работает, но именование не отражает разницу ролей.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 7</div>
+        <div class="title">Зазор после h2 больше чем после .meta</div>
+        <div class="desc">h2 → .meta = 12 + 6 (padding-bottom) = <strong>18px</strong>. .meta → контент = <strong>12px</strong>. Контр-интуитивно: «связанные блоки» (h2 и его описание) дальше, чем «разные блоки» (описание и контент). Должно быть наоборот.</div>
+    </div>
+
+    <div class="iss">
+        <div class="lab">Issue 8</div>
+        <div class="title">h1 определён в CSS, но не используется в HTML</div>
+        <div class="desc">10 строк мёртвого кода. Можно удалить либо оставить как backup для возможного return.</div>
+    </div>
+
+    <h2 class="doc">3. Предлагаемые правила</h2>
+
+    <p class="doc">Принцип: <strong>tight pair</strong> — заголовок и его описание считаем одним блоком, между ними <code>--sp-1</code> (4px). <strong>Block break</strong> — между описанием и контентом <code>--sp-3</code> (12px). <strong>Section break</strong> — между секциями <code>--sp-6</code> (32px перед h2).</p>
+
+    <table class="tk-table">
+        <thead>
+            <tr><th>Элемент</th><th>Шрифт</th><th>margin-top</th><th>margin-bottom</th><th>Прочее</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>h1</code></td>
+                <td class="desc">— удалить из CSS —</td>
+                <td colspan="3" class="desc">не используется. Если когда-то понадобится — определим заново.</td>
+            </tr>
+            <tr>
+                <td><code>h2</code></td>
+                <td>h2 18 / semibold</td>
+                <td><strong class="changed">--sp-6 (32)</strong></td>
+                <td><strong class="changed">--sp-1 (4)</strong></td>
+                <td class="desc">убрать <code>padding-bottom: 6px</code></td>
+            </tr>
+            <tr>
+                <td><code>h3</code></td>
+                <td>h3 14 / semibold</td>
+                <td><strong class="changed">--sp-4 (16)</strong></td>
+                <td><strong class="changed">--sp-1 (4)</strong></td>
+                <td class="desc">добавить mt</td>
+            </tr>
+            <tr>
+                <td><code>h4</code></td>
+                <td>body 13 / semibold</td>
+                <td><strong class="changed">--sp-2 (8)</strong></td>
+                <td><strong class="changed">--sp-1 (4)</strong></td>
+                <td class="desc">убрать хардкод 6px</td>
+            </tr>
+            <tr>
+                <td><code>.meta</code> (глобальная)</td>
+                <td>body 13 / regular</td>
+                <td>0</td>
+                <td><code>--sp-3</code> 12</td>
+                <td class="desc">оставить как есть</td>
+            </tr>
+            <tr>
+                <td><code>h2+.meta</code> / <code>h3+.meta</code> / <code>h4+.meta</code></td>
+                <td colspan="4" class="desc"><strong class="changed">+ правило: <code>margin-top: 0</code> у .meta когда стоит сразу после заголовка</strong> (схлопывает дубль-зазор)</td>
+            </tr>
+            <tr>
+                <td><code>.title-area h3</code></td>
+                <td><strong class="changed">h3 14 / semibold</strong> (унифицированно с глобальным)</td>
+                <td>0</td>
+                <td>2px</td>
+                <td class="desc">убрать переопределение шрифта</td>
+            </tr>
+            <tr>
+                <td><code>.title-area .meta</code></td>
+                <td>caption 11 / regular</td>
+                <td>0</td>
+                <td>0</td>
+                <td class="desc">оставить</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="doc">4. Три паттерна — было / стало</h2>
+
+    <h3 class="doc">Паттерн A · Section block (раздел внутри вкладки)</h3>
+    <p class="doc"><code>h2</code> + <code>.meta</code> + контент. Самый частый паттерн на странице.</p>
+
+    <div class="ba-grid">
+        <div class="ba-col before">
+            <div class="ba-lab">Сейчас</div>
+            <div class="cur demo-section">
+                <div class="mock-content">предыдущий блок</div>
+                <h2>Динамика воронок по устройствам</h2>
+                <p class="meta">Mobile vs desktop, последние 8 недель.</p>
+                <div class="mock-content">контент: grid / table / chart</div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">prev → h2: <strong>24px</strong> · h2 → .meta: <strong>18px</strong> (12 mb + 6 padding) · .meta → контент: <strong>12px</strong></p>
+        </div>
+        <div class="ba-col after">
+            <div class="ba-lab">Стало</div>
+            <div class="new demo-section">
+                <div class="mock-content">предыдущий блок</div>
+                <h2>Динамика воронок по устройствам</h2>
+                <p class="meta">Mobile vs desktop, последние 8 недель.</p>
+                <div class="mock-content">контент: grid / table / chart</div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">prev → h2: <strong>32px</strong> · h2 → .meta: <strong>4px</strong> (tight pair) · .meta → контент: <strong>12px</strong></p>
+        </div>
+    </div>
+
+    <h3 class="doc">Паттерн B · Card title block (заголовок внутри карточки)</h3>
+    <p class="doc"><code>.title-area</code> с <code>h3</code> + <code>.meta</code> + контент карточки.</p>
+
+    <div class="ba-grid">
+        <div class="ba-col before">
+            <div class="ba-lab">Сейчас</div>
+            <div class="cur">
+                <div class="mock-cell">
+                    <div class="title-area">
+                        <h3>Посетители и сессии <span style="font-size:10px;color:var(--tx-muted)">(sum)</span></h3>
+                        <p class="meta">Сколько заходят на сайт</p>
+                    </div>
+                    <div class="mock-chart">chart</div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">h3 = <strong>13 / bold</strong> (отличается от глобального 14 / semibold). Иерархия с внешними h3 ломается.</p>
+        </div>
+        <div class="ba-col after">
+            <div class="ba-lab">Стало</div>
+            <div class="new">
+                <div class="mock-cell">
+                    <div class="title-area">
+                        <h3>Посетители и сессии <span style="font-size:10px;color:var(--tx-muted)">(sum)</span></h3>
+                        <p class="meta">Сколько заходят на сайт</p>
+                    </div>
+                    <div class="mock-chart">chart</div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">h3 = <strong>14 / semibold</strong> (как глобальный). Иерархия консистентна. Внутри <code>.title-area</code> margin'ов нет — управляется padding'ом контейнера.</p>
+        </div>
+    </div>
+
+    <h3 class="doc">Паттерн C · Compact list (h4 + список внутри слайдера)</h3>
+    <p class="doc"><code>h4</code> «Топ 5 стран» + список <code>.country-row</code> внутри slider-карточки.</p>
+
+    <div class="ba-grid">
+        <div class="ba-col before">
+            <div class="ba-lab">Сейчас</div>
+            <div class="cur">
+                <div class="mock-cell">
+                    <div class="mock-chart" style="height:40px">метрики выше</div>
+                    <h4>Топ 5 стран</h4>
+                    <div style="font-size:11px;display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--bg-divider)"><span>🇯🇵 Japan</span><span>34</span></div>
+                    <div style="font-size:11px;display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--bg-divider)"><span>🇺🇸 USA</span><span>15</span></div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">prev → h4: <strong>12px</strong> · h4 → list: <strong>6px</strong> (хардкод вне шкалы)</p>
+        </div>
+        <div class="ba-col after">
+            <div class="ba-lab">Стало</div>
+            <div class="new">
+                <div class="mock-cell">
+                    <div class="mock-chart" style="height:40px">метрики выше</div>
+                    <h4>Топ 5 стран</h4>
+                    <div style="font-size:11px;display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--bg-divider)"><span>🇯🇵 Japan</span><span>34</span></div>
+                    <div style="font-size:11px;display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--bg-divider)"><span>🇺🇸 USA</span><span>15</span></div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:var(--tx-muted);margin-top:var(--sp-2)">prev → h4: <strong>8px</strong> · h4 → list: <strong>4px</strong> (tight pair, заголовок прилипает к списку)</p>
+        </div>
+    </div>
+
+    <h2 class="doc">5. Принцип «tight pair»</h2>
+    <div class="audit">
+        <div class="audit-row">
+            <span class="k">Tight pair</span>
+            <span class="v"><code>--sp-1</code> 4px — заголовок и его описание/список считаются одним блоком, прижаты друг к другу. <strong>Применяется:</strong> h2 → .meta · h3 → .meta · h4 → .meta · h4 → list</span>
+        </div>
+        <div class="audit-row">
+            <span class="k">Block break</span>
+            <span class="v"><code>--sp-3</code> 12px — между «section block» (h2 + .meta) и контентом (grid/table/chart). <strong>Применяется:</strong> .meta → контент</span>
+        </div>
+        <div class="audit-row">
+            <span class="k">Sub-section break</span>
+            <span class="v"><code>--sp-4</code> 16px — перед h3 (когда используется как глобальный заголовок, не в карточке)</span>
+        </div>
+        <div class="audit-row">
+            <span class="k">Section break</span>
+            <span class="v"><code>--sp-6</code> 32px — перед h2 (новая секция). Заменяет inline <code>style="margin-top:32px"</code> на правило в CSS.</span>
+        </div>
+    </div>
+
+    <h2 class="doc">6. Что добавится в Typography v1.0</h2>
+
+    <p class="doc">Если согласуем — секция в <code>tokens.md</code> и <code>tokens.json</code>:</p>
+
+    <pre>// === Headings & Spacing ===
+
+h1 { /* удалён, не используется */ }
+
+h2 {
+    font-size:    var(--fs-h2);
+    font-weight:  var(--fw-semibold);
+    margin:       var(--sp-6) 0 var(--sp-1);  /* 32 / 4 */
+}
+
+h3 {
+    font-size:    var(--fs-h3);
+    font-weight:  var(--fw-semibold);
+    margin:       var(--sp-4) 0 var(--sp-1);  /* 16 / 4 */
+}
+
+h4 {
+    font-size:    var(--fs-body);
+    font-weight:  var(--fw-semibold);
+    margin:       var(--sp-2) 0 var(--sp-1);  /* 8 / 4 */
+    color:        var(--tx-secondary);
+}
+
+.meta {
+    font-size:    var(--fs-body);
+    color:        var(--tx-secondary);
+    margin-bottom: var(--sp-3);                /* 12 */
+}
+
+/* Tight pair — описание сразу после заголовка не дублирует gap */
+h2 + .meta, h3 + .meta, h4 + .meta { margin-top: 0; }
+
+/* Card title block — компактная вариация для .title-area внутри .cell */
+.title-area {
+    display: flex; flex-direction: column;
+    padding-bottom: var(--sp-1);
+}
+.title-area h3 {
+    font-size:    var(--fs-h3);                /* НЕ переопределяем — = глобальному */
+    font-weight:  var(--fw-semibold);
+    margin: 0 0 2px 0;
+}
+.title-area .meta {
+    font-size:    var(--fs-caption);            /* меньше — это «подпись» */
+    margin: 0;
+    line-height: 1.3;
+}</pre>
+
+    <h2 class="doc">7. Реальный пример — что сейчас в дашборде</h2>
+    <p class="doc"><strong>⚠ Поправка:</strong> в первой версии я отрисовал блок без учёта grid system дашборда — получилось плотнее чем в скриншоте. Здесь — точная картина с реальной CSS-структурой, разбор где сидят «лишние» отступы и куда они уходят.</p>
+
+    <style>
+        /* === REAL: точное соответствие дашборду (generate_report.py) === */
+        .real { color: var(--tx-primary); }
+        .real h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; }
+        .real .meta { color: var(--tx-secondary); font-size: var(--fs-body); margin-bottom: var(--sp-3); }
+        .real .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: 80px;            /* HARDCODE 80px row height */
+            gap: var(--sp-4);                  /* 16px между ячейками */
+            margin-bottom: var(--sp-5);        /* 24px ниже grid */
+        }
+        .real .h4x6 {
+            grid-column: span 6;
+            grid-row: span 5;                  /* 5 × 80px = 400px высота */
+            display: grid;
+            grid-template-rows: 80px 1fr;     /* первый row = title-area */
+            gap: var(--sp-2);                  /* 8px между title-area и cell */
+        }
+        .real .title-area {
+            display: flex; flex-direction: column;
+            justify-content: flex-end;          /* BOTTOM-aligned */
+            padding-bottom: var(--sp-1);
+            grid-row: 1;
+            background: rgba(225,112,85,0.06); /* подкрашиваю чтобы было видно границу */
+            outline: 1px dashed rgba(225,112,85,0.4);
+        }
+        .real .title-area h3 { font-size: var(--fs-body); font-weight: var(--fw-bold); margin: 0 0 2px 0; }
+        .real .title-area .meta { margin: 0; font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.3; }
+        .real .cell {
+            background: var(--bg-card);
+            border-radius: var(--r-xl);
+            padding: 14px;                     /* HARDCODE 14px (не из --sp шкалы!) */
+            box-shadow: var(--sh-card);
+            overflow: auto;
+            grid-row: 2;
+        }
+        .real-page { background: var(--bg-page); border: 1px dashed var(--bg-border); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); position: relative; margin-bottom: var(--sp-4); }
+        .real-page::before { content: 'фон страницы (--bg-page)'; position: absolute; top: -8px; left: 12px; background: var(--bg-card); padding: 0 6px; font-size: 10px; color: var(--tx-muted); }
+
+        .real-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r-md); overflow: hidden; }
+        .real-table th { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-1) var(--sp-2); font-size: var(--fs-caption); text-align: left; font-weight: var(--fw-semibold); }
+        .real-table td { padding: var(--sp-1) var(--sp-2); font-size: var(--fs-caption); border-bottom: 1px solid var(--bg-divider); }
+        .real-table tr:last-child td { border-bottom: none; }
+        .delta-up   { color: var(--c-growth); }
+        .delta-down { color: var(--c-decline); }
+
+        /* gap-marker для разметки */
+        .gm { background: rgba(108,92,231,0.1); border-left: 3px solid var(--c-channel-social); padding: 4px 8px; font-size: 10px; color: var(--c-channel-social); border-radius: 0 var(--r-md) var(--r-md) 0; margin: 2px 0; line-height: 1.4; }
+        .gm b { color: var(--tx-primary); }
+        .gm.warn { border-left-color: var(--c-decline); background: rgba(225,112,85,0.08); color: var(--c-decline); }
+        .gm.warn b { color: var(--c-decline); }
+    </style>
+
+    <h3 class="doc">7.1 Реальный код секции в дашборде</h3>
+    <p class="doc">Из <code>generate_report.py:3378-3399</code>:</p>
+
+    <pre>&lt;h2&gt;Карточек за сессию — разрез по странам и source&lt;/h2&gt;
+&lt;p class="meta"&gt;Mobile, последняя полная неделя. Сколько карточек товара…&lt;/p&gt;
+&lt;div class="grid"&gt;
+    &lt;div class="h4x6"&gt;
+        &lt;div class="title-area"&gt;
+            &lt;h3&gt;По странам&lt;/h3&gt;
+            &lt;p class="meta"&gt;∆ vs avg прошлых 4 недель&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class="cell" style="overflow:auto;"&gt;
+            &lt;table class="data-table tbl-compact"&gt;…&lt;/table&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="h4x6"&gt;…по source…&lt;/div&gt;
+&lt;/div&gt;</pre>
+
+    <p class="doc">Ключевое: блок завернут в <code>.grid</code> с <code>grid-auto-rows: 80px</code>, и каждая колонка <code>.h4x6</code> внутри имеет <code>grid-template-rows: 80px 1fr</code>. То есть <strong><code>.title-area</code> ВСЕГДА занимает первый 80-пиксельный row сетки</strong>, независимо от того сколько в нём контента.</p>
+
+    <h3 class="doc">7.2 Как это рендерится (точно как в твоём скриншоте)</h3>
+    <p class="doc">Ниже — рендер с <strong>подсветкой границы <code>.title-area</code></strong> (красная пунктирная рамка). Видно что внутри 80px row, сам контент h3+meta высотой ~37px, а сверху ~43px пустоты — потому что <code>justify-content: flex-end</code> прижимает контент к низу.</p>
+
+    <div class="real-page real">
+        <h2>Карточек за сессию — разрез по странам и source</h2>
+        <p class="meta">Mobile, последняя полная неделя. Сколько карточек товара открывает один пользователь за сессию.</p>
+        <div class="grid">
+            <div class="h4x6">
+                <div class="title-area">
+                    <h3>По странам</h3>
+                    <p class="meta">∆ vs avg прошлых 4 недель</p>
+                </div>
+                <div class="cell">
+                    <table class="real-table">
+                        <thead><tr><th>Страна</th><th>Сессии</th><th>Median карт.</th><th>∆ Median</th><th>Mean карт.</th><th>∆ Mean</th></tr></thead>
+                        <tbody>
+                            <tr><td>🇯🇵 Japan</td><td>17</td><td>1.0</td><td class="delta-down">↓ −0.8</td><td>1.0</td><td class="delta-down">↓ −1.3</td></tr>
+                            <tr><td>🇺🇸 United States</td><td>16</td><td>4.0</td><td class="delta-up">↑ +3.0</td><td>2.8</td><td class="delta-up">↑ +0.4</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="h4x6">
+                <div class="title-area">
+                    <h3>По source</h3>
+                    <p class="meta">∆ vs avg прошлых 4 недель</p>
+                </div>
+                <div class="cell">
+                    <table class="real-table">
+                        <thead><tr><th>Source</th><th>Сессии</th><th>Median карт.</th><th>∆ Median</th><th>Mean карт.</th><th>∆ Mean</th></tr></thead>
+                        <tbody>
+                            <tr><td>ig</td><td>26</td><td>4.0</td><td class="delta-up">↑ +2.5</td><td>3.8</td><td class="delta-up">↑ +1.0</td></tr>
+                            <tr><td>(direct)</td><td>22</td><td>1.0</td><td class="delta-down">↓ −0.2</td><td>1.3</td><td class="delta-down">↓ −0.6</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="doc">7.3 Что задаёт каждый отступ — все хардкоды</h3>
+
+    <div style="background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4);">
+        <p style="font-size: var(--fs-caption); color: var(--tx-primary); margin-bottom: var(--sp-2)"><b>[ предыдущий блок ]</b></p>
+
+        <div class="gm">↕ <b>24px</b> · <code>h2 margin-top: var(--sp-5)</code></div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0"><b>h2</b> — «Карточек за сессию» <span style="color:var(--tx-secondary)">(18 / semibold)</span></p>
+
+        <div class="gm warn">↕ <b>12 + 6 = 18px</b> · <code>h2 margin-bottom: --sp-3</code> + <code>padding-bottom: 6px</code> (хардкод, без border)</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0"><b>p.meta</b> — «Mobile, последняя полная неделя…» <span style="color:var(--tx-secondary)">(13 / regular)</span></p>
+
+        <div class="gm">↕ <b>12px</b> · <code>.meta margin-bottom: var(--sp-3)</code></div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0"><b>.grid</b> начинается <span style="color:var(--tx-secondary)">(grid-template-columns: 12 col, grid-auto-rows: <span style="color:var(--c-decline)">80px</span>, gap 16)</span></p>
+
+        <div class="gm warn">↕ внутри .h4x6 первый row = <b>80px</b> · <code>.h4x6 grid-template-rows: 80px 1fr</code> ← хардкод</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0"><b>.title-area</b> — занимает 80px <span style="color:var(--tx-secondary)">(<code>justify-content: flex-end</code>)</span></p>
+
+        <div class="gm warn">↕ <b>~43px</b> пустоты сверху · контент h3+meta ~37px высотой, прижат к НИЗУ row'а</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0; padding-left: var(--sp-3); border-left: 2px solid var(--c-decline);"><b>h3</b> — «По странам» <span style="color:var(--tx-secondary)">(13 / <strong>bold</strong>) — переопределяет global h3 (14 / semibold)</span></p>
+
+        <div class="gm" style="margin-left: var(--sp-3);">↕ <b>2px</b> · <code>.title-area h3 margin-bottom: 2px</code> (хардкод)</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0; padding-left: var(--sp-3); border-left: 2px solid var(--c-decline);"><b>.meta</b> внутри title-area — «∆ vs avg…» <span style="color:var(--tx-secondary)">(11 / regular) — переопределяет global .meta (13 / regular)</span></p>
+
+        <div class="gm" style="margin-left: var(--sp-3);">↕ <b>4px</b> · <code>.title-area padding-bottom: var(--sp-1)</code></div>
+
+        <div class="gm">↕ <b>8px</b> · <code>.h4x6 gap: var(--sp-2)</code> между title-area и cell</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0"><b>.cell</b> с таблицей <span style="color:var(--tx-secondary)">(padding: <span style="color:var(--c-decline)">14px</span> хардкод)</span></p>
+    </div>
+
+    <h3 class="doc">7.4 Все хардкоды одним списком</h3>
+
+    <table class="tk-table">
+        <thead>
+            <tr><th>Что</th><th>Значение</th><th>Где</th><th>Проблема</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>grid-auto-rows</code></td><td><strong class="changed">80px</strong></td><td><code>.grid</code></td><td class="desc">Один на весь grid system. Создаёт ~43px пустоты в каждой <code>.title-area</code>.</td></tr>
+            <tr><td><code>grid-template-rows</code></td><td><strong class="changed">80px 1fr</strong></td><td><code>.h4x6</code> и т.п.</td><td class="desc">Прибивает первый row к 80px независимо от контента.</td></tr>
+            <tr><td><code>justify-content</code></td><td>flex-end</td><td><code>.title-area</code></td><td class="desc">Контент прижат к низу row'а → пустота уходит ВВЕРХ (видно как «лишний воздух» перед h3).</td></tr>
+            <tr><td><code>padding</code></td><td><strong class="changed">14px</strong></td><td><code>.cell</code></td><td class="desc">Хардкод вне 4/8/12/16 шкалы. Должно быть <code>--sp-3</code> (12) или <code>--sp-4</code> (16).</td></tr>
+            <tr><td><code>h2 padding-bottom</code></td><td><strong class="changed">6px</strong></td><td><code>h2</code></td><td class="desc">Без border-bottom — лишняя пустота. Уже отмечен в Issue 1.</td></tr>
+            <tr><td><code>.title-area h3 margin-bottom</code></td><td>2px</td><td><code>.title-area h3</code></td><td class="desc">Не из шкалы, но окей: внутренний микро-зазор.</td></tr>
+            <tr><td><code>.title-area h3 font-size/weight</code></td><td><strong class="changed">13/bold</strong></td><td><code>.title-area h3</code></td><td class="desc">Переопределяет global <code>14/semibold</code>. Один тэг — два разных вида (Issue 5).</td></tr>
+            <tr><td><code>.title-area .meta font-size</code></td><td><strong class="changed">11</strong></td><td><code>.title-area .meta</code></td><td class="desc">Переопределяет global <code>13</code> через каскад (Issue 6). По смыслу — это <code>.meta-sm</code>.</td></tr>
+        </tbody>
+    </table>
+
+    <h3 class="doc">7.5 Что я отрисовал в первой версии (для сравнения)</h3>
+    <p class="doc">Без grid system, на чистых margin-правилах. Получилось <strong>плотнее на ~50px</strong> чем в реальном дашборде — потому что не было 80px-локированного title-area row.</p>
+
+    <div class="real-page new">
+        <h2>Карточек за сессию — разрез по странам и source</h2>
+        <p class="meta">Mobile, последняя полная неделя. Сколько карточек товара открывает один пользователь за сессию.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
+            <div>
+                <h3>По странам</h3>
+                <p class="meta-sm">∆ vs avg прошлых 4 недель</p>
+                <table class="real-table">
+                    <thead><tr><th>Страна</th><th>Сессии</th><th>Median карт.</th><th>∆ Median</th><th>Mean карт.</th><th>∆ Mean</th></tr></thead>
+                    <tbody>
+                        <tr><td>🇯🇵 Japan</td><td>17</td><td>1.0</td><td class="delta-down">↓ −0.8</td><td>1.0</td><td class="delta-down">↓ −1.3</td></tr>
+                        <tr><td>🇺🇸 United States</td><td>16</td><td>4.0</td><td class="delta-up">↑ +3.0</td><td>2.8</td><td class="delta-up">↑ +0.4</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <h3>По source</h3>
+                <p class="meta-sm">∆ vs avg прошлых 4 недель</p>
+                <table class="real-table">
+                    <thead><tr><th>Source</th><th>Сессии</th><th>Median карт.</th><th>∆ Median</th><th>Mean карт.</th><th>∆ Mean</th></tr></thead>
+                    <tbody>
+                        <tr><td>ig</td><td>26</td><td>4.0</td><td class="delta-up">↑ +2.5</td><td>3.8</td><td class="delta-up">↑ +1.0</td></tr>
+                        <tr><td>(direct)</td><td>22</td><td>1.0</td><td class="delta-down">↓ −0.2</td><td>1.3</td><td class="delta-down">↓ −0.6</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="doc">7.6 Откуда такой большой gap — в одной фразе</h3>
+    <p class="doc"><strong>Grid-system в дашборде заставляет <code>.title-area</code> занимать 80px row, а <code>justify-content: flex-end</code> прижимает контент к низу.</strong> Эти 80px — не из spacing-токенов, а из дизайн-решения «все блоки в сетке имеют одинаковую высоту строки 80px» (чтобы графики и таблицы выравнивались).</p>
+
+    <p class="doc">Проблема: для <strong>табличных подсекций</strong> (как этот пример) 80px title-area — overhead. Контент h3+meta весит ~37px, остальные 43px — пустота. Для <strong>чартов</strong> это работает (визуальный ритм), но для таблиц где cell сам растёт по контенту — лишний воздух.</p>
+
+    <h3 class="doc">7.7 Что предлагаю в спецификации</h3>
+
+    <table class="tk-table">
+        <thead>
+            <tr><th>Опция</th><th>Что меняем</th><th>Эффект</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>A · Status quo</strong></td>
+                <td class="desc">Ничего не трогаем</td>
+                <td class="desc">Воздух в title-area остаётся. Простое решение если визуально устраивает.</td>
+            </tr>
+            <tr>
+                <td><strong>B · Top-align</strong></td>
+                <td class="desc"><code>.title-area justify-content: flex-start</code> (вместо flex-end)</td>
+                <td class="desc">h3 прилипает СВЕРХУ. Воздух перемещается ВНИЗ (между meta и cell). Чисто визуально tight pair восстанавливается, но gap до cell растёт.</td>
+            </tr>
+            <tr>
+                <td><strong>C · Уменьшить row до 48px</strong></td>
+                <td class="desc"><code>.h4x6 grid-template-rows: 48px 1fr</code> (только для табличных h4x6, не для chart-ов)</td>
+                <td class="desc">title-area становится плотнее. Воздух уменьшается до ~11px. Чтобы различать таблицы и чарты — добавить класс <code>.h4x6.h4x6--table</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>D · Не использовать .grid</strong></td>
+                <td class="desc">Для табличных подсекций — обычный flex/flow (как в моей первой отрисовке)</td>
+                <td class="desc">Полностью убирает 80px-row, gap'ы регулируются margin'ами заголовков. Самая компактная компоновка. Но «выпадает» из визуального ритма grid'а.</td>
+            </tr>
+            <tr>
+                <td><strong>E · Принять <code>.meta-sm</code> + tight pair</strong></td>
+                <td class="desc">Применять только к не-grid контекстам</td>
+                <td class="desc">Появляется новый класс <code>.meta-sm</code> (caption 11px) + правило tight pair. Для блоков ВНЕ grid'а используем margin-based spacing. Внутри grid'а оставляем <code>.title-area</code> как есть (или меняем по B/C/D).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <pre>/* Новый класс .meta-sm — для коротких caption-описаний (вне grid system) */
+.meta-sm {
+    font-size:    var(--fs-caption);    /* 11px */
+    color:        var(--tx-secondary);
+    line-height:  1.3;
+    margin-bottom: var(--sp-3);          /* 12px block break */
+}
+h2 + .meta-sm, h3 + .meta-sm, h4 + .meta-sm { margin-top: 0; }</pre>
+
+    <h2 class="doc">8. Твоя структура отступов · em-based (новое предложение)</h2>
+    <p class="doc">Три твои правки: (1) текст после h2 и h3 одинакового размера = <strong>11px caption</strong> везде; (2) line-height = <strong>1.25</strong>; (3) margin-top заголовков считается от их font-size (h2 = 200%, h3 = 150%). Это меняет спецификацию: уходит разница между <code>.meta</code> и <code>.meta-sm</code> (они сливаются в один <code>.meta</code> на 11px), а отступы заголовков становятся <strong>пропорциональными размеру шрифта</strong> через <code>em</code>.</p>
+
+    <h3 class="doc">8.1 Структура (твоя схема)</h3>
+
+    <p class="doc"><strong>Правило округления:</strong> процент × font-size, затем округляем до ближайшего <strong>чётного</strong> числа <strong>в меньшую сторону</strong>. Так получаются «дизайнерские» значения которые легко складываются с пиксельной шкалой.</p>
+
+    <pre>[предыдущий блок]
+↕ <b>250% × h2 = 250% × 18 = 45 → 44px</b> (округление вниз до чётного) — section break
+&lt;h2&gt;
+↕ <b>4px</b> — tight pair
+&lt;p class="meta"&gt; (11px / line-height 1.25)
+↕ <b>175% × h3 = 175% × 14 = 24.5 → 24px</b> (округление вниз до чётного) — sub-section break
+&lt;h3&gt;
+↕ <b>4px</b> — tight pair
+&lt;p class="meta"&gt;
+↕ <b>8px</b> — content gap
+[контент: table / grid / chart]</pre>
+
+    <style>
+        /* === V2: финальная структура — px (округлённые до чётных) + lh 1.25 + единый .meta caption === */
+        .v2 { line-height: 1.25; }
+        .v2 h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: 44px 0 0; padding: 0; line-height: 1.25; }  /* 250% × 18 = 45 → 44 */
+        .v2 h3 { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: 24px 0 0; line-height: 1.25; }                /* 175% × 14 = 24.5 → 24 */
+        .v2 h4 { font-size: var(--fs-body); font-weight: var(--fw-semibold); margin: 16px 0 0; color: var(--tx-secondary); line-height: 1.25; }  /* 125% × 13 = 16.25 → 16 */
+        .v2 .meta { font-size: var(--fs-caption); color: var(--tx-secondary); line-height: 1.25; margin: 0 0 8px; }
+        .v2 h2 + .meta, .v2 h3 + .meta, .v2 h4 + .meta { margin-top: 4px; }
+        .v2 :first-child { margin-top: 0; } /* не делаем margin сверху у первого ребёнка */
+    </style>
+
+    <h3 class="doc">8.2 Реальный рендер с 3-строчной подписью</h3>
+    <p class="doc">Тот же блок «Карточек за сессию», но с длинным описанием которое переносится на 3 строки — чтобы было видно как работает <code>line-height: 1.25</code> на многострочном тексте. Здесь нет grid system — flow-layout. h2 = 44px margin-top, h3 = 24px margin-top, оба <code>.meta</code> на 11px / lh 1.25.</p>
+
+    <div class="real-page v2" style="max-width: 720px">
+        <h2>Карточек за сессию — разрез по странам и source</h2>
+        <p class="meta">Mobile, последняя полная неделя. Сколько карточек товара открывает один пользователь за сессию. Ниже разрез по странам и по source — дельта vs avg прошлых 4 недель показывает динамику относительно стабильного периода.</p>
+
+        <h3>По странам</h3>
+        <p class="meta">∆ vs avg прошлых 4 недель</p>
+        <table class="real-table">
+            <thead><tr><th>Страна</th><th>Сессии</th><th>Median карт.</th><th>∆ Median</th><th>Mean карт.</th><th>∆ Mean</th></tr></thead>
+            <tbody>
+                <tr><td>🇯🇵 Japan</td><td>17</td><td>1.0</td><td class="delta-down">↓ −0.8</td><td>1.0</td><td class="delta-down">↓ −1.3</td></tr>
+                <tr><td>🇺🇸 United States</td><td>16</td><td>4.0</td><td class="delta-up">↑ +3.0</td><td>2.8</td><td class="delta-up">↑ +0.4</td></tr>
+            </tbody>
+        </table>
+
+        <h3>По source</h3>
+        <p class="meta">∆ vs avg прошлых 4 недель</p>
+        <table class="real-table">
+            <thead><tr><th>Source</th><th>Сессии</th><th>Median карт.</th><th>∆ Median</th><th>Mean карт.</th><th>∆ Mean</th></tr></thead>
+            <tbody>
+                <tr><td>ig</td><td>26</td><td>4.0</td><td class="delta-up">↑ +2.5</td><td>3.8</td><td class="delta-up">↑ +1.0</td></tr>
+                <tr><td>(direct)</td><td>22</td><td>1.0</td><td class="delta-down">↓ −0.2</td><td>1.3</td><td class="delta-down">↓ −0.6</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="doc">При <strong>line-height 1.25 на 11px</strong> высота строки = 13.75px. Между строками 2.75px чистого зазора (примерно как между двумя короткими словами по горизонтали). Текст плотный, но не «слипается».</p>
+
+    <h3 class="doc">8.3 Все отступы — поштучно</h3>
+
+    <div style="background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4);">
+        <p style="font-size: var(--fs-caption); color: var(--tx-primary); margin-bottom: var(--sp-2)"><b>[ предыдущий блок ]</b></p>
+
+        <div class="gm">↕ <b>44px</b> · <code>h2 margin-top: 44px</code> (250% × 18 = 45 → округление вниз до чётного = 44) — section break</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0"><b>h2</b> — «Карточек за сессию» <span style="color:var(--tx-secondary)">(18 / semibold / lh 1.25)</span></p>
+
+        <div class="gm">↕ <b>4px</b> · <code>h2 + .meta { margin-top: 4px }</code> — tight pair</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0"><b>p.meta</b> — «Mobile, последняя полная неделя… (3 строки)» <span style="color:var(--tx-secondary)">(11 / regular / lh 1.25)</span></p>
+
+        <div class="gm">↕ <b>24px</b> · <code>h3 margin-top: 24px</code> (175% × 14 = 24.5 → округление вниз = 24) — sub-section break</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0; padding-left: var(--sp-3); border-left: 2px solid var(--c-channel-social);"><b>h3</b> — «По странам» <span style="color:var(--tx-secondary)">(14 / semibold / lh 1.25)</span></p>
+
+        <div class="gm" style="margin-left: var(--sp-3);">↕ <b>4px</b> · <code>h3 + .meta { margin-top: 4px }</code> — tight pair</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0; padding-left: var(--sp-3); border-left: 2px solid var(--c-channel-social);"><b>p.meta</b> — «∆ vs avg…» <span style="color:var(--tx-secondary)">(11 / regular / lh 1.25)</span></p>
+
+        <div class="gm" style="margin-left: var(--sp-3);">↕ <b>8px</b> · <code>.meta { margin-bottom: 8px }</code> — content gap</div>
+
+        <p style="font-size: var(--fs-caption); margin-bottom: 0; padding-left: var(--sp-3); border-left: 2px solid var(--c-channel-social);"><b>table</b> — данные</p>
+    </div>
+
+    <h3 class="doc">8.4 Что меняется по сравнению с моим предыдущим предложением</h3>
+
+    <table class="tk-table">
+        <thead>
+            <tr><th>Параметр</th><th>Было (моё предл.)</th><th>Стало (твоё предл.)</th><th>Эффект</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.meta</code> font-size</td>
+                <td>13 (body)</td>
+                <td><strong class="changed">11 (caption) везде</strong></td>
+                <td class="desc">Унифицируется с тем что уже в <code>.title-area</code>. Класс <code>.meta-sm</code> больше не нужен — есть только <code>.meta</code>.</td>
+            </tr>
+            <tr>
+                <td>line-height</td>
+                <td>1.5 (по умолчанию)</td>
+                <td><strong class="changed">1.25</strong></td>
+                <td class="desc">Текст плотнее, без разреженности. Применяется к h2/h3/h4/.meta/body.</td>
+            </tr>
+            <tr>
+                <td>h2 margin-top</td>
+                <td>32px (--sp-6)</td>
+                <td><strong class="changed">44px (250% × 18, round even)</strong></td>
+                <td class="desc">250% от font-size, затем округление вниз до ближайшего чётного. 45 → 44.</td>
+            </tr>
+            <tr>
+                <td>h3 margin-top</td>
+                <td>16px (--sp-4)</td>
+                <td><strong class="changed">24px (175% × 14, round even)</strong></td>
+                <td class="desc">175% от font-size, округление вниз. 24.5 → 24.</td>
+            </tr>
+            <tr>
+                <td>h4 margin-top</td>
+                <td>8px (--sp-2)</td>
+                <td><strong class="changed">16px (125% × 13, round even)</strong></td>
+                <td class="desc">По той же логике. 16.25 → 16. Можно подкрутить процент если хочется иначе.</td>
+            </tr>
+            <tr>
+                <td>tight pair</td>
+                <td>4px (--sp-1)</td>
+                <td>4px</td>
+                <td class="desc">Без изменений.</td>
+            </tr>
+            <tr>
+                <td>.meta margin-bottom</td>
+                <td>12px (--sp-3)</td>
+                <td><strong class="changed">8px</strong></td>
+                <td class="desc">Меньше зазор до контента. С 11px шрифтом 8px достаточно.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 class="doc">8.5 Сводка CSS</h3>
+    <p class="doc">Правило margin-top заголовков: <strong>процент × font-size, округление вниз до ближайшего чётного</strong>. Получаются «дизайнерские» значения (44 / 24 / 16) вместо прямого em.</p>
+
+    <pre>body { line-height: 1.25; }              /* применяется ко всему */
+
+h2 {
+    font-size:   var(--fs-h2);            /* 18 */
+    font-weight: var(--fw-semibold);
+    margin:      44px 0 0;                 /* 250% × 18 = 45 → 44 (round even down) */
+    line-height: 1.25;
+}
+
+h3 {
+    font-size:   var(--fs-h3);            /* 14 */
+    font-weight: var(--fw-semibold);
+    margin:      24px 0 0;                 /* 175% × 14 = 24.5 → 24 */
+    line-height: 1.25;
+}
+
+h4 {
+    font-size:   var(--fs-body);          /* 13 */
+    font-weight: var(--fw-semibold);
+    margin:      16px 0 0;                 /* 125% × 13 = 16.25 → 16 */
+    color:       var(--tx-secondary);
+    line-height: 1.25;
+}
+
+.meta {
+    font-size:    var(--fs-caption);      /* 11px ВЕЗДЕ — единый размер */
+    color:        var(--tx-secondary);
+    line-height:  1.25;
+    margin:       0 0 8px;                 /* 0 top, 8px bottom (gap к контенту) */
+}
+
+/* Tight pair — описание сразу после заголовка */
+h2 + .meta, h3 + .meta, h4 + .meta { margin-top: 4px; }</pre>
+
+    <p class="doc"><strong>В виде токенов:</strong> можно вынести в <code>--mt-h2: 44px; --mt-h3: 24px; --mt-h4: 16px;</code> — тогда если меняешь размер заголовка, нужно вручную пересчитать токен по формуле <code>floor_even(percent × size)</code>.</p>
+
+    <h3 class="doc">8.6 Для grid system (.title-area внутри .h4x6) — отдельно</h3>
+    <p class="doc">Эти правила работают <strong>вне</strong> grid system (для разделов из секции 7.5 — flow layout). Внутри grid system <code>.title-area</code> с её 80px row продолжает существовать как отдельный паттерн (или решаем что с ним делать по вариантам B/C/D из секции 7.7).</p>
+
+    <p class="doc"><strong>Для согласования:</strong> применяем эту структуру (8.1-8.5) ко всем заголовкам ВНЕ grid system. Внутри grid (<code>.title-area</code>) — отдельный вопрос: либо унифицируем (поменяем <code>.title-area .meta</code> на 11/lh 1.25 — что и так), либо переделываем grid (варианты B/C/D из 7.7). Какой выбираем?</p>
+
+    <h2 class="doc">9. Вопросы для решения</h2>
+
+    <div class="q-grid">
+        <div class="q-card">
+            <div class="num">Q1</div>
+            <div class="title">Унифицировать h3 в карточке (14/semibold) или оставить компактный (13/bold)?</div>
+            <div class="desc"><strong>Унифицировать</strong> — иерархия чище, один h3 везде. <strong>Оставить</strong> — карточки плотнее, заголовок не «доминирует» в маленькой области. Я предлагаю первое (см. Pattern B). Но если 14px реально съест воздух в карточке — оставим 13/bold и переименуем правило (например, <code>.title-area h3</code> = <code>--fs-cardhead</code>).</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q2</div>
+            <div class="title">«Tight pair» = 4px (--sp-1)?</div>
+            <div class="desc">Альтернативы: 0 (приклеить вплотную), 6px (мягче), 8px (--sp-2). 4px — стандарт «связанная пара» в большинстве дизайн-систем (Material, Polaris). Принимаем?</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q3</div>
+            <div class="title">Section break перед h2 = 32px?</div>
+            <div class="desc">Сейчас в коде 24, в HTML inline 32 в двух местах. Если ставим 32 везде — те inline можно убрать, заодно решается «странная пустота» в этих двух блоках. Принимаем 32?</div>
+        </div>
+
+        <div class="q-card">
+            <div class="num">Q4</div>
+            <div class="title">Удалить h1 из CSS?</div>
+            <div class="desc">Не используется в дашборде. Удалить — чище. Оставить — backup на будущее. Я бы удалил.</div>
+        </div>
+
+        <div class="q-card" style="background: linear-gradient(135deg, var(--c-decline), var(--c-channel-social));">
+            <div class="num">Q5</div>
+            <div class="title">Принимаем <code>.meta-sm</code> как новый класс?</div>
+            <div class="desc">11px caption variant of <code>.meta</code> — для коротких tag-like подписей (как «∆ vs avg прошлых 4 недель» в скриншоте). Альтернатива — оставить только <code>.meta</code> 13px, мириться что в плотных подсетках текст крупнее. <code>.meta-sm</code> даёт визуальную плотность без ухода в overrides.</div>
+        </div>
+    </div>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Headings & Spacing v0 · 2026-04-29</p>
+</body>
+</html>

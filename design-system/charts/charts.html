@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Charts · Pinkspink Design System v1.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            /* === Typography v1.0 (зависимость) === */
+            --ff-mono: 'Ubuntu Mono', monospace;
+            --fw-regular: 400; --fw-semibold: 600; --fw-bold: 700;
+            --ls-label: 0.5px;
+            --fs-kpi: 28px; --fs-h2: 18px; --fs-h3: 14px;
+            --fs-body: 13px; --fs-caption: 11px; --fs-chart-meta: 10px;
+
+            /* === Charts v1.0 — высоты === */
+            --ch-xs: 60px; --ch-sm: 180px; --ch-md: 280px; --ch-lg: 360px;
+
+            /* Цвета (нужны для рендера примеров) */
+            --c-channel-social: #6C5CE7;
+            --c-channel-paid:   #00B894;
+            --c-channel-direct: #636E72;
+            --c-channel-organic:#0984E3;
+            --c-channel-referral:#FDCB6E;
+            --c-channel-email:  #E17055;
+            --c-funnel-home:    #636E72;
+            --c-funnel-catalog: #2D3436;
+            --c-funnel-product: #6C5CE7;
+            --c-funnel-atc:     #FDCB6E;
+            --c-funnel-checkout:#74B9FF;
+            --c-funnel-purchase:#00B894;
+            --c-growth: #00B894; --c-decline: #E17055; --c-neutral: #636E72; --c-highlight: #6C5CE7;
+            --tx-primary:#2D3436; --tx-secondary:#636E72; --tx-muted:#B2BEC3; --tx-ondark:#FFFFFF;
+            --bg-page:#FAFAFA; --bg-card:#FFFFFF; --bg-muted:#F0F0F0; --bg-border:#DFE6E9; --bg-divider:#F0F0F0; --bg-inverse:#2D3436; --bg-hover:#F8F9FA;
+            --r-md: 4px; --r-lg: 6px; --r-xl: 8px;
+            --sh-card: 0 1px 3px rgba(0,0,0,0.08);
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: inherit; }
+        body { font-family: var(--ff-mono); background: var(--bg-page); color: var(--tx-primary); padding: var(--sp-5); max-width: 1500px; margin: 0 auto; }
+
+        h1.doc { font-size: var(--fs-kpi); font-weight: var(--fw-bold); margin-bottom: var(--sp-2); }
+        h2.doc { font-size: var(--fs-h2); font-weight: var(--fw-semibold); margin: var(--sp-5) 0 var(--sp-3); padding-bottom: 6px; border-bottom: 2px solid var(--bg-inverse); }
+        h3.doc { font-size: var(--fs-h3); font-weight: var(--fw-bold); margin: var(--sp-4) 0 var(--sp-2); }
+        p.doc  { font-size: var(--fs-body); color: var(--tx-secondary); line-height: 1.5; margin-bottom: var(--sp-3); }
+        p.doc strong { color: var(--tx-primary); }
+        code { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-muted); padding: 1px 4px; border-radius: var(--r-md); }
+        pre { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3); border-radius: var(--r-lg); font-size: var(--fs-caption); line-height: 1.5; overflow-x: auto; font-family: var(--ff-mono); margin: var(--sp-2) 0 var(--sp-3); }
+        .badge { font-family: var(--ff-mono); font-size: var(--fs-caption); background: var(--bg-inverse); color: var(--tx-ondark); padding: 2px 6px; border-radius: var(--r-md); display: inline-block; }
+        .meta-line { font-size: var(--fs-caption); color: var(--tx-secondary); margin-bottom: var(--sp-3); }
+
+        /* Type cards (= token cards для Charts) */
+        .type-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); margin-bottom: var(--sp-4); overflow: hidden; }
+        .type-head { background: var(--bg-inverse); color: var(--tx-ondark); padding: var(--sp-3) var(--sp-4); display: flex; justify-content: space-between; align-items: baseline; }
+        .type-head .name { font-size: var(--fs-h3); font-weight: var(--fw-bold); }
+        .type-head .meta { font-size: var(--fs-caption); color: var(--tx-muted); }
+        .type-body { padding: var(--sp-4); display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--sp-4); }
+        @media (max-width: 1000px) { .type-body { grid-template-columns: 1fr; } }
+        .type-canvas { position: relative; height: var(--ch-md); }
+        .type-canvas.lg { height: var(--ch-lg); }
+        .type-canvas.sm { height: var(--ch-sm); }
+
+        .type-spec { display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-caption); }
+        .type-spec .row { display: grid; grid-template-columns: 110px 1fr; gap: var(--sp-2); padding: 6px 0; border-bottom: 1px solid var(--bg-divider); }
+        .type-spec .row:last-child { border-bottom: none; }
+        .type-spec .k { color: var(--tx-secondary); }
+        .type-spec .v { color: var(--tx-primary); }
+        .type-spec .v code { font-size: 10px; }
+
+        /* Formatter table */
+        .fmt-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; margin-bottom: var(--sp-4); }
+        .fmt-row { display: grid; grid-template-columns: 100px repeat(4, 1fr); gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--bg-divider); align-items: center; font-size: var(--fs-caption); }
+        .fmt-row:last-child { border-bottom: none; }
+        .fmt-row.head { background: var(--bg-muted); font-weight: var(--fw-semibold); }
+        .fmt-row .raw { color: var(--tx-muted); }
+        .fmt-row .res { color: var(--tx-primary); font-weight: var(--fw-semibold); }
+
+        /* Legend markers visual */
+        .lg-card { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; margin-bottom: var(--sp-4); }
+        .lg-row  { display: grid; grid-template-columns: 140px 100px 1fr; gap: var(--sp-3); align-items: center; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--bg-divider); font-size: var(--fs-caption); }
+        .lg-row:last-child { border-bottom: none; }
+        .lg-row.head { background: var(--bg-muted); font-weight: var(--fw-semibold); }
+        .lg-marker-bar  { display: inline-block; width: 10px; height: 10px; border-radius: 1px; vertical-align: middle; }
+        .lg-marker-line { display: inline-block; width: 32px; height: 2px; vertical-align: middle; }
+        .lg-marker-circ { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+
+        /* Heights demo */
+        .h-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); align-items: start; margin-bottom: var(--sp-4); }
+        @media (max-width: 1100px) { .h-grid { grid-template-columns: repeat(2, 1fr); } }
+        .h-cell { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-3); }
+        .h-cell .lab { font-size: 10px; text-transform: uppercase; color: var(--tx-secondary); margin-bottom: var(--sp-2); letter-spacing: var(--ls-label); }
+
+        /* Apply section */
+        .apply { background: var(--bg-card); border-radius: var(--r-xl); box-shadow: var(--sh-card); padding: var(--sp-4); margin-bottom: var(--sp-4); }
+        .apply .step { font-size: var(--fs-h3); font-weight: var(--fw-semibold); margin: var(--sp-3) 0 var(--sp-2); }
+        .apply .step .num { background: var(--c-channel-social); color: var(--tx-ondark); padding: 2px 8px; border-radius: var(--r-md); font-size: var(--fs-caption); margin-right: var(--sp-2); }
+
+        /* Inline list of rules */
+        ul.rules { font-size: var(--fs-body); color: var(--tx-primary); line-height: 1.7; margin-left: var(--sp-4); margin-bottom: var(--sp-3); }
+        ul.rules li { margin-bottom: var(--sp-1); }
+
+        /* Sparkline demo */
+        .spark-demo { background: var(--bg-muted); border-radius: var(--r-lg); padding: 6px var(--sp-2); position: relative; }
+    </style>
+</head>
+<body>
+    <h1 class="doc">Charts <span class="badge">v1.0</span></h1>
+    <p class="meta-line">Pinkspink Design System · Раздел charts · 6 типов · 4 форматтера · 4 пресета легенды · 4 ступени высоты · единый hover</p>
+    <p class="doc">Спецификация графиков. Всё работает на Chart.js 4.4 + chartjs-plugin-datalabels 2.2. Полностью наследует типографику из <a href="../typography/" style="color:var(--c-channel-social)">Typography v1.0</a> — никаких новых размеров шрифта или весов вне согласованной шкалы. Источник правды — <code>tokens.json</code>, текстовая версия — <code>tokens.md</code>.</p>
+
+    <h2 class="doc">1. Глобальная настройка</h2>
+    <p class="doc">Запускается один раз при загрузке страницы. Дальше все графики наследуют шрифт, цвет осей, размеры подписей, hover-mode.</p>
+    <pre>// === Chart.js global setup ===
+Chart.register(ChartDataLabels);  // ОБЯЗАТЕЛЬНО для v4 — иначе datalabels игнорируются
+
+Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+Chart.defaults.color       = '#636E72';                 // --tx-secondary
+
+Chart.defaults.font.size                  = 10;            // --fs-chart-meta (оси)
+Chart.defaults.plugins.legend.labels.font = { size: 10 };  // --fs-chart-meta (легенда)
+Chart.defaults.plugins.datalabels         = Chart.defaults.plugins.datalabels || {};
+Chart.defaults.plugins.datalabels.font    = { size: 11 };  // --fs-caption (datalabels)
+
+Chart.defaults.scale.grid.color = 'rgba(0,0,0,0.06)';
+
+Chart.defaults.interaction = { mode: 'index', intersect: false };
+// (для bubble override на { mode: 'point', intersect: true } per-chart)</pre>
+
+    <h2 class="doc">2. Форматтеры</h2>
+    <p class="doc">Четыре функции, единые для всех графиков. Все автоматически скрывают <code>0</code> и <code>null</code>. Локаль <code>ru-RU</code> для разделителя тысяч.</p>
+
+    <pre>const fmt = {
+    num: (v)         =&gt; (v == null || v === 0) ? '' : v.toLocaleString('ru-RU'),    // 12 845
+    pct: (v, dec=1)  =&gt; (v == null || v === 0) ? '' : v.toFixed(dec) + '%',         // 12.4%
+    sec: (v)         =&gt; (v == null || v === 0) ? '' : v + 's',                      // 31s
+    cur: (v, c='$')  =&gt; (v == null || v === 0) ? '' : c + v.toLocaleString('ru-RU') // $630
+};</pre>
+
+    <div class="fmt-card">
+        <div class="fmt-row head">
+            <span>Функция</span><span>0</span><span>12345</span><span>12.456</span><span>null</span>
+        </div>
+        <div class="fmt-row">
+            <span><code>fmt.num</code></span>
+            <span class="raw">''</span><span class="res">12 345</span><span class="res">12.456</span><span class="raw">''</span>
+        </div>
+        <div class="fmt-row">
+            <span><code>fmt.pct</code></span>
+            <span class="raw">''</span><span class="res">12345.0%</span><span class="res">12.5%</span><span class="raw">''</span>
+        </div>
+        <div class="fmt-row">
+            <span><code>fmt.sec</code></span>
+            <span class="raw">''</span><span class="res">12345s</span><span class="res">12s</span><span class="raw">''</span>
+        </div>
+        <div class="fmt-row">
+            <span><code>fmt.cur</code></span>
+            <span class="raw">''</span><span class="res">$12 345</span><span class="res">$12</span><span class="raw">''</span>
+        </div>
+    </div>
+
+    <h2 class="doc">3. Datalabel-пэд</h2>
+    <p class="doc">Полупрозрачный фон под значениями — чтобы число читалось когда падает на цветную линию или пузырь. Применяется к Line, Combo (line-часть), Bubble. Для bar-сегментов не нужен (там белое на цветном).</p>
+    <pre>const dlPad = {
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderRadius:    3,
+    padding: { top: 1, bottom: 1, left: 4, right: 4 }
+};</pre>
+
+    <h2 class="doc">4. Маркеры легенды</h2>
+
+    <div class="lg-card">
+        <div class="lg-row head">
+            <span>Тип графика</span><span>Маркер</span><span>Конфиг</span>
+        </div>
+        <div class="lg-row">
+            <span>Bar (любой)</span>
+            <span><span class="lg-marker-bar" style="background:var(--c-channel-social)"></span></span>
+            <span><code>usePointStyle:true · pointStyle:'rect' · boxWidth:10</code></span>
+        </div>
+        <div class="lg-row">
+            <span>Line</span>
+            <span><span class="lg-marker-line" style="background:var(--c-channel-social)"></span></span>
+            <span><code>usePointStyle:true · boxWidth:32 · generateLabels (custom)</code></span>
+        </div>
+        <div class="lg-row">
+            <span>Bubble</span>
+            <span><span class="lg-marker-circ" style="background:var(--c-channel-social)"></span></span>
+            <span><code>usePointStyle:true · pointStyle:'circle' · boxWidth:10</code></span>
+        </div>
+        <div class="lg-row">
+            <span>Combo (mixed)</span>
+            <span>
+                <span class="lg-marker-bar" style="background:var(--c-channel-social);margin-right:6px"></span>
+                <span class="lg-marker-line" style="background:var(--c-growth)"></span>
+            </span>
+            <span><code>usePointStyle:true · boxWidth:14 · generateLabels (custom — bar=rect, line=line)</code></span>
+        </div>
+        <div class="lg-row">
+            <span>Sparkline</span>
+            <span style="color:var(--tx-muted)">— нет —</span>
+            <span><code>display: false</code></span>
+        </div>
+    </div>
+
+    <p class="doc">Все: <code>position:'top'</code>, <code>align:'start'</code> (по левому краю). Кастомная функция <code>legendLabels</code> нужна потому что Chart.js v4 рисует точку для line-датасетов вместо линии.</p>
+
+    <h2 class="doc">5. Шесть типов графиков</h2>
+
+    <!-- A. Grouped Bar -->
+    <div class="type-card">
+        <div class="type-head"><span class="name">A · Grouped Bar</span><span class="meta">Воронка по периодам, динамика по каналам</span></div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-grouped"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Type</span><span class="v"><code>bar</code></span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">funnel или channel</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>barTop</code> + <code>fmt.num</code></span></div>
+                <div class="row"><span class="k">Legend</span><span class="v"><code>bar</code> preset</span></div>
+                <div class="row"><span class="k">Y</span><span class="v"><code>beginAtZero · grace:'15%'</code></span></div>
+                <div class="row"><span class="k">BarWidth</span><span class="v"><code>maxBarThickness:40</code></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- B. Stacked Bar -->
+    <div class="type-card">
+        <div class="type-head"><span class="name">B · Stacked Bar</span><span class="meta">Композиция / доли</span></div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-stacked"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Type</span><span class="v"><code>bar</code></span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">channel</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>barCenter</code> + <code>display: ctx => v &gt; 30</code></span></div>
+                <div class="row"><span class="k">Legend</span><span class="v"><code>bar</code> preset</span></div>
+                <div class="row"><span class="k">Scales</span><span class="v">x/y stacked, y beginAtZero</span></div>
+                <div class="row"><span class="k">Tooltip</span><span class="v"><code>withShare</code> — значение + доля %</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- C. Combo -->
+    <div class="type-card">
+        <div class="type-head"><span class="name">C · Combo · Bar + Line (dual-axis)</span><span class="meta">Сессии-stack + покупатели-линия</span></div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-combo"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Type</span><span class="v">per-dataset</span></div>
+                <div class="row"><span class="k">Bars</span><span class="v"><code>order:2 · stack:'s' · maxBarThickness:40</code></span></div>
+                <div class="row"><span class="k">Line</span><span class="v"><code>order:0 · pointRadius:4 · borderWidth:2 · tension:0.3</code></span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v">per-dataset: bar белым в центре, line зелёным с пэдом</span></div>
+                <div class="row"><span class="k">Legend</span><span class="v"><code>mixed</code> preset (квадрат + линия)</span></div>
+                <div class="row"><span class="k">Y / Y1</span><span class="v">Y слева stacked, Y1 справа без сетки</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- D. Line -->
+    <div class="type-card">
+        <div class="type-head"><span class="name">D · Line</span><span class="meta">% конверсии, тренды</span></div>
+        <div class="type-body">
+            <div class="type-canvas"><canvas id="ch-line"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Type</span><span class="v"><code>line</code></span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">funnel или semantic</span></div>
+                <div class="row"><span class="k">Defaults</span><span class="v"><code>borderWidth:2 · tension:0.3 · pointRadius:4 · pointHoverRadius:6</code></span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v"><code>line</code> + dlPad + <code>fmt.pct</code></span></div>
+                <div class="row"><span class="k">Legend</span><span class="v"><code>line</code> preset (короткая линия 32×2)</span></div>
+                <div class="row"><span class="k">Y</span><span class="v">ticks <code>v + '%'</code> · grace 15%</span></div>
+                <div class="row"><span class="k">Tooltip</span><span class="v"><code>customByFmt</code> с <code>fmt.pct</code></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- E. Bubble -->
+    <div class="type-card">
+        <div class="type-head"><span class="name">E · Bubble</span><span class="meta">Объём × конверсия × размер</span></div>
+        <div class="type-body">
+            <div class="type-canvas lg"><canvas id="ch-bubble"></canvas></div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Type</span><span class="v"><code>bubble</code></span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">channel (по source)</span></div>
+                <div class="row"><span class="k">Datalabels</span><span class="v">имя source · <code>anchor:'end' · align:'right' · clamp:true</code> · dlPad</span></div>
+                <div class="row"><span class="k">Legend</span><span class="v"><code>bubble</code> preset (круг 10×10)</span></div>
+                <div class="row"><span class="k">Interaction</span><span class="v">override: <code>{ mode:'point', intersect:true }</code></span></div>
+                <div class="row"><span class="k">Padding</span><span class="v"><code>{ top:16, right:32, bottom:4, left:4 }</code></span></div>
+                <div class="row"><span class="k">Tooltip</span><span class="v"><code>twoDimensions</code> — X + Y</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- F. Sparkline -->
+    <div class="type-card">
+        <div class="type-head"><span class="name">F · Sparkline</span><span class="meta">Мини-тренды в KPI-карточках</span></div>
+        <div class="type-body">
+            <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+                <div>
+                    <div style="font-size:10px;color:var(--tx-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:var(--ls-label)">С min/max — высота 100px</div>
+                    <div class="spark-demo" style="height:100px"><canvas id="ch-spark-full"></canvas></div>
+                </div>
+                <div>
+                    <div style="font-size:10px;color:var(--tx-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:var(--ls-label)">Простой — высота --ch-xs (60px)</div>
+                    <div class="spark-demo" style="height:var(--ch-xs)"><canvas id="ch-spark-simple"></canvas></div>
+                </div>
+            </div>
+            <div class="type-spec">
+                <div class="row"><span class="k">Type</span><span class="v"><code>line</code></span></div>
+                <div class="row"><span class="k">Цвета</span><span class="v">channel или semantic (по тренду)</span></div>
+                <div class="row"><span class="k">Defaults</span><span class="v"><code>borderWidth:1.5 · tension:0.4 · pointRadius:0 · fill:false</code></span></div>
+                <div class="row"><span class="k">Min/max</span><span class="v">10px regular, max=growth · min=decline, align top/bottom</span></div>
+                <div class="row"><span class="k">Точки</span><span class="v"><code>pointRadius:2.5</code> только в min/max</span></div>
+                <div class="row"><span class="k">X grid</span><span class="v">лёгкая <code>rgba(0,0,0,0.06)</code>, ticks скрыты</span></div>
+                <div class="row"><span class="k">Y</span><span class="v"><code>display:false</code></span></div>
+                <div class="row"><span class="k">Tooltip</span><span class="v"><code>false</code> · Legend <code>false</code></span></div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="doc">6. Высоты — четыре ступени</h2>
+    <p class="doc">Каждый график получает <code>min-height</code> и <code>max-height</code> равные одной из четырёх CSS-переменных. Контейнер фиксированный — график не «дышит» при разных данных.</p>
+
+    <pre>:root {
+    --ch-xs: 60px;   /* sparkline в KPI-карточках */
+    --ch-sm: 180px;  /* графики в слайдер-карточках (компакт) */
+    --ch-md: 280px;  /* стандартный график в .cell */
+    --ch-lg: 360px;  /* детализированные с осями + большая легенда */
+}</pre>
+
+    <div class="h-grid">
+        <div class="h-cell">
+            <div class="lab">--ch-xs · 60px</div>
+            <div style="position:relative;height:60px"><canvas id="h-xs"></canvas></div>
+        </div>
+        <div class="h-cell">
+            <div class="lab">--ch-sm · 180px</div>
+            <div style="position:relative;height:180px"><canvas id="h-sm"></canvas></div>
+        </div>
+        <div class="h-cell">
+            <div class="lab">--ch-md · 280px</div>
+            <div style="position:relative;height:280px"><canvas id="h-md"></canvas></div>
+        </div>
+        <div class="h-cell">
+            <div class="lab">--ch-lg · 360px</div>
+            <div style="position:relative;height:360px"><canvas id="h-lg"></canvas></div>
+        </div>
+    </div>
+
+    <h2 class="doc">7. Ширина баров — <code>maxBarThickness</code></h2>
+    <p class="doc">На каждом dataset с <code>type: 'bar'</code> ставим <code>maxBarThickness: 40</code>. Бары не превышают 40px, после порога — зазоры. Когда баров слишком много (например, 30 дней) — переключатель grain (day/week/month) вместо горизонтального скролла. Скролл — fallback только когда агрегация невозможна.</p>
+
+    <pre>{ type: 'bar', ..., maxBarThickness: 40, categoryPercentage: 0.8, barPercentage: 0.9 }</pre>
+
+    <h2 class="doc">8. Цветовая логика</h2>
+    <p class="doc">Все цвета на графиках берутся <strong>только из токенов</strong> (Color v1.0 когда будет создан, или Python-словарей <code>CHANNEL_COLORS</code> / <code>FUNNEL_STAGES</code>). Никаких inline hex.</p>
+
+    <ul class="rules">
+        <li><strong>channel</strong> — Социальные: Social, Paid, Direct, Organic, Referral, Email</li>
+        <li><strong>funnel</strong> — Этапы воронки: home, catalog, product, ATC, checkout, purchase</li>
+        <li><strong>semantic</strong> — Дельты, sparkline по тренду, акценты: growth, decline, neutral, highlight</li>
+    </ul>
+
+    <h2 class="doc">9. Соответствие Typography v1.0</h2>
+    <p class="doc">Никаких новых размеров шрифта или весов вне согласованной шкалы. Все настройки идут через <code>Chart.defaults</code>:</p>
+
+    <ul class="rules">
+        <li><strong>Datalabels</strong> (значения, source-имена на пузырях): <code>--fs-caption</code> 11px / regular</li>
+        <li><strong>Подписи осей и легенды</strong>: <code>--fs-chart-meta</code> 10px / regular</li>
+        <li><strong>Sparkline min/max</strong>: <code>--fs-chart-meta</code> 10px / regular</li>
+        <li><strong>Шрифт</strong>: <code>'Ubuntu Mono'</code> через <code>Chart.defaults.font.family</code></li>
+    </ul>
+
+    <p class="doc"><strong>Никаких <code>weight: 'bold'</code></strong> в чарт-конфигах. Если хочется выделить — используем <strong>цвет</strong> (<code>--c-growth</code>, <code>--tx-ondark</code>, <code>--c-decline</code>), не толщину.</p>
+
+    <h2 class="doc">10. Применение в новом проекте</h2>
+
+    <div class="apply">
+        <div class="step"><span class="num">1</span>Подключить Chart.js + datalabels</div>
+        <pre>&lt;script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"&gt;&lt;/script&gt;</pre>
+
+        <div class="step"><span class="num">2</span>Применить Typography v1.0 (см. соседнюю папку <code>typography/</code>)</div>
+
+        <div class="step"><span class="num">3</span>Добавить токены высоты в <code>:root</code></div>
+        <pre>:root {
+    --ch-xs: 60px; --ch-sm: 180px; --ch-md: 280px; --ch-lg: 360px;
+}</pre>
+
+        <div class="step"><span class="num">4</span>Глобальная настройка Chart.defaults — один раз при загрузке (см. секцию 1)</div>
+
+        <div class="step"><span class="num">5</span>Для каждого графика — взять подходящий пресет из секции 5</div>
+    </div>
+
+    <p class="doc" style="margin-top:var(--sp-5);text-align:center;color:var(--tx-muted)">Pinkspink Design System · Charts v1.0 · 2026-04-28</p>
+
+    <script>
+    // === Глобальная настройка Chart.js (как в спецификации) ===
+    Chart.register(ChartDataLabels);
+    Chart.defaults.font.family = "'Ubuntu Mono', monospace";
+    Chart.defaults.color       = '#636E72';
+    Chart.defaults.font.size                  = 10;
+    Chart.defaults.plugins.legend.labels.font = { size: 10 };
+    Chart.defaults.plugins.datalabels         = Chart.defaults.plugins.datalabels || {};
+    Chart.defaults.plugins.datalabels.font    = { size: 11 };
+    Chart.defaults.scale.grid.color = 'rgba(0,0,0,0.06)';
+    Chart.defaults.interaction = { mode: 'index', intersect: false };
+
+    const cssvar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    const fmt = {
+        num: v => (v == null || v === 0) ? '' : v.toLocaleString('ru-RU'),
+        pct: (v, dec=1) => (v == null || v === 0) ? '' : v.toFixed(dec) + '%',
+        sec: v => (v == null || v === 0) ? '' : v + 's',
+        cur: (v, c='$') => (v == null || v === 0) ? '' : c + v.toLocaleString('ru-RU')
+    };
+
+    const dlPad = {
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        borderRadius: 3,
+        padding: { top: 1, bottom: 1, left: 4, right: 4 }
+    };
+
+    function legendLabels(chart) {
+        return chart.data.datasets.map((ds, i) => {
+            const isLine = (ds.type === 'line') || (chart.config.type === 'line' && !ds.type);
+            const color = ds.borderColor || ds.backgroundColor;
+            return {
+                text: ds.label,
+                fillStyle: color, strokeStyle: color,
+                lineWidth: isLine ? 2 : 0,
+                pointStyle: isLine ? 'line' : (chart.config.type === 'bubble' ? 'circle' : 'rect'),
+                hidden: !chart.isDatasetVisible(i),
+                datasetIndex: i
+            };
+        });
+    }
+
+    const legendPresets = {
+        bar:    { display: true, position: 'top', align: 'start', labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 10, boxHeight: 10, padding: 12 } },
+        line:   { display: true, position: 'top', align: 'start', labels: { usePointStyle: true, boxWidth: 32, boxHeight: 2, padding: 12, generateLabels: legendLabels } },
+        bubble: { display: true, position: 'top', align: 'start', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 10, boxHeight: 10, padding: 12 } },
+        mixed:  { display: true, position: 'top', align: 'start', labels: { usePointStyle: true, boxWidth: 14, boxHeight: 8, padding: 12, generateLabels: legendLabels } }
+    };
+
+    const dlPresets = {
+        barTop:    { anchor: 'end',    align: 'top',    color: cssvar('--tx-primary') },
+        barCenter: { anchor: 'center', align: 'center', color: cssvar('--tx-ondark')  },
+        line:      { align: 'top',                       color: cssvar('--tx-primary'), ...dlPad }
+    };
+
+    const periodLabels = ['W04', 'W05', 'W06', 'W07', 'W08'];
+
+    // A — Grouped Bar
+    new Chart(document.getElementById('ch-grouped'), {
+        type: 'bar',
+        data: {
+            labels: periodLabels,
+            datasets: [
+                { label: 'home',     backgroundColor: cssvar('--c-funnel-home'),     data: [80, 95, 92, 110, 125], maxBarThickness: 40 },
+                { label: 'product',  backgroundColor: cssvar('--c-funnel-product'),  data: [60, 72, 68, 85, 96],   maxBarThickness: 40 },
+                { label: 'ATC',      backgroundColor: cssvar('--c-funnel-atc'),      data: [12, 14, 11, 18, 22],   maxBarThickness: 40 },
+                { label: 'purchase', backgroundColor: cssvar('--c-funnel-purchase'), data: [1, 2, 0, 3, 4],         maxBarThickness: 40 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: legendPresets.bar,
+                datalabels: { ...dlPresets.barTop, formatter: fmt.num }
+            },
+            scales: { y: { beginAtZero: true, grace: '15%' } }
+        }
+    });
+
+    // B — Stacked Bar
+    new Chart(document.getElementById('ch-stacked'), {
+        type: 'bar',
+        data: {
+            labels: periodLabels,
+            datasets: [
+                { label: 'Social',  backgroundColor: cssvar('--c-channel-social'),  data: [120, 145, 132, 178, 201], stack: 's', maxBarThickness: 40 },
+                { label: 'Paid',    backgroundColor: cssvar('--c-channel-paid'),    data: [45, 52, 48, 60, 55],     stack: 's', maxBarThickness: 40 },
+                { label: 'Direct',  backgroundColor: cssvar('--c-channel-direct'),  data: [80, 75, 82, 95, 98],     stack: 's', maxBarThickness: 40 },
+                { label: 'Organic', backgroundColor: cssvar('--c-channel-organic'), data: [10, 12, 15, 13, 18],     stack: 's', maxBarThickness: 40 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: legendPresets.bar,
+                datalabels: { ...dlPresets.barCenter, display: ctx => ctx.dataset.data[ctx.dataIndex] > 30, formatter: fmt.num },
+                tooltip: { callbacks: { label: ctx => {
+                    const total = ctx.chart.data.datasets.reduce((s, d) => s + (d.data[ctx.dataIndex] || 0), 0);
+                    const share = total > 0 ? (ctx.parsed.y / total * 100).toFixed(1) : 0;
+                    return ctx.dataset.label + ': ' + fmt.num(ctx.parsed.y) + ' (' + share + '%)';
+                }}}
+            },
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+        }
+    });
+
+    // C — Combo
+    new Chart(document.getElementById('ch-combo'), {
+        data: {
+            labels: periodLabels,
+            datasets: [
+                { type: 'bar',  label: 'Social',  backgroundColor: cssvar('--c-channel-social'), data: [120, 145, 132, 178, 201], stack: 's', yAxisID: 'y', order: 2, maxBarThickness: 40,
+                  datalabels: { ...dlPresets.barCenter, display: ctx => ctx.dataset.data[ctx.dataIndex] > 30, formatter: fmt.num } },
+                { type: 'bar',  label: 'Paid',    backgroundColor: cssvar('--c-channel-paid'),   data: [45, 52, 48, 60, 55],     stack: 's', yAxisID: 'y', order: 2, maxBarThickness: 40,
+                  datalabels: { ...dlPresets.barCenter, display: ctx => ctx.dataset.data[ctx.dataIndex] > 30, formatter: fmt.num } },
+                { type: 'bar',  label: 'Direct',  backgroundColor: cssvar('--c-channel-direct'), data: [80, 75, 82, 95, 98],     stack: 's', yAxisID: 'y', order: 2, maxBarThickness: 40,
+                  datalabels: { ...dlPresets.barCenter, display: ctx => ctx.dataset.data[ctx.dataIndex] > 30, formatter: fmt.num } },
+                { type: 'line', label: 'Покупатели', borderColor: cssvar('--c-growth'), backgroundColor: cssvar('--c-growth'),
+                  borderWidth: 2, tension: 0.3, pointRadius: 4, pointHoverRadius: 6, pointBorderWidth: 0, pointBackgroundColor: cssvar('--c-growth'),
+                  data: [4, 5, 4, 7, 8], yAxisID: 'y1', order: 0,
+                  datalabels: { anchor: 'end', align: 'top', offset: 6, color: cssvar('--c-growth'), formatter: fmt.num, ...dlPad } }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: legendPresets.mixed },
+            scales: {
+                x: { stacked: true },
+                y:  { stacked: true, beginAtZero: true, position: 'left' },
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // D — Line
+    new Chart(document.getElementById('ch-line'), {
+        type: 'line',
+        data: {
+            labels: periodLabels,
+            datasets: [
+                { label: 'catalog→product', borderColor: cssvar('--c-funnel-product'), backgroundColor: cssvar('--c-funnel-product'), borderWidth: 2, tension: 0.3, pointRadius: 4, pointHoverRadius: 6, pointBorderWidth: 0, data: [42.1, 49.6, 51.5, 47.8, 52.4] },
+                { label: 'product→ATC',     borderColor: cssvar('--c-funnel-atc'),     backgroundColor: cssvar('--c-funnel-atc'),     borderWidth: 2, tension: 0.3, pointRadius: 4, pointHoverRadius: 6, pointBorderWidth: 0, data: [20.0, 19.4, 16.2, 21.2, 22.9] }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: legendPresets.line,
+                datalabels: { ...dlPresets.line, formatter: v => fmt.pct(v, 1) },
+                tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt.pct(ctx.parsed.y, 1) } }
+            },
+            scales: { y: { beginAtZero: true, grace: '15%', ticks: { callback: v => v + '%' } } }
+        }
+    });
+
+    // E — Bubble
+    new Chart(document.getElementById('ch-bubble'), {
+        type: 'bubble',
+        data: {
+            datasets: [
+                { label: 'ig',          backgroundColor: cssvar('--c-channel-social'),  data: [{x: 1234, y: 4.5, r: 18}], pointStyle: 'circle' },
+                { label: 'meta (paid)', backgroundColor: cssvar('--c-channel-paid'),    data: [{x: 342, y: 0.9, r: 8}],   pointStyle: 'circle' },
+                { label: '(direct)',    backgroundColor: cssvar('--c-channel-direct'),  data: [{x: 523, y: 4.0, r: 12}],  pointStyle: 'circle' },
+                { label: 'google',      backgroundColor: cssvar('--c-channel-organic'), data: [{x: 89, y: 6.7, r: 5}],    pointStyle: 'circle' },
+                { label: 'youtube',     backgroundColor: cssvar('--c-channel-referral'),data: [{x: 1850, y: 2.1, r: 14}], pointStyle: 'circle' },
+                { label: 'tiktok',      backgroundColor: cssvar('--c-channel-email'),   data: [{x: 220, y: 8.2, r: 7}],   pointStyle: 'circle' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'point', intersect: true },
+            layout: { padding: { top: 16, right: 32, bottom: 4, left: 4 } },
+            plugins: {
+                legend: legendPresets.bubble,
+                datalabels: { anchor: 'end', align: 'right', offset: 6, clamp: true, formatter: (v, ctx) => ctx.dataset.label, color: cssvar('--tx-primary'), ...dlPad },
+                tooltip: { callbacks: { label: ctx => {
+                    const p = ctx.raw;
+                    return ctx.dataset.label + ': ' + fmt.num(p.x) + ' сес. → ' + fmt.pct(p.y, 1);
+                }}}
+            },
+            scales: {
+                x: { title: { display: true, text: 'Сессии' } },
+                y: { title: { display: true, text: 'Конверсия %' }, ticks: { callback: v => v + '%' } }
+            }
+        }
+    });
+
+    // F — Sparkline (full version с min/max)
+    function makeSparkline(canvasId, data, withMinMax) {
+        const config = {
+            type: 'line',
+            data: {
+                labels: data.map((_, i) => i),
+                datasets: [{
+                    data,
+                    borderColor: cssvar('--c-channel-social'),
+                    backgroundColor: cssvar('--c-channel-social'),
+                    borderWidth: 1.5,
+                    tension: 0.4,
+                    pointRadius: withMinMax ? (ctx => {
+                        const d = ctx.dataset.data;
+                        const v = d[ctx.dataIndex];
+                        return (v === Math.max(...d) || v === Math.min(...d)) ? 2.5 : 0;
+                    }) : 0,
+                    pointBackgroundColor: ctx => {
+                        const d = ctx.dataset.data;
+                        const v = d[ctx.dataIndex];
+                        if (v === Math.max(...d)) return cssvar('--c-growth');
+                        if (v === Math.min(...d)) return cssvar('--c-decline');
+                        return 'transparent';
+                    },
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                layout: withMinMax ? { padding: { top: 14, bottom: 20, left: 4, right: 18 } } : { padding: 0 },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false },
+                    datalabels: withMinMax ? {
+                        display: ctx => {
+                            const d = ctx.dataset.data;
+                            const v = d[ctx.dataIndex];
+                            return v === Math.max(...d) || v === Math.min(...d);
+                        },
+                        font: { size: 10 },
+                        color: ctx => {
+                            const d = ctx.dataset.data;
+                            const v = d[ctx.dataIndex];
+                            return v === Math.max(...d) ? cssvar('--c-growth') : cssvar('--c-decline');
+                        },
+                        align: ctx => {
+                            const d = ctx.dataset.data;
+                            const v = d[ctx.dataIndex];
+                            return v === Math.max(...d) ? 'top' : 'bottom';
+                        },
+                        offset: 4,
+                        formatter: fmt.num
+                    } : { display: false }
+                },
+                scales: withMinMax ? {
+                    x: { display: true, grid: { display: true, color: 'rgba(0,0,0,0.06)', drawTicks: false, drawBorder: false }, ticks: { display: false }, border: { display: false } },
+                    y: { display: false }
+                } : { x: { display: false }, y: { display: false } }
+            }
+        };
+        new Chart(document.getElementById(canvasId), config);
+    }
+    const sparkData = [120, 145, 132, 178, 201, 188, 220];
+    makeSparkline('ch-spark-full',   sparkData, true);
+    makeSparkline('ch-spark-simple', sparkData, false);
+
+    // Heights demo — 4 ступени (одинаковые данные, разная высота)
+    function makeHeightDemo(canvasId, isXs) {
+        if (isXs) {
+            makeSparkline(canvasId, sparkData, false);
+            return;
+        }
+        new Chart(document.getElementById(canvasId), {
+            type: 'bar',
+            data: {
+                labels: periodLabels,
+                datasets: [{ label: 'Сессии', backgroundColor: cssvar('--c-channel-social'), data: [120, 145, 132, 178, 201], maxBarThickness: 40 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: legendPresets.bar, datalabels: { ...dlPresets.barTop, formatter: fmt.num } },
+                scales: { y: { beginAtZero: true, grace: '15%' } }
+            }
+        });
+    }
+    makeHeightDemo('h-xs', true);
+    makeHeightDemo('h-sm', false);
+    makeHeightDemo('h-md', false);
+    makeHeightDemo('h-lg', false);
+    </script>
+</body>
+</html>
