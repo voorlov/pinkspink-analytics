@@ -173,12 +173,18 @@ def aggregate_period(rows: list[dict], days: set[date]) -> dict:
     }
 
 
-def daily_window(today_utc: date) -> tuple[date, set[date], set[date]]:
-    """yesterday + trailing-7d baseline (the 7 days before yesterday)."""
-    yesterday = today_utc - timedelta(days=1)
-    target = {yesterday}
-    baseline = {yesterday - timedelta(days=i) for i in range(1, 8)}
-    return yesterday, target, baseline
+DAILY_LOOKBACK_DAYS = 10
+
+
+def daily_lookback_window(today_utc: date) -> tuple[date, date]:
+    """Date range for the daily probe query (covers latest target + baseline)."""
+    return today_utc - timedelta(days=DAILY_LOOKBACK_DAYS), today_utc - timedelta(days=1)
+
+
+def pick_latest_day(rows: list[dict]) -> date | None:
+    """Return the most recent date in rows that has sessions > 0."""
+    days = sorted({r["day"] for r in rows if r["sessions"] > 0}, reverse=True)
+    return days[0] if days else None
 
 
 def weekly_window(today_utc: date) -> tuple[date, date, set[date], set[date]]:
@@ -257,12 +263,22 @@ def send_telegram(text: str, token: str, chat_id: str) -> None:
                 continue
 
 
-def build_daily_prompt(target: date, target_data: dict, baseline_data: dict) -> str:
+def build_daily_prompt(
+    target: date, today_utc: date, target_data: dict, baseline_data: dict
+) -> str:
+    age = (today_utc - target).days
+    if age <= 1:
+        freshness = "Данные за вчера:"
+    else:
+        freshness = (
+            f"Данные за {target.isoformat()} (это {age} дн. назад — GA4-export "
+            f"за более свежие даты ещё не готов, что нормально):"
+        )
     return (
         f"Сегодня daily report для Pinkspink за {target.isoformat()} (UTC).\n\n"
-        f"Данные за вчера:\n```json\n"
+        f"{freshness}\n```json\n"
         f"{json.dumps(target_data, indent=2, ensure_ascii=False)}\n```\n\n"
-        f"Данные за trailing-7-day baseline (7 дней до вчера):\n```json\n"
+        f"Данные за trailing-7-day baseline (7 дней до целевого дня):\n```json\n"
         f"{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```\n\n"
         "Сгенерируй daily report по шаблону из references/report-template.md "
         "(≤300 слов, на русском). Применяй small-sample rules из metrics-playbook.md. "
@@ -312,24 +328,24 @@ def main() -> int:
     client = bq_client()
 
     if args.grain == "daily":
-        target_day, target_set, baseline_set = daily_window(today_utc)
-        start = min(baseline_set | target_set)
-        end = max(baseline_set | target_set)
+        start, end = daily_lookback_window(today_utc)
         rows = fetch_session_facts(client, start, end)
-        target_data = aggregate_period(rows, target_set)
-        baseline_data = aggregate_period(rows, baseline_set)
-        if target_data["sessions_total"] == 0:
+        target_day = pick_latest_day(rows)
+        if target_day is None:
             print(
-                f"WARN: no data for {target_day} — Telegram-уведомление, отчёт пропущен"
+                f"WARN: no data in last {DAILY_LOOKBACK_DAYS} days — отчёт пропущен"
             )
             if not args.dry_run:
                 send_telegram(
-                    f"⚠ Данные за {target_day} не доступны в BigQuery (export задержался). Daily отчёт пропущен.",
+                    f"⚠ В BigQuery нет данных за последние {DAILY_LOOKBACK_DAYS} дней. Daily отчёт пропущен.",
                     os.environ["TELEGRAM_BOT_TOKEN"],
                     os.environ["TELEGRAM_CHAT_ID"],
                 )
             return 0
-        prompt = build_daily_prompt(target_day, target_data, baseline_data)
+        baseline_set = {target_day - timedelta(days=i) for i in range(1, 8)}
+        target_data = aggregate_period(rows, {target_day})
+        baseline_data = aggregate_period(rows, baseline_set)
+        prompt = build_daily_prompt(target_day, today_utc, target_data, baseline_data)
         max_tokens = 800
         out_path = report_path("daily", target_day, None)
     else:
