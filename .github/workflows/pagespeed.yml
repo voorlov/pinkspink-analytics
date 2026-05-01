@@ -1,0 +1,37 @@
+name: PageSpeed check
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # понедельник 03:00 UTC = 11:00 Beijing
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Probe and notify
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+        run: python scripts/check_pagespeed.py
+
+      - name: Commit results
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git add reports/perf/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "perf: weekly snapshot $(date -u +%Y-%m-%d)"
+            git push
+          fi

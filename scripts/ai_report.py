@@ -22,14 +22,15 @@ import json
 import os
 import re
 import sys
-import urllib.parse
-import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import anthropic
 from google.cloud import bigquery
 from google.oauth2 import service_account
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _telegram import send_telegram  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = ROOT / ".claude" / "skills" / "pinkspink-analytics-coach"
@@ -43,7 +44,6 @@ EXCLUDED_COUNTRIES = ("China", "Hong Kong", "South Korea", "Singapore")
 SPAM_SOURCES = ("api.scraperforce.com", "sanganzhu.com", "jariblog.online")
 
 CLAUDE_MODEL = "claude-sonnet-4-6"
-TELEGRAM_LIMIT = 4000
 
 
 def bq_client() -> bigquery.Client:
@@ -250,42 +250,6 @@ def call_claude(skill_content: str, user_prompt: str, max_tokens: int) -> str:
         messages=[{"role": "user", "content": user_prompt}],
     )
     return "".join(b.text for b in response.content if b.type == "text")
-
-
-def chunk_for_telegram(text: str) -> list[str]:
-    chunks: list[str] = []
-    remaining = text
-    while remaining:
-        if len(remaining) <= TELEGRAM_LIMIT:
-            chunks.append(remaining)
-            break
-        cut = remaining.rfind("\n\n", 0, TELEGRAM_LIMIT)
-        if cut < TELEGRAM_LIMIT // 2:
-            cut = remaining.rfind("\n", 0, TELEGRAM_LIMIT)
-        if cut < 0:
-            cut = TELEGRAM_LIMIT
-        chunks.append(remaining[:cut])
-        remaining = remaining[cut:].lstrip()
-    return chunks
-
-
-def send_telegram(text: str, token: str, chat_id: str) -> None:
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    for chunk in chunk_for_telegram(text):
-        for parse_mode in ("Markdown", None):
-            params = {"chat_id": chat_id, "text": chunk}
-            if parse_mode:
-                params["parse_mode"] = parse_mode
-            data = urllib.parse.urlencode(params).encode()
-            req = urllib.request.Request(url, data=data)
-            try:
-                urllib.request.urlopen(req, timeout=15).read()
-                break
-            except urllib.error.HTTPError as exc:
-                if parse_mode is None:
-                    raise
-                # Fallback: retry without parse_mode if Telegram rejected markdown
-                continue
 
 
 def changelog_block(entries: str) -> str:
