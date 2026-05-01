@@ -231,13 +231,13 @@ python update_analytics.py traffic products pages geo retention transactions
 ## Автоматизация — как устроено
 
 **Track A — HTML-дашборд:**
-- Workflow: `.github/workflows/build-dashboard.yml`, cron `0 6 * * *` (09:00 МСК) + кнопка Run workflow.
+- Workflow: `.github/workflows/build-dashboard.yml`, cron `0 3 * * *` UTC (11:00 Пекин / 06:00 МСК) + кнопка Run workflow.
 - Запускает `python generate_report.py --grain all`, копирует HTML в `docs/`, коммитит и пушит.
 - GitHub Pages раздаёт `docs/` по адресу https://voorlov.github.io/pinkspink-analytics/.
 - Репо публичный (бесплатный план GitHub не поддерживает Pages на приватных репо). Данные — агрегатная аналитика без PII.
 
 **Track B — AI-отчёты:**
-- Workflow: `.github/workflows/ai-reports.yml`. Два cron: `0 6 * * *` (daily, 09:00 МСК) и `0 7 * * 1` (weekly, понедельник 10:00 МСК). Также workflow_dispatch для ручного запуска.
+- Workflow: `.github/workflows/ai-reports.yml`. Два cron в UTC: `0 3 * * *` (daily) и `0 3 * * 1` (weekly понедельник). Это 11:00 Пекин / 06:00 МСК. По понедельникам сработают оба run одновременно (daily за вчерашний день + weekly за прошлую неделю). Также workflow_dispatch для ручного запуска.
 - Скрипт: `scripts/ai_report.py --grain daily|weekly`.
   1. BigQuery: подтягивает session-level метрики за нужный период (yesterday + trailing-7d, или прошлая неделя + 4 предыдущие).
   2. Aggregate: каналы, страны, девайсы, ATC rate, View→ATC, etc.
