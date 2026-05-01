@@ -20,6 +20,7 @@ Required environment:
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -33,6 +34,7 @@ from google.oauth2 import service_account
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = ROOT / ".claude" / "skills" / "pinkspink-analytics-coach"
 REPORTS_DIR = ROOT / "reports"
+CHANGELOG_FILE = ROOT / "changelog.md"
 SERVICE_ACCOUNT_FILE = ROOT / "service_account.json"
 
 BQ_PROJECT = "claude-code-486108"
@@ -198,6 +200,29 @@ def weekly_window(today_utc: date) -> tuple[date, date, set[date], set[date]]:
     return last_monday, last_sunday, target, baseline
 
 
+def load_recent_changelog(today_utc: date, window_days: int) -> str:
+    """Return changelog entries from last `window_days` days as markdown bullets.
+
+    Empty string if file missing or no entries match.
+    """
+    if not CHANGELOG_FILE.exists():
+        return ""
+    cutoff = today_utc - timedelta(days=window_days)
+    entry_re = re.compile(r"^-\s+\*\*(\d{4}-\d{2}-\d{2})")
+    entries = []
+    for line in CHANGELOG_FILE.read_text(encoding="utf-8").splitlines():
+        m = entry_re.match(line)
+        if not m:
+            continue
+        try:
+            entry_date = date.fromisoformat(m.group(1))
+        except ValueError:
+            continue
+        if entry_date >= cutoff:
+            entries.append(line.strip())
+    return "\n".join(entries)
+
+
 def load_skill() -> str:
     parts = [(SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")]
     refs_dir = SKILL_DIR / "references"
@@ -263,8 +288,22 @@ def send_telegram(text: str, token: str, chat_id: str) -> None:
                 continue
 
 
+def changelog_block(entries: str) -> str:
+    if not entries:
+        return ""
+    return (
+        "\n\nИзменения с нашей стороны (из changelog.md). Используй для "
+        "confounder-чека — если метрика двинулась после такого изменения, явно "
+        "свяжи их в отчёте:\n```\n" + entries + "\n```"
+    )
+
+
 def build_daily_prompt(
-    target: date, today_utc: date, target_data: dict, baseline_data: dict
+    target: date,
+    today_utc: date,
+    target_data: dict,
+    baseline_data: dict,
+    changelog_entries: str,
 ) -> str:
     age = (today_utc - target).days
     if age <= 1:
@@ -279,7 +318,8 @@ def build_daily_prompt(
         f"{freshness}\n```json\n"
         f"{json.dumps(target_data, indent=2, ensure_ascii=False)}\n```\n\n"
         f"Данные за trailing-7-day baseline (7 дней до целевого дня):\n```json\n"
-        f"{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```\n\n"
+        f"{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```"
+        f"{changelog_block(changelog_entries)}\n\n"
         "Сгенерируй daily report по шаблону из references/report-template.md "
         "(≤300 слов, на русском). Применяй small-sample rules из metrics-playbook.md. "
         "Если значимых движений нет — одна строка «спокойный день». "
@@ -288,7 +328,11 @@ def build_daily_prompt(
 
 
 def build_weekly_prompt(
-    week_start: date, week_end: date, target_data: dict, baseline_data: dict
+    week_start: date,
+    week_end: date,
+    target_data: dict,
+    baseline_data: dict,
+    changelog_entries: str,
 ) -> str:
     return (
         f"Сегодня weekly report для Pinkspink за неделю "
@@ -296,7 +340,8 @@ def build_weekly_prompt(
         f"Данные за прошлую неделю:\n```json\n"
         f"{json.dumps(target_data, indent=2, ensure_ascii=False)}\n```\n\n"
         f"Данные за baseline (среднее по 4 предыдущим неделям, агрегировано):\n"
-        f"```json\n{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```\n\n"
+        f"```json\n{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```"
+        f"{changelog_block(changelog_entries)}\n\n"
         "Сгенерируй weekly report по шаблону из references/report-template.md "
         "(≤700 слов, на русском). Включи до 3 рекомендаций.\n\n"
         "ВАЖНО: у тебя нет прямого доступа к BigQuery в этом контексте, только "
@@ -345,7 +390,10 @@ def main() -> int:
         baseline_set = {target_day - timedelta(days=i) for i in range(1, 8)}
         target_data = aggregate_period(rows, {target_day})
         baseline_data = aggregate_period(rows, baseline_set)
-        prompt = build_daily_prompt(target_day, today_utc, target_data, baseline_data)
+        changelog_entries = load_recent_changelog(today_utc, window_days=14)
+        prompt = build_daily_prompt(
+            target_day, today_utc, target_data, baseline_data, changelog_entries
+        )
         max_tokens = 800
         out_path = report_path("daily", target_day, None)
     else:
@@ -355,8 +403,9 @@ def main() -> int:
         rows = fetch_session_facts(client, start, end)
         target_data = aggregate_period(rows, target_set)
         baseline_data = aggregate_period(rows, baseline_set)
+        changelog_entries = load_recent_changelog(today_utc, window_days=60)
         prompt = build_weekly_prompt(
-            week_monday, week_sunday, target_data, baseline_data
+            week_monday, week_sunday, target_data, baseline_data, changelog_entries
         )
         max_tokens = 1800
         out_path = report_path("weekly", week_monday, week_monday)
