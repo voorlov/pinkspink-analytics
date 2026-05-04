@@ -2824,36 +2824,38 @@ def render_card_html(card, name_key, dev_prefix=""):
 
     low_n_badge = '<span class="low-n-badge">&#9888; low n</span>' if card.get("sessions", 0) < 50 else ""
 
+    # data-card-* attrs: stable selectors for the JS country-filter recompute
+    # so it can find cards without parsing canvas IDs.
     return f"""
-        <div class="block"{border_style}>
+        <div class="block" data-card-type="{name_key}" data-card-name="{name}"{border_style}>
             <h3>{name}{low_n_badge}</h3>
             <canvas id="{canvas_id}"></canvas>
             <div class="metrics">
-                <div class="metric">
+                <div class="metric" data-metric="sessions">
                     <span class="label">Сессии</span>
                     <span class="value">{card['sessions']}</span>
                     {delta_html(card['delta_sessions'])}
                 </div>
-                <div class="metric">
+                <div class="metric" data-metric="share">
                     <span class="label">Доля</span>
                     <span class="value">{card['share']}%</span>
                 </div>
-                <div class="metric">
+                <div class="metric" data-metric="er">
                     <span class="label">ER</span>
                     <span class="value">{card['er']}%</span>
                     {delta_html(card['delta_er'], suffix=' п.п.')}
                 </div>
-                <div class="metric">
+                <div class="metric" data-metric="median_sec">
                     <span class="label">Median sec</span>
                     <span class="value">{card['median_sec']}s</span>
                     {delta_html(card['delta_median'], suffix='s')}
                 </div>
-                <div class="metric">
+                <div class="metric" data-metric="deep">
                     <span class="label">Глубина 2+</span>
                     <span class="value">{card['deep_pct']}%</span>
                     {delta_html(card['delta_deep'], suffix=' п.п.')}
                 </div>
-                <div class="metric">
+                <div class="metric" data-metric="products">
                     <span class="label">Карточек med / mean</span>
                     <span class="value">{card.get('median_products', 0)} / {card['avg_products']}</span>
                     {delta_html(card.get('delta_products'), suffix='')}
@@ -2901,8 +2903,9 @@ def build_html(data):
         f'<label class="check"><input type="checkbox" data-country="{c}"> {flag(c)}</label>'
         for c in _excluded_in_data
     )
+    # Phase 4: included labels also get .check for visual consistency with excluded ones.
     country_included_html = "".join(
-        f'<label><input type="checkbox" data-country="{c}" checked> {flag(c)}</label>'
+        f'<label class="check"><input type="checkbox" data-country="{c}" checked> {flag(c)}</label>'
         for c in _included_in_data
     )
     country_total = len(_excluded_in_data) + len(_included_in_data)
@@ -3256,6 +3259,15 @@ def build_html(data):
         .country-section label {{ display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 2px 0; }}
         .country-section-title {{ font-weight: var(--fw-bold); font-size: var(--fs-caption); color: var(--tx-secondary); margin: var(--tight-pair) 0 2px; text-transform: uppercase; }}
         .country-sep {{ border: none; border-top: 1px solid var(--bg-border); margin: 6px 0; }}
+        .country-panel .filter-buttons {{ display: flex; gap: var(--sp-1, 4px); margin-top: var(--sp-2, 8px); }}
+        .country-panel .filter-buttons .btn {{ flex: 1; }}
+        /* Mass-toggle row for the long "Все страны" section sticks to the bottom of
+           the scrollable panel — users always have one-click access without scroll. */
+        .country-panel .filter-buttons.sticky-bottom {{
+            position: sticky; bottom: 0; background: var(--bg-card);
+            padding: var(--sp-1, 4px) 0; margin-top: 0;
+            border-top: 1px solid var(--bg-border);
+        }}
         .filters-note {{ font-size: var(--fs-chart-meta); color: var(--tx-secondary); align-self: center; max-width: 140px; line-height: 1.2; }}
         /* === 12-column × fixed-row Grid System ===
            Row height = 80px. Elements specify cols (span X) + rows (span Y).
@@ -3409,10 +3421,18 @@ def build_html(data):
                 </button>
                 <div class="country-panel" id="country-panel" hidden>
                     <div class="country-section-title">Исключённые</div>
-                    <div class="country-section">{country_excluded_html}</div>
+                    <div class="country-section excluded">{country_excluded_html}</div>
+                    <div class="filter-buttons">
+                        <button type="button" class="btn" onclick="setExcludedSection(true)">Добавить исключения</button>
+                        <button type="button" class="btn" onclick="setExcludedSection(false)">Убрать исключения</button>
+                    </div>
                     <hr class="country-sep">
                     <div class="country-section-title">Все страны</div>
-                    <div class="country-section country-list">{country_included_html}</div>
+                    <div class="country-section included country-list">{country_included_html}</div>
+                    <div class="filter-buttons sticky-bottom">
+                        <button type="button" class="btn" onclick="setAllCountries(true)">Выбрать все</button>
+                        <button type="button" class="btn" onclick="setAllCountries(false)">Убрать все</button>
+                    </div>
                 </div>
             </div>
             <nav class="tab-bar">
@@ -4052,17 +4072,356 @@ def build_html(data):
     }}
 
     function updateCountryCount() {{
-        // Counter only — country exclusion is currently applied server-side at generation time.
-        // Reactive recompute lands once charts are migrated to the registry pattern.
         const all = document.querySelectorAll('.country-section input[type="checkbox"]');
         const checked = Array.from(all).filter(cb => cb.checked).length;
         const counter = document.getElementById('country-count');
         if (counter) counter.textContent = checked + ' из ' + all.length;
     }}
 
+    // =========================================================================
+    // REACTIVE COUNTRY FILTER (Phase 2 of joyful-mapping-sutherland.md)
+    // -------------------------------------------------------------------------
+    // Recomputes the 6 Funnels-tab blocks on the fly when checkbox selection
+    // changes. Reads from per-country payload keys (funnel_by_country,
+    // channel_country, source_country, bottom_funnel_full, stage_tables_full,
+    // bubble_channel_country) shipped in Phase 1.
+    //
+    // Stays inert until user toggles a checkbox: FILTERS.countries === null
+    // means SSR (Python-rendered, default-excluded) data. First user change
+    // populates the Set and triggers full recompute via filterHandlers.
+    //
+    // Limitation: median_eng_sec / avg_product_views / median_product_views
+    // are NOT in the slim per-country payload. Those card cells stay at SSR
+    // values. Sessions, share, ER, deep%, top-5 countries, funnel bars, and
+    // bubble + trend stages all recompute live.
+    // =========================================================================
+    FILTERS.countries = null;
+    const _N_PREV_BY_GRAIN = {{ day: 7, week: 4, month: 3 }};
+    const _CC_FUNNEL_FIELDS = ['funnel_homepage','funnel_catalog','funnel_product','funnel_atc','funnel_checkout','funnel_purchase'];
+
+    function getSelectedCountries() {{
+        const set = new Set();
+        document.querySelectorAll('.country-section input[type="checkbox"]:checked')
+            .forEach(cb => set.add(cb.dataset.country));
+        return set;
+    }}
+
+    function _safeRate(num, den) {{ return den ? Math.round(num / den * 1000) / 10 : 0; }}
+    function _avgArr(arr) {{ return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }}
+
+    // Build a delta-span via DOM API (textContent only — no HTML parsing).
+    function _buildDeltaSpan(value, suffix) {{
+        const span = document.createElement('span');
+        if (value == null) {{
+            span.className = 'delta neutral';
+            span.textContent = '—';
+            return span;
+        }}
+        if (value > 0) {{
+            span.className = 'delta green';
+            span.textContent = '↑ +' + value + suffix;
+        }} else if (value < 0) {{
+            span.className = 'delta red';
+            span.textContent = '↓ ' + value + suffix;
+        }} else {{
+            span.className = 'delta neutral';
+            span.textContent = '→ 0' + suffix;
+        }}
+        return span;
+    }}
+
+    // Sum {{country: {{period: {{fields}}}}}} across `picked` countries at one period.
+    function _sumByCountryAtPeriod(byCountry, period, picked) {{
+        const agg = {{
+            sessions: 0, engaged_sessions: 0,
+            sessions_1page: 0, sessions_2_5pages: 0, sessions_over5pages: 0,
+            funnel_homepage: 0, funnel_catalog: 0, funnel_product: 0,
+            funnel_atc: 0, funnel_checkout: 0, funnel_purchase: 0,
+        }};
+        for (const country in byCountry) {{
+            if (!picked.has(country)) continue;
+            const v = byCountry[country][period];
+            if (!v) continue;
+            for (const k in agg) agg[k] += (v[k] || 0);
+        }}
+        return agg;
+    }}
+
+    // Sum a flat {{country: {{fields}}}} bucket (no period dim) — for bubble_channel_country.
+    function _sumByCountryFlat(byCountry, picked) {{
+        const agg = {{
+            sessions: 0,
+            funnel_catalog: 0, funnel_product: 0,
+            funnel_atc: 0, funnel_checkout: 0, funnel_purchase: 0,
+        }};
+        for (const country in byCountry) {{
+            if (!picked.has(country)) continue;
+            const v = byCountry[country];
+            if (!v) continue;
+            for (const k in agg) agg[k] += (v[k] || 0);
+        }}
+        return agg;
+    }}
+
+    // Total sessions across all countries (selected) for a device + period.
+    // Denominator for share% on channel/source cards.
+    function _totalSessionsAt(dev, period, picked) {{
+        const fbc = ((DATA.funnel_by_country || {{}})[dev]) || {{}};
+        const countries = fbc[period] || {{}};
+        let total = 0;
+        for (const c in countries) {{
+            if (picked.has(c)) total += (countries[c].sessions || 0);
+        }}
+        return total;
+    }}
+
+    // ---------- Block 1: per-period funnel bars (mobile + desktop) ----------
+    function recomputeFunnelByCountry(picked) {{
+        const fbc = DATA.funnel_by_country || {{}};
+        const periods = DATA.periods || [];
+        [['stacked-mobile', 'mobile'], ['stacked-desktop', 'desktop']].forEach(([id, dev]) => {{
+            const chart = Chart.getChart(id);
+            if (!chart) return;
+            const byPeriod = fbc[dev] || {{}};
+            chart.data.datasets.forEach((ds, i) => {{
+                const field = _CC_FUNNEL_FIELDS[i];
+                ds.data = periods.map(p => {{
+                    const countries = byPeriod[p] || {{}};
+                    let sum = 0;
+                    for (const c in countries) {{
+                        if (picked.has(c)) sum += (countries[c][field] || 0);
+                    }}
+                    return sum;
+                }});
+            }});
+            chart.update('none');
+        }});
+    }}
+
+    // ---------- Block 2 + 3: Channel / source cards ----------
+    function _recomputeCardSet(payloadKey, type, picked, dev) {{
+        const groups = (DATA[payloadKey] || {{}})[dev];
+        if (!groups) return;
+        const periods = DATA.periods || [];
+        if (!periods.length) return;
+        const curPeriod = periods[periods.length - 1];
+        const nPrev = _N_PREV_BY_GRAIN[currentGrain] || 4;
+        const prevStart = Math.max(0, periods.length - 1 - nPrev);
+        const totalSessions = _totalSessionsAt(dev, curPeriod, picked);
+        const sliceEl = document.querySelector('[data-device-slice="' + dev + '"]');
+        if (!sliceEl) return;
+
+        Object.keys(groups).forEach(name => {{
+            const byCountry = groups[name];
+            // Find card via stable data-card-* attrs (added in Phase 2 to render_card_html)
+            const cards = sliceEl.querySelectorAll('[data-card-type="' + type + '"]');
+            let card = null;
+            for (const c of cards) {{
+                if (c.dataset.cardName === name) {{ card = c; break; }}
+            }}
+            if (!card) return;
+            const canvas = card.querySelector('canvas');
+
+            const perPeriod = periods.map(p => _sumByCountryAtPeriod(byCountry, p, picked));
+            const cur = perPeriod[perPeriod.length - 1];
+            const prev = perPeriod.slice(prevStart, perPeriod.length - 1);
+
+            // Funnel bar chart
+            if (canvas) {{
+                const chart = Chart.getChart(canvas);
+                if (chart) {{
+                    chart.data.datasets.forEach((ds, i) => {{
+                        ds.data = perPeriod.map(s => s[_CC_FUNNEL_FIELDS[i]]);
+                    }});
+                    chart.update('none');
+                }}
+            }}
+
+            // Cur-period scalar metrics
+            const sessions = cur.sessions;
+            const er = _safeRate(cur.engaged_sessions, cur.sessions);
+            const deep = _safeRate(cur.sessions_2_5pages + cur.sessions_over5pages, cur.sessions);
+            const share = totalSessions ? Math.round(sessions / totalSessions * 1000) / 10 : 0;
+
+            // Deltas vs avg of prev N periods
+            const avgSessions = _avgArr(prev.map(s => s.sessions));
+            const avgEr = _avgArr(prev.map(s => _safeRate(s.engaged_sessions, s.sessions)));
+            const avgDeep = _avgArr(prev.map(s => _safeRate(s.sessions_2_5pages + s.sessions_over5pages, s.sessions)));
+            const dSess = avgSessions > 0 ? Math.round((sessions - avgSessions) / avgSessions * 1000) / 10 : null;
+            const dEr   = (avgEr > 0 || er > 0) ? Math.round((er - avgEr) * 10) / 10 : null;
+            const dDeep = (avgDeep > 0 || deep > 0) ? Math.round((deep - avgDeep) * 10) / 10 : null;
+
+            _setMetric(card, 'sessions', String(sessions), _buildDeltaSpan(dSess, '%'));
+            _setMetric(card, 'share', share + '%', null);
+            _setMetric(card, 'er', er + '%', _buildDeltaSpan(dEr, ' п.п.'));
+            _setMetric(card, 'deep', deep + '%', _buildDeltaSpan(dDeep, ' п.п.'));
+            // 'median_sec' and 'products' stay at SSR — not summable.
+
+            // Top-5 countries (current period)
+            const top = [];
+            for (const country in byCountry) {{
+                if (!picked.has(country)) continue;
+                const v = byCountry[country][curPeriod];
+                if (!v || !v.sessions) continue;
+                top.push([country, v.sessions]);
+            }}
+            top.sort((a, b) => b[1] - a[1]);
+            _renderTopCountries(card, top.slice(0, 5));
+        }});
+    }}
+
+    // Replace .metric value + delta in-place via DOM API (no HTML parsing).
+    function _setMetric(card, metric, value, deltaEl) {{
+        const el = card.querySelector('.metric[data-metric="' + metric + '"]');
+        if (!el) return;
+        const valEl = el.querySelector('.value');
+        if (valEl) valEl.textContent = value;
+        if (deltaEl) {{
+            const oldDelta = el.querySelector('.delta');
+            if (oldDelta) oldDelta.replaceWith(deltaEl);
+        }}
+    }}
+
+    // Rebuild top-5 country list via DOM API.
+    function _renderTopCountries(card, top) {{
+        const wrap = card.querySelector('.top-countries');
+        if (!wrap) return;
+        while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+        const h4 = document.createElement('h4');
+        h4.textContent = 'Топ 5 стран';
+        wrap.appendChild(h4);
+        top.forEach(([c, s]) => {{
+            const row = document.createElement('div');
+            row.className = 'country-row';
+            const flagSpan = document.createElement('span');
+            flagSpan.textContent = COUNTRY_FLAGS[c] || '🏳️';
+            const sessSpan = document.createElement('span');
+            sessSpan.textContent = String(s);
+            row.appendChild(flagSpan);
+            row.appendChild(sessSpan);
+            wrap.appendChild(row);
+        }});
+    }}
+
+    function recomputeChannelCards(picked, dev) {{ _recomputeCardSet('channel_country', 'channel', picked, dev); }}
+    function recomputeSourceCards(picked, dev)  {{ _recomputeCardSet('source_country',  'source',  picked, dev); }}
+
+    // ---------- Block 5 helpers — used by the bubble device-filter handler ----------
+    // Builds the items array (per-channel summed over picked countries, current period)
+    // that bubbleChart consumes. Mirrors Python's build_bubble_data structure.
+    function _ccRecomputeBubbleItems(dev, picked) {{
+        const bcc = (DATA.bubble_channel_country || {{}})[dev] || {{}};
+        const chc = (DATA.channel_country || {{}})[dev] || {{}};
+        const periods = DATA.periods || [];
+        const items = [];
+        Object.keys(bcc).forEach(ch => {{
+            const summed = _sumByCountryFlat(bcc[ch], picked);
+            items.push({{
+                name: ch,
+                sessions: summed.sessions,
+                funnel_catalog: summed.funnel_catalog,
+                funnel_product: summed.funnel_product,
+                funnel_atc: summed.funnel_atc,
+                funnel_checkout: summed.funnel_checkout,
+                funnel_purchase: summed.funnel_purchase,
+                cat_to_prod:          summed.funnel_catalog ? Math.round(summed.funnel_product   / summed.funnel_catalog  * 1000) / 10 : 0,
+                prod_to_atc:          summed.funnel_product ? Math.round(summed.funnel_atc       / summed.funnel_product  * 1000) / 10 : 0,
+                atc_to_checkout:      summed.funnel_atc     ? Math.round(summed.funnel_checkout  / summed.funnel_atc      * 1000) / 10 : 0,
+                checkout_to_purchase: summed.funnel_checkout? Math.round(summed.funnel_purchase  / summed.funnel_checkout * 1000) / 10 : 0,
+                er: 0, median_sec: 0,  // not summable across countries
+            }});
+        }});
+        items.sort((a, b) => b.sessions - a.sessions);
+
+        // Compute deltas vs avg of prev N periods using channel_country
+        const nPrev = _N_PREV_BY_GRAIN[currentGrain] || 4;
+        const prevStart = Math.max(0, periods.length - 1 - nPrev);
+        const prevPeriods = periods.slice(prevStart, periods.length - 1);
+        const STAGE_PAIRS = [
+            ['cat_to_prod',          'delta_cat_to_prod',          'funnel_catalog',  'funnel_product'],
+            ['prod_to_atc',          'delta_prod_to_atc',          'funnel_product',  'funnel_atc'],
+            ['atc_to_checkout',      'delta_atc_to_checkout',      'funnel_atc',      'funnel_checkout'],
+            ['checkout_to_purchase', 'delta_checkout_to_purchase', 'funnel_checkout', 'funnel_purchase'],
+        ];
+        items.forEach(item => {{
+            STAGE_PAIRS.forEach(([metric, deltaKey, denomField, numerField]) => {{
+                const prevVals = prevPeriods.map(p => {{
+                    const sums = _sumByCountryAtPeriod(chc[item.name] || {{}}, p, picked);
+                    return sums[denomField] ? sums[numerField] / sums[denomField] * 100 : 0;
+                }});
+                const avg = _avgArr(prevVals);
+                const cur = item[metric];
+                item[deltaKey] = (avg > 0 || cur > 0) ? Math.round((cur - avg) * 10) / 10 : null;
+            }});
+        }});
+        return items;
+    }}
+
+    // Builds a trend bundle with the same shape as DATA.channel_trend[dev], but
+    // datasets recomputed from channel_country sums per period for picked countries.
+    function _ccRecomputeTrendBundle(dev, picked, baseTrend) {{
+        const chc = (DATA.channel_country || {{}})[dev] || {{}};
+        const periods = DATA.periods || [];
+        const channels = baseTrend.channels || [];
+        const channelColors = baseTrend.channel_colors || {{}};
+        const STAGE_KEYS = [
+            ['cat_to_prod',          'funnel_catalog',  'funnel_product'],
+            ['prod_to_atc',          'funnel_product',  'funnel_atc'],
+            ['atc_to_checkout',      'funnel_atc',      'funnel_checkout'],
+            ['checkout_to_purchase', 'funnel_checkout', 'funnel_purchase'],
+        ];
+        const bundle = {{ channels, channel_colors: channelColors }};
+        STAGE_KEYS.forEach(([metric, denomField, numerField]) => {{
+            bundle[metric] = {{
+                labels: periods,
+                datasets: channels.map(ch => ({{
+                    label: ch,
+                    data: periods.map(p => {{
+                        const sums = _sumByCountryAtPeriod(chc[ch] || {{}}, p, picked);
+                        return sums[denomField] ? Math.round(sums[numerField] / sums[denomField] * 1000) / 10 : null;
+                    }}),
+                    borderColor: channelColors[ch] || '#999',
+                    backgroundColor: channelColors[ch] || '#999',
+                    tension: 0.3, pointRadius: 3, spanGaps: true,
+                }})),
+            }};
+        }});
+        return bundle;
+    }}
+
+    // ---------- Bulk-toggle helpers (4 dropdown buttons) ----------
+    function setAllCountries(checked) {{
+        document.querySelectorAll('.country-section.included input[type="checkbox"]')
+            .forEach(cb => {{ cb.checked = checked; }});
+        applyCountryFilter();
+    }}
+    function setExcludedSection(checked) {{
+        document.querySelectorAll('.country-section.excluded input[type="checkbox"]')
+            .forEach(cb => {{ cb.checked = checked; }});
+        applyCountryFilter();
+    }}
+
+    // ---------- Orchestrator (called by checkbox change handler) ----------
+    function applyCountryFilter() {{
+        FILTERS.countries = getSelectedCountries();
+        updateCountryCount();
+        if (!tabInited.funnels) return;
+        // Block 1: bar charts always visible — recompute directly.
+        recomputeFunnelByCountry(FILTERS.countries);
+        const dev = FILTERS.device || 'all';
+        // Cards: recompute for current device slice only (other slices update on device switch).
+        recomputeChannelCards(FILTERS.countries, dev);
+        recomputeSourceCards(FILTERS.countries, dev);
+        // Bottom funnel + stage tables + bubbles: piggyback the existing filter-handler chain,
+        // which now reads FILTERS.countries to swap data sources.
+        if (typeof filterHandlers !== 'undefined') {{
+            filterHandlers.forEach(fn => fn(FILTERS));
+        }}
+    }}
+
     document.addEventListener('DOMContentLoaded', () => {{
         document.querySelectorAll('.country-section input[type="checkbox"]').forEach(cb => {{
-            cb.addEventListener('change', updateCountryCount);
+            cb.addEventListener('change', applyCountryFilter);
         }});
         document.addEventListener('click', (ev) => {{
             const filter = document.querySelector('.country-filter');
@@ -4376,9 +4735,19 @@ def build_html(data):
         }});
 
         // ---- Filter handler: rebuild bubbles + trends with current device slice ----
+        // FILTERS.countries (when set) replaces server-side bubble_channel / channel_trend
+        // data with on-the-fly sums over selected countries (using bubble_channel_country
+        // and channel_country payload keys from Phase 1).
         registerFilterHandler(f => {{
-            const bubbleData = DATA.bubble_channel[f.device] || DATA.bubble_channel.all;
-            const trendBundle = DATA.channel_trend[f.device] || DATA.channel_trend.all;
+            const dev = f.device;
+            let bubbleData, trendBundle;
+            if (FILTERS.countries && DATA.bubble_channel_country && DATA.channel_country) {{
+                bubbleData = _ccRecomputeBubbleItems(dev, FILTERS.countries);
+                trendBundle = _ccRecomputeTrendBundle(dev, FILTERS.countries, _trendInitial);
+            }} else {{
+                bubbleData = DATA.bubble_channel[dev] || DATA.bubble_channel.all;
+                trendBundle = DATA.channel_trend[dev] || DATA.channel_trend.all;
+            }}
             CHANNEL_STAGES.forEach(s => {{
                 const cfg = bubbleCharts['ch-' + s.stage];
                 if (cfg && cfg[0]) {{
@@ -4398,8 +4767,16 @@ def build_html(data):
         }});
 
         // ---- Bottom funnel table ----
+        // FILTERS.countries (set by applyCountryFilter) makes this country-reactive:
+        // filter bottom_funnel_full instead of using the SSR (default-excluded) set.
         function _renderBottomFunnel(dev) {{
-            const rows = (DATA.bottom_funnel && (DATA.bottom_funnel[dev] || DATA.bottom_funnel.all)) || [];
+            let rows;
+            if (FILTERS.countries && DATA.bottom_funnel_full) {{
+                const allRows = DATA.bottom_funnel_full[dev] || DATA.bottom_funnel_full.all || [];
+                rows = allRows.filter(r => FILTERS.countries.has(r.country));
+            }} else {{
+                rows = (DATA.bottom_funnel && (DATA.bottom_funnel[dev] || DATA.bottom_funnel.all)) || [];
+            }}
             const tbody = document.getElementById('tbody-bottom-funnel');
             if (!tbody) return;
             tbody.innerHTML = rows.map(r =>
@@ -4430,8 +4807,16 @@ def build_html(data):
         function _renderStageTable(stageKey, dev) {{
             const wrapper = document.getElementById('stage-table-' + stageKey);
             if (!wrapper) return;
-            const stages = DATA.stage_tables[dev] || DATA.stage_tables.all || {{}};
-            const rows = stages[stageKey] || [];
+            // FILTERS.countries makes this country-reactive: filter stage_tables_full
+            // instead of using the SSR (default-excluded) set.
+            let rows;
+            if (FILTERS.countries && DATA.stage_tables_full) {{
+                const stagesFull = DATA.stage_tables_full[dev] || DATA.stage_tables_full.all || {{}};
+                rows = (stagesFull[stageKey] || []).filter(r => FILTERS.countries.has(r.country));
+            }} else {{
+                const stages = DATA.stage_tables[dev] || DATA.stage_tables.all || {{}};
+                rows = stages[stageKey] || [];
+            }}
             const inputLabel = STAGE_LABELS[stageKey];
             let body;
             if (!rows.length) {{
