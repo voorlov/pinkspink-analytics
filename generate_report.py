@@ -2076,6 +2076,31 @@ def generate_html(rows, grain, excluded_countries, analytics_data=None, _payload
             }
         bubble_channel_country[_dev] = _out
 
+    # ============================================================
+    # RAW ROWS — fed to the client-side _aggregateRows() helper so
+    # all Summary + Analytics metrics can be recomputed reactively
+    # for any country selection. Replaces the per-graph payload-key
+    # explosion that Phase 1 used; one slim payload covers everything.
+    # ============================================================
+    _RAW_ROW_FIELDS = (
+        "period", "device", "channel", "source", "country",
+        "sessions", "users", "engaged_sessions",
+        "sessions_1page", "sessions_2_5pages", "sessions_over5pages",
+        "funnel_homepage", "funnel_catalog", "funnel_product",
+        "funnel_atc", "funnel_checkout", "funnel_purchase",
+        "revenue", "new_users", "returning_users",
+        "median_eng_sec", "avg_product_views", "median_product_views",
+    )
+    raw_rows = []
+    for _r in filtered_all:
+        _row = {}
+        for _f in _RAW_ROW_FIELDS:
+            _v = getattr(_r, _f, None)
+            if _f == "revenue" and _v is not None:
+                _v = float(_v)
+            _row[_f] = _v if _v is not None else 0
+        raw_rows.append(_row)
+
     # ---- OVERVIEW: KPI + breakdowns ----
 
     # Total KPIs (all devices)
@@ -2747,6 +2772,8 @@ def generate_html(rows, grain, excluded_countries, analytics_data=None, _payload
         "bottom_funnel_full": bottom_funnel_full,
         "stage_tables_full": stage_tables_full,
         "bubble_channel_country": bubble_channel_country,
+        # Phase 5: raw rows for client-side aggregation across all tabs
+        "raw_rows": raw_rows,
         "overview_kpis_trend": overview_kpis_trend,
         "cur_kpis": cur_kpis,
         "channel_table": channel_table,
@@ -4109,6 +4136,314 @@ def build_html(data):
     function _safeRate(num, den) {{ return den ? Math.round(num / den * 1000) / 10 : 0; }}
     function _avgArr(arr) {{ return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }}
 
+    // =========================================================================
+    // _aggregateRows — JS mirror of Python's aggregate() (generate_report.py:1354).
+    // Sums summable fields, computes derived rates/medians per group key.
+    // Used by Summary + Analytics recompute paths (Phase 5/6) so country filter
+    // reaches every chart on the dashboard, not just the Funnels tab.
+    // =========================================================================
+    const _AGG_SUMMABLE = [
+        'sessions', 'users', 'engaged_sessions',
+        'sessions_1page', 'sessions_2_5pages', 'sessions_over5pages',
+        'funnel_homepage', 'funnel_catalog', 'funnel_product',
+        'funnel_atc', 'funnel_checkout', 'funnel_purchase',
+        'revenue', 'new_users', 'returning_users',
+    ];
+    function _aggregateRows(rows, groupKeys, filterFn) {{
+        const result = new Map();
+        for (const r of rows) {{
+            if (filterFn && !filterFn(r)) continue;
+            const key = groupKeys.map(k => String(r[k])).join('||');
+            let d = result.get(key);
+            if (!d) {{
+                d = {{ _key: groupKeys.map(k => r[k]) }};
+                for (const f of _AGG_SUMMABLE) d[f] = 0;
+                d._eng_ms_vals = [];
+                d._avg_pv_vals = [];
+                d._med_pv_vals = [];
+                result.set(key, d);
+            }}
+            for (const f of _AGG_SUMMABLE) d[f] += (r[f] || 0);
+            const sess = r.sessions || 0;
+            if (r.median_eng_sec != null && sess > 0) {{
+                for (let i = 0; i < sess; i++) d._eng_ms_vals.push(r.median_eng_sec);
+            }}
+            if (r.avg_product_views != null && sess > 0) {{
+                for (let i = 0; i < sess; i++) d._avg_pv_vals.push(r.avg_product_views);
+            }}
+            if (r.median_product_views != null && sess > 0) {{
+                for (let i = 0; i < sess; i++) d._med_pv_vals.push(r.median_product_views);
+            }}
+        }}
+        for (const d of result.values()) {{
+            const s = d.sessions;
+            d.er = s ? Math.round(d.engaged_sessions / s * 1000) / 10 : 0;
+            d.bounce_rate = s ? Math.round(d.sessions_1page / s * 1000) / 10 : 0;
+            d.deep_pct = s ? Math.round((d.sessions_2_5pages + d.sessions_over5pages) / s * 1000) / 10 : 0;
+            d.cr = s ? Math.round(d.funnel_purchase / s * 10000) / 100 : 0;
+            d.atc_rate = s ? Math.round(d.funnel_atc / s * 10000) / 100 : 0;
+            d.cart_to_purchase = d.funnel_atc ? Math.min(100, Math.round(d.funnel_purchase / d.funnel_atc * 1000) / 10) : 0;
+            d.revenue_per_session = s ? Math.round(d.revenue / s * 100) / 100 : 0;
+            d.cat_to_prod = d.funnel_catalog ? Math.min(100, Math.round(d.funnel_product / d.funnel_catalog * 1000) / 10) : 0;
+            d.prod_to_atc = d.funnel_product ? Math.min(100, Math.round(d.funnel_atc / d.funnel_product * 1000) / 10) : 0;
+            d.atc_to_checkout = d.funnel_atc ? Math.min(100, Math.round(d.funnel_checkout / d.funnel_atc * 1000) / 10) : 0;
+            d.checkout_to_purchase = d.funnel_checkout ? Math.min(100, Math.round(d.funnel_purchase / d.funnel_checkout * 1000) / 10) : 0;
+            // Medians: sort + middle. Mean is also computed here so that JS callers
+            // can swap them in if they prefer summable-friendly approximations.
+            const ev = d._eng_ms_vals;
+            d.median_eng_sec = ev.length ? Math.round(ev.sort((a, b) => a - b)[Math.floor(ev.length / 2)] * 10) / 10 : 0;
+            const av = d._avg_pv_vals;
+            d.avg_product_views = av.length ? Math.round(av.reduce((a, b) => a + b, 0) / av.length * 10) / 10 : 0;
+            const mv = d._med_pv_vals;
+            d.median_product_views = mv.length ? Math.round(mv.sort((a, b) => a - b)[Math.floor(mv.length / 2)] * 10) / 10 : 0;
+            // avg_pages is what the existing Summary tables read for the "Стр./сесс." column.
+            d.avg_pages = d.avg_product_views;  // proxy; matches Python builders for these breakdowns
+            delete d._eng_ms_vals; delete d._avg_pv_vals; delete d._med_pv_vals;
+        }}
+        return result;
+    }}
+
+    // Returns rows filtered by current country selection (or default-excluded set
+    // when the user hasn't toggled anything).
+    const _DEFAULT_EXCLUDED = new Set((DATA.excluded_countries || []));
+    function _activeRows() {{
+        const all = DATA.raw_rows || [];
+        if (FILTERS.countries) {{
+            const picked = FILTERS.countries;
+            return all.filter(r => picked.has(r.country));
+        }}
+        return all.filter(r => !_DEFAULT_EXCLUDED.has(r.country));
+    }}
+
+    // Compute % delta of current period vs avg of N previous periods.
+    function _computeDeltaVsPrev(values, nPrev) {{
+        if (!values || values.length < 2) return null;
+        const cur = values[values.length - 1];
+        const start = Math.max(0, values.length - 1 - nPrev);
+        const prev = values.slice(start, values.length - 1);
+        if (!prev.length) return null;
+        const avg = prev.reduce((a, b) => a + b, 0) / prev.length;
+        if (avg === 0) return null;
+        return Math.round((cur - avg) / avg * 1000) / 10;
+    }}
+    // Absolute delta in p.p. (for rate metrics).
+    function _computeDeltaPp(values, nPrev) {{
+        if (!values || values.length < 2) return null;
+        const cur = values[values.length - 1];
+        const start = Math.max(0, values.length - 1 - nPrev);
+        const prev = values.slice(start, values.length - 1);
+        if (!prev.length) return null;
+        const avg = prev.reduce((a, b) => a + b, 0) / prev.length;
+        return Math.round((cur - avg) * 100) / 100;
+    }}
+
+    // =========================================================================
+    // _rebuildSummaryData(activeRows) — JS mirror of Python's summary_data builder
+    // (generate_report.py:2280-2700ish). Produces exactly the shape that existing
+    // Summary filter-handlers consume, so country-reactive recompute drops in
+    // without touching per-chart handlers.
+    // =========================================================================
+    function _rebuildSummaryData(rows, periods, nPrev) {{
+        const devices = ['all', 'mobile', 'desktop', 'tablet'];
+        const trackedChannels = ['Social', 'Paid', 'Direct', 'Organic', 'Referral'];
+        const devMatch = (dev) => (dev === 'all' ? () => true : (r) => r.device === dev);
+
+        function trVals(agg, groupKey) {{
+            return periods.map(p => agg.get([...(Array.isArray(groupKey) ? groupKey : [groupKey]), p].join('||'))?.[0] || null);
+        }}
+
+        // Per-period agg per device — used by KPI / trends / etc.
+        const ptByDev = {{}};
+        for (const dev of devices) {{
+            ptByDev[dev] = _aggregateRows(rows, ['period'], devMatch(dev));
+        }}
+        const lookup = (m, dev) => periods.map(p => {{
+            const e = ptByDev[dev].get(p);
+            return e ? (e[m] || 0) : 0;
+        }});
+        const lastVal = (m, dev) => {{
+            if (!periods.length) return 0;
+            const e = ptByDev[dev].get(periods[periods.length - 1]);
+            return e ? (e[m] || 0) : 0;
+        }};
+
+        // ---- KPI per device ----
+        const kpi = {{}};
+        for (const dev of devices) {{
+            const tr = (m) => lookup(m, dev);
+            kpi[dev] = {{
+                revenue_per_session: {{ value: lastVal('revenue_per_session', dev), delta: _computeDeltaVsPrev(tr('revenue_per_session'), nPrev), trend: tr('revenue_per_session'), agg: 'mean' }},
+                revenue:             {{ value: Math.round(lastVal('revenue', dev) * 100) / 100, delta: _computeDeltaVsPrev(tr('revenue'), nPrev), trend: tr('revenue').map(v => Math.round(v * 100) / 100), agg: 'sum' }},
+                atc_rate:            {{ value: lastVal('atc_rate', dev), delta: _computeDeltaPp(tr('atc_rate'), nPrev), trend: tr('atc_rate'), agg: 'rate' }},
+                purchase_rate:       {{ value: lastVal('cr', dev), delta: _computeDeltaPp(tr('cr'), nPrev), trend: tr('cr'), agg: 'rate' }},
+                cart_to_purchase:    {{ value: lastVal('cart_to_purchase', dev), delta: _computeDeltaPp(tr('cart_to_purchase'), nPrev), trend: tr('cart_to_purchase'), agg: 'rate' }},
+            }};
+        }}
+
+        // ---- Visitors & sessions ----
+        const visitorsSessions = {{ labels: periods }};
+        for (const dev of devices) {{
+            visitorsSessions[dev] = {{
+                visitors: lookup('users', dev),
+                sessions: lookup('sessions', dev),
+            }};
+        }}
+
+        // ---- Device sessions per period (mobile/desktop/tablet) ----
+        const devByPeriod = _aggregateRows(rows, ['period', 'device']);
+        const deviceSessions = {{ labels: periods }};
+        for (const d of ['mobile', 'desktop', 'tablet']) {{
+            deviceSessions[d] = periods.map(p => {{
+                const e = devByPeriod.get([p, d].join('||'));
+                return e ? (e.sessions || 0) : 0;
+            }});
+        }}
+
+        // ---- New vs Returning ----
+        const newRet = {{ labels: periods }};
+        for (const dev of devices) {{
+            newRet[dev] = {{
+                new: lookup('new_users', dev),
+                returning: lookup('returning_users', dev),
+            }};
+        }}
+
+        // ---- Time on site (median) per device ----
+        const timeOnSite = {{ labels: periods }};
+        for (const d of ['mobile', 'desktop', 'tablet']) {{
+            timeOnSite[d] = periods.map(p => {{
+                const e = devByPeriod.get([p, d].join('||'));
+                return e ? (e.median_eng_sec || 0) : 0;
+            }});
+        }}
+
+        // ---- Bounce by device ----
+        const bounceDevice = {{ labels: periods }};
+        for (const d of ['mobile', 'desktop', 'tablet']) {{
+            bounceDevice[d] = periods.map(p => {{
+                const e = devByPeriod.get([p, d].join('||'));
+                return e ? (e.bounce_rate || 0) : 0;
+            }});
+        }}
+
+        // ---- Source trend (per device, per channel) ----
+        const sourceTrend = {{ labels: periods }};
+        for (const dev of devices) {{
+            const chPp = _aggregateRows(rows, ['period', 'channel'], devMatch(dev));
+            const ptDev = ptByDev[dev];
+            const sources = trackedChannels.map(ch => {{
+                const sessionsArr = periods.map(p => {{
+                    const e = chPp.get([p, ch].join('||'));
+                    return e ? (e.sessions || 0) : 0;
+                }});
+                const totals = periods.map(p => {{
+                    const e = ptDev.get(p);
+                    return e ? (e.sessions || 0) : 0;
+                }});
+                const shares = sessionsArr.map((s, i) => totals[i] > 0 ? Math.round(s / totals[i] * 1000) / 10 : 0);
+                return {{ name: ch, sessions: sessionsArr, share_pct: shares }};
+            }});
+            sourceTrend[dev] = sources;
+        }}
+
+        // ---- Source / Country tables (per-device, with per-metric deltas) ----
+        const sourceMetrics = [
+            ['sessions', 'rel'], ['users', 'rel'],
+            ['new_users', 'rel'], ['returning_users', 'rel'],
+            ['er', 'pp'], ['bounce_rate', 'pp'],
+            ['median_eng_sec', 'rel'], ['avg_pages', 'rel'],
+            ['atc_rate', 'pp'], ['cr', 'pp'],
+        ];
+        function buildTable(groupKey, rows_, devFilter, minSessions) {{
+            const agg = _aggregateRows(rows_, ['period', groupKey], devFilter);
+            const allKeys = new Set();
+            for (const k of agg.keys()) allKeys.add(k.split('||')[1]);
+            const out = [];
+            for (const key of allKeys) {{
+                const trends = {{}};
+                for (const [m, _] of sourceMetrics) {{
+                    trends[m] = periods.map(p => {{
+                        const e = agg.get([p, key].join('||'));
+                        return e ? (e[m] || 0) : 0;
+                    }});
+                }}
+                if (trends[sourceMetrics[0][0]].reduce((a, b) => a + b, 0) === 0) continue;
+                const row = {{ name: key }};
+                for (const [m, dt] of sourceMetrics) {{
+                    const cur = trends[m][trends[m].length - 1] || 0;
+                    let delta;
+                    if (dt === 'pp') delta = _computeDeltaPp(trends[m], nPrev);
+                    else if (dt === 'rel') delta = _computeDeltaVsPrev(trends[m], nPrev);
+                    else delta = null;
+                    row[m] = {{ value: cur, delta, delta_type: dt }};
+                }}
+                out.push(row);
+            }}
+            const sorted = out.sort((a, b) => (b.sessions.value || 0) - (a.sessions.value || 0));
+            return minSessions ? sorted.filter(r => r.sessions.value >= minSessions).slice(0, 20) : sorted;
+        }}
+        const sourceTable = {{}};
+        const countryTable = {{}};
+        for (const dev of devices) {{
+            sourceTable[dev] = buildTable('channel', rows, devMatch(dev));
+            countryTable[dev] = buildTable('country', rows, devMatch(dev), 5);
+        }}
+
+        // ---- ATC + PR trend per device ----
+        const atcPrTrend = {{ labels: periods }};
+        for (const dev of devices) {{
+            atcPrTrend[dev] = {{
+                atc_rate: lookup('atc_rate', dev),
+                purchase_rate: lookup('cr', dev),
+            }};
+        }}
+
+        // ---- Rankings (top-N source × country combos at current period) ----
+        function buildRanking(rows_, sortMetric, devFilter, topN, minSessions) {{
+            if (!periods.length) return [];
+            const curP = periods[periods.length - 1];
+            const agg = _aggregateRows(rows_, ['source', 'country'], r => devFilter(r) && r.period === curP);
+            const out = [];
+            for (const d of agg.values()) {{
+                if (d.sessions < minSessions) continue;
+                const newShare = d.sessions > 0 ? d.new_users / d.sessions : 0;
+                const userType = newShare > 0.6 ? 'New' : (newShare < 0.4 ? 'Returning' : 'Mixed');
+                out.push({{
+                    source: d._key[0],
+                    country: d._key[1],
+                    user_type: userType,
+                    sessions: d.sessions,
+                    atc_rate: d.atc_rate,
+                    purchase_rate: d.cr,
+                    metric_value: d[sortMetric],
+                }});
+            }}
+            return out.sort((a, b) => (b.metric_value || 0) - (a.metric_value || 0)).slice(0, topN);
+        }}
+        const rankingAtc = {{}};
+        const rankingPr = {{}};
+        for (const dev of devices) {{
+            rankingAtc[dev] = buildRanking(rows, 'atc_rate', devMatch(dev), 10, 10);
+            rankingPr[dev]  = buildRanking(rows, 'cr',       devMatch(dev), 10, 10);
+        }}
+
+        return {{
+            n_prev: nPrev,
+            kpi,
+            visitors_sessions: visitorsSessions,
+            device_sessions: deviceSessions,
+            new_returning: newRet,
+            time_on_site: timeOnSite,
+            bounce_device: bounceDevice,
+            source_trend: sourceTrend,
+            source_table: sourceTable,
+            country_table: countryTable,
+            atc_pr_trend: atcPrTrend,
+            ranking_atc: rankingAtc,
+            ranking_pr: rankingPr,
+        }};
+    }}
+
     // Build a delta-span via DOM API (textContent only — no HTML parsing).
     function _buildDeltaSpan(value, suffix) {{
         const span = document.createElement('span');
@@ -4405,15 +4740,44 @@ def build_html(data):
     function applyCountryFilter() {{
         FILTERS.countries = getSelectedCountries();
         updateCountryCount();
-        if (!tabInited.funnels) return;
-        // Block 1: bar charts always visible — recompute directly.
-        recomputeFunnelByCountry(FILTERS.countries);
-        const dev = FILTERS.device || 'all';
-        // Cards: recompute for current device slice only (other slices update on device switch).
-        recomputeChannelCards(FILTERS.countries, dev);
-        recomputeSourceCards(FILTERS.countries, dev);
-        // Bottom funnel + stage tables + bubbles: piggyback the existing filter-handler chain,
-        // which now reads FILTERS.countries to swap data sources.
+
+        // Phase 5: rebuild summary_data from active rows. Existing handlers close
+        // over `const S = DATA.summary` AND sometimes deeper refs like
+        // `_kpiSource = DATA.summary.kpi`. To keep all those refs live we mutate
+        // ONE LEVEL DEEP — every sub-object reference in DATA.summary keeps its
+        // identity, only its inner keys (per-device slices) get swapped.
+        if (DATA.raw_rows && DATA.summary) {{
+            const nPrev = DATA.summary.n_prev || 4;
+            const fresh = _rebuildSummaryData(_activeRows(), DATA.periods || [], nPrev);
+            for (const k of Object.keys(fresh)) {{
+                const cur = DATA.summary[k];
+                if (cur && typeof cur === 'object' && !Array.isArray(cur)) {{
+                    // Drop stale keys that aren't in the fresh slice, then merge.
+                    for (const sk of Object.keys(cur)) {{
+                        if (!(sk in fresh[k])) delete cur[sk];
+                    }}
+                    Object.assign(cur, fresh[k]);
+                }} else {{
+                    DATA.summary[k] = fresh[k];
+                }}
+            }}
+            // Mirror into DATA_BY_GRAIN[currentGrain].summary too, so handlers that
+            // captured that reference (Summary _kpiSource path) see updated data.
+            if (DATA_BY_GRAIN && DATA_BY_GRAIN[currentGrain] && DATA_BY_GRAIN[currentGrain].summary) {{
+                DATA_BY_GRAIN[currentGrain].summary = DATA.summary;
+            }}
+        }}
+
+        // Funnels-tab specifics (only fire when Funnels is initialized).
+        if (tabInited.funnels) {{
+            recomputeFunnelByCountry(FILTERS.countries);
+            const dev = FILTERS.device || 'all';
+            recomputeChannelCards(FILTERS.countries, dev);
+            recomputeSourceCards(FILTERS.countries, dev);
+        }}
+
+        // Trigger the existing filter-handler chain — Summary, Funnels, Analytics
+        // handlers all consume the now-updated DATA.summary / FILTERS.countries.
         if (typeof filterHandlers !== 'undefined') {{
             filterHandlers.forEach(fn => fn(FILTERS));
         }}
@@ -5412,7 +5776,7 @@ def build_html(data):
             desktop: cssvar('--c-channel-organic'),
             tablet:  cssvar('--c-channel-referral')
         }};
-        registerDeviceChart(new Chart(document.getElementById('sum-device-sessions'), {{
+        const devSessChart = new Chart(document.getElementById('sum-device-sessions'), {{
             type: 'bar',
             data: {{
                 labels: S.device_sessions.labels,
@@ -5450,7 +5814,15 @@ def build_html(data):
                 }},
                 scales: {{ x: {{ stacked: true }}, y: {{ stacked: true, beginAtZero: true }} }}
             }}
-        }}));
+        }});
+        registerDeviceChart(devSessChart);
+        // Country-reactive: re-bind data from (now-fresh) DATA.summary.device_sessions.
+        registerFilterHandler(() => {{
+            ['mobile', 'desktop', 'tablet'].forEach((dev, i) => {{
+                if (devSessChart.data.datasets[i]) devSessChart.data.datasets[i].data = S.device_sessions[dev];
+            }});
+            devSessChart.update('none');
+        }});
 
         // ---- New vs Returning ----
         const nrInit = S.new_returning[FILTERS.device] || S.new_returning.all;
@@ -5497,7 +5869,7 @@ def build_html(data):
         }});
 
         // ---- Time on Site per device (median) ----
-        registerDeviceChart(new Chart(document.getElementById('sum-time-on-site'), {{
+        const timeOnSiteChart = new Chart(document.getElementById('sum-time-on-site'), {{
             type: 'line',
             data: {{
                 labels: S.time_on_site.labels,
@@ -5525,10 +5897,17 @@ def build_html(data):
                 }},
                 scales: {{ y: {{ beginAtZero: true, grace: '15%', title: {{ display: true, text: 'median sec' }} }} }}
             }}
-        }}));
+        }});
+        registerDeviceChart(timeOnSiteChart);
+        registerFilterHandler(() => {{
+            ['mobile','desktop','tablet'].forEach((dev, i) => {{
+                if (timeOnSiteChart.data.datasets[i]) timeOnSiteChart.data.datasets[i].data = S.time_on_site[dev];
+            }});
+            timeOnSiteChart.update('none');
+        }});
 
         // ---- Bounce Rate per device ----
-        registerDeviceChart(new Chart(document.getElementById('sum-bounce-device'), {{
+        const bounceDevChart = new Chart(document.getElementById('sum-bounce-device'), {{
             type: 'line',
             data: {{
                 labels: S.bounce_device.labels,
@@ -5556,7 +5935,14 @@ def build_html(data):
                 }},
                 scales: {{ y: {{ beginAtZero: true, grace: '15%', ticks: {{ callback: v => v + '%' }} }} }}
             }}
-        }}));
+        }});
+        registerDeviceChart(bounceDevChart);
+        registerFilterHandler(() => {{
+            ['mobile','desktop','tablet'].forEach((dev, i) => {{
+                if (bounceDevChart.data.datasets[i]) bounceDevChart.data.datasets[i].data = S.bounce_device[dev];
+            }});
+            bounceDevChart.update('none');
+        }});
 
         // ---- Source trend (multi-line with session counts) ----
         const srcColors = {{
