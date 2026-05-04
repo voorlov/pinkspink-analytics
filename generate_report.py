@@ -1542,6 +1542,19 @@ def generate_html(rows, grain, excluded_countries, analytics_data=None, _payload
         """Run builder(filt) for each device slice; return {device: result}."""
         return {dev: builder(filtered_by_device[dev]) for dev in DEVICE_SLICES}
 
+    # Parallel slice WITHOUT excluded_countries — used only to populate the
+    # per-country payload keys consumed by the reactive country filter on the
+    # Funnels tab (Phase 1 of joyful-mapping-sutherland.md). All existing
+    # aggregates keep using `filtered` / `filtered_by_device`, so the visual
+    # output of current graphs is unchanged when the dropdown stays at default.
+    filtered_all = [RowProxy(r, period_map[r.period]) for r in rows if r.period in valid_raw_periods]
+    filtered_all_by_device = {
+        "all":     filtered_all,
+        "mobile":  [r for r in filtered_all if r.device == "mobile"],
+        "desktop": [r for r in filtered_all if r.device == "desktop"],
+        "tablet":  [r for r in filtered_all if r.device == "tablet"],
+    }
+
     # ---- BLOCK 1: Funnel stages by period (mobile + desktop) ----
     FUNNEL_STAGES = [
         ("home",     "funnel_homepage", TOKENS["funnel"]["home"]),
@@ -1940,6 +1953,128 @@ def generate_html(rows, grain, excluded_countries, analytics_data=None, _payload
         "desktop": build_bottom_funnel("desktop"),
         "tablet": build_bottom_funnel("tablet"),
     }
+
+    # ============================================================
+    # PER-COUNTRY PAYLOAD KEYS (Phase 1: data only, JS wires up later)
+    # ============================================================
+    # Built from `filtered_all` (NO country exclusion). The reactive country
+    # filter in the dropdown will sum these client-side once Phase 2 lands.
+    # Until then nothing reads them, so current graphs are unaffected.
+    #
+    # Structures kept slim — only the summable fields needed to recover
+    # sessions, ER, bounce, deep%, ATC rate, View→ATC, etc. on the JS side.
+    # users / revenue / new+returning / medians are intentionally dropped:
+    # the Funnels tab cards never display them per-country, and the Summary
+    # tab keeps using `filtered` (unaffected by this filter).
+    _CC_SUMMABLE_KEYS = (
+        "sessions", "engaged_sessions",
+        "sessions_1page", "sessions_2_5pages", "sessions_over5pages",
+        "funnel_homepage", "funnel_catalog", "funnel_product",
+        "funnel_atc", "funnel_checkout", "funnel_purchase",
+    )
+    def _pick_cc(d):
+        return {k: d.get(k, 0) for k in _CC_SUMMABLE_KEYS}
+
+    # Tablet is dropped from per-country structures: the page never filters
+    # by tablet (UI buttons are mobile / desktop / all) and tablet traffic
+    # is < 1% of sessions. Saves ~25% payload size.
+    _CC_DEVICES = ("all", "mobile", "desktop")
+
+    # Cap source dimension to top 10 sources by total sessions across the
+    # window. Current source_cards displays top 5 per device, so 10 leaves
+    # headroom for JS to re-derive top-5 after country selection changes.
+    _src_totals = aggregate(filtered_all, ["source"])
+    _top_sources = {
+        k[0] for k, _ in sorted(_src_totals.items(), key=lambda kv: -kv[1]["sessions"])[:10]
+    }
+
+    # 1. funnel_by_country[device][period][country] — Block 1 funnel bars
+    funnel_by_country = {}
+    for _dev in _CC_DEVICES:
+        _slc = filtered_all_by_device[_dev]
+        _by_pc = aggregate(_slc, ["period", "country"])
+        _out = {}
+        for (_p, _country), _data in _by_pc.items():
+            _out.setdefault(_p, {})[_country] = _pick_cc(_data)
+        funnel_by_country[_dev] = _out
+
+    # 2. channel_country[device][channel][country][period] — Block 2 cards.
+    # Per-period × channel × country, so JS can recompute trend + current-period
+    # totals + deltas vs avg of N prev periods + top-5 countries.
+    channel_country = {}
+    _channels_keep = {"Social", "Paid", "Direct", "Organic", "Referral"}
+    for _dev in _CC_DEVICES:
+        _slc = filtered_all_by_device[_dev]
+        _by_pcc = aggregate(_slc, ["period", "channel", "country"])
+        _out = {}
+        for (_p, _ch, _country), _data in _by_pcc.items():
+            if _ch not in _channels_keep:
+                continue
+            _out.setdefault(_ch, {}).setdefault(_country, {})[_p] = _pick_cc(_data)
+        channel_country[_dev] = _out
+
+    # 3. source_country[device][source][country][period] — Block 3 cards (top 10 sources)
+    source_country = {}
+    for _dev in _CC_DEVICES:
+        _slc = filtered_all_by_device[_dev]
+        _by_psc = aggregate(_slc, ["period", "source", "country"])
+        _out = {}
+        for (_p, _src, _country), _data in _by_psc.items():
+            if _src not in _top_sources:
+                continue
+            _out.setdefault(_src, {}).setdefault(_country, {})[_p] = _pick_cc(_data)
+        source_country[_dev] = _out
+
+    # 4. bottom_funnel_full[device] — same shape as bottom_funnel, no exclusion
+    def _build_bottom_funnel_full(_slc):
+        _agg = aggregate(_slc, ["source", "country"], lambda r: r.period == cur_period_label)
+        _table = []
+        for (_src, _country), _data in _agg.items():
+            if _data["funnel_atc"] == 0 and _data["funnel_checkout"] == 0 and _data["funnel_purchase"] == 0:
+                continue
+            _table.append({
+                "source": _src,
+                "country": _country,
+                "sessions": _data["sessions"],
+                "catalog": _data["funnel_catalog"],
+                "product": _data["funnel_product"],
+                "atc": _data["funnel_atc"],
+                "checkout": _data["funnel_checkout"],
+                "purchase": _data["funnel_purchase"],
+            })
+        return sorted(_table, key=lambda x: (-x["atc"], -x["checkout"], -x["purchase"]))
+    bottom_funnel_full = {
+        _dev: _build_bottom_funnel_full(filtered_all_by_device[_dev])
+        for _dev in _CC_DEVICES
+    }
+
+    # 5. stage_tables_full[device][stageKey] — same shape as stage_tables, no exclusion.
+    # Reuses the existing _stage_tables_for builder (it accepts any filtered slice).
+    stage_tables_full = {
+        _dev: _stage_tables_for(filtered_all_by_device[_dev])
+        for _dev in _CC_DEVICES
+    }
+
+    # 6. bubble_channel_country[device][channel][country] — Block 5 bubble recompute.
+    # Current period only, channel × country. JS sums per-channel for selected
+    # countries to recover sessions, funnel stages, and stage-to-stage conv %.
+    bubble_channel_country = {}
+    for _dev in _CC_DEVICES:
+        _slc = filtered_all_by_device[_dev]
+        _by_cc = aggregate(_slc, ["channel", "country"], lambda r: r.period == cur_period_label)
+        _out = {}
+        for (_ch, _country), _data in _by_cc.items():
+            if _ch in ("Spam", "Other"):
+                continue
+            _out.setdefault(_ch, {})[_country] = {
+                "sessions": _data["sessions"],
+                "funnel_catalog": _data["funnel_catalog"],
+                "funnel_product": _data["funnel_product"],
+                "funnel_atc": _data["funnel_atc"],
+                "funnel_checkout": _data["funnel_checkout"],
+                "funnel_purchase": _data["funnel_purchase"],
+            }
+        bubble_channel_country[_dev] = _out
 
     # ---- OVERVIEW: KPI + breakdowns ----
 
@@ -2603,6 +2738,15 @@ def generate_html(rows, grain, excluded_countries, analytics_data=None, _payload
         "channel_trend": channel_trend,
         "stage_tables": stage_tables,
         "bottom_funnel": bottom_funnel,
+        # Per-country breakdowns for the reactive country filter (Phase 1).
+        # Built from filtered_all (no country exclusion). JS will consume these
+        # in Phase 2 to recompute Funnels-tab blocks on checkbox toggle.
+        "funnel_by_country": funnel_by_country,
+        "channel_country": channel_country,
+        "source_country": source_country,
+        "bottom_funnel_full": bottom_funnel_full,
+        "stage_tables_full": stage_tables_full,
+        "bubble_channel_country": bubble_channel_country,
         "overview_kpis_trend": overview_kpis_trend,
         "cur_kpis": cur_kpis,
         "channel_table": channel_table,
