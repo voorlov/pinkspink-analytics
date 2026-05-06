@@ -1118,7 +1118,8 @@ def fetch_analytics_data(client, grain):
         SELECT
             user_pseudo_id,
             MIN(PARSE_DATE('%Y%m%d', event_date)) AS first_date,
-            ANY_VALUE(device.category) AS device
+            ANY_VALUE(device.category) AS device,
+            ANY_VALUE(geo.country) AS country
         FROM `{BQ_PROJECT}.{BQ_DATASET}.events_*`
         WHERE _TABLE_SUFFIX BETWEEN '20260205' AND '{end}'
             AND event_name = 'first_visit'
@@ -1128,6 +1129,7 @@ def fetch_analytics_data(client, grain):
         SELECT DISTINCT
             fv.user_pseudo_id,
             fv.device,
+            fv.country,
             FORMAT_DATE('%G-W%V', fv.first_date) AS cohort_week,
             DATE_DIFF(PARSE_DATE('%Y%m%d', e.event_date), fv.first_date, WEEK) AS weeks_since
         FROM first_visits fv
@@ -1136,10 +1138,10 @@ def fetch_analytics_data(client, grain):
         WHERE e._TABLE_SUFFIX BETWEEN '20260205' AND '{end}'
             AND e.event_name = 'session_start'
     )
-    SELECT cohort_week, device, weeks_since, COUNT(DISTINCT user_pseudo_id) AS users
+    SELECT cohort_week, device, country, weeks_since, COUNT(DISTINCT user_pseudo_id) AS users
     FROM returns
     WHERE weeks_since BETWEEN 0 AND 8
-    GROUP BY cohort_week, device, weeks_since
+    GROUP BY cohort_week, device, country, weeks_since
     ORDER BY cohort_week, device, weeks_since
     """
     cohort_rows = list(client.query(sql_cohort).result())
@@ -6439,6 +6441,7 @@ def build_html(data):
                 const cohorts = {{}};
                 A.cohort.forEach(r => {{
                     if (device !== 'all' && r.device !== device) return;
+                    if (r.country !== undefined && !_isPickedCountry(r.country)) return;
                     if (!cohorts[r.cohort_week]) cohorts[r.cohort_week] = {{}};
                     cohorts[r.cohort_week][r.weeks_since] =
                         (cohorts[r.cohort_week][r.weeks_since] || 0) + r.users;
