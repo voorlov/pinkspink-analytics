@@ -1028,6 +1028,7 @@ def fetch_analytics_data(client, grain):
             event_name,
             REGEXP_EXTRACT((SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location'), r'https?://[^/]+(/.*)?') AS page_path,
             device.category AS device,
+            geo.country AS country,
             IFNULL((SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'medium'), IFNULL(traffic_source.medium, '(none)')) AS medium,
             IFNULL((SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'source'), IFNULL(traffic_source.source, '(direct)')) AS source
         FROM `{BQ_PROJECT}.{BQ_DATASET}.events_*`
@@ -1038,16 +1039,17 @@ def fetch_analytics_data(client, grain):
             {period} AS period,
             {CHANNEL_SQL} AS channel,
             device,
+            country,
             user_pseudo_id, session_id,
             MAX(CASE WHEN event_name = 'scroll' THEN 1 ELSE 0 END) AS has_scroll,
             MAX(CASE WHEN event_name = 'scroll' AND REGEXP_CONTAINS(IFNULL(page_path,''), r'/products/') THEN 1 ELSE 0 END) AS scroll_product,
             MAX(CASE WHEN event_name = 'scroll' AND REGEXP_CONTAINS(IFNULL(page_path,''), r'/collections/') THEN 1 ELSE 0 END) AS scroll_catalog,
             MAX(CASE WHEN event_name = 'view_item' THEN 1 ELSE 0 END) AS has_product
         FROM events
-        GROUP BY period, channel, device, source, medium, user_pseudo_id, session_id
+        GROUP BY period, channel, device, country, source, medium, user_pseudo_id, session_id
     )
     SELECT
-        period, channel, device,
+        period, channel, device, country,
         COUNT(*) AS sessions,
         SUM(has_scroll) AS sessions_with_scroll,
         SUM(scroll_product) AS scroll_on_product,
@@ -1055,7 +1057,7 @@ def fetch_analytics_data(client, grain):
         SUM(has_product) AS sessions_with_product
     FROM sessions
     WHERE channel != 'Spam'
-    GROUP BY period, channel, device
+    GROUP BY period, channel, device, country
     ORDER BY period, channel, device
     """
     scroll_rows = list(client.query(sql_scroll).result())
@@ -1071,6 +1073,7 @@ def fetch_analytics_data(client, grain):
             user_pseudo_id,
             (SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS session_id,
             device.category AS device,
+            geo.country AS country,
             IFNULL(SAFE_CAST(REGEXP_EXTRACT(
                 (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location'),
                 r'[?&]page=(\d+)'
@@ -1088,19 +1091,19 @@ def fetch_analytics_data(client, grain):
             )
     ),
     session_max AS (
-        SELECT period, device, user_pseudo_id, session_id, MAX(page_num) AS max_page
+        SELECT period, device, country, user_pseudo_id, session_id, MAX(page_num) AS max_page
         FROM catalog_views
-        GROUP BY period, device, user_pseudo_id, session_id
+        GROUP BY period, device, country, user_pseudo_id, session_id
     )
     SELECT
-        period, device,
+        period, device, country,
         COUNT(*) AS sessions,
         COUNTIF(max_page = 1) AS page1,
         COUNTIF(max_page = 2) AS page2,
         COUNTIF(max_page = 3) AS page3,
         COUNTIF(max_page >= 4) AS page4plus
     FROM session_max
-    GROUP BY period, device
+    GROUP BY period, device, country
     ORDER BY period, device
     """
     catalog_rows = list(client.query(sql_catalog).result())
@@ -1153,6 +1156,7 @@ def fetch_analytics_data(client, grain):
             (SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'engagement_time_msec') AS engagement_time_msec,
             event_name,
             device.category AS device,
+            geo.country AS country,
             IFNULL((SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'source'), IFNULL(traffic_source.source, '(direct)')) AS source,
             IFNULL((SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'medium'), IFNULL(traffic_source.medium, '(none)')) AS medium
         FROM `{BQ_PROJECT}.{BQ_DATASET}.events_*`
@@ -1163,20 +1167,21 @@ def fetch_analytics_data(client, grain):
             {period} AS period,
             {CHANNEL_SQL} AS channel,
             device,
+            country,
             user_pseudo_id, session_id,
             SUM(engagement_time_msec) AS eng_ms,
             MAX(CASE WHEN event_name = 'view_item' THEN 1 ELSE 0 END) AS has_product
         FROM events
-        GROUP BY period, channel, device, source, medium, user_pseudo_id, session_id
+        GROUP BY period, channel, device, country, source, medium, user_pseudo_id, session_id
     )
     SELECT
-        period, channel, device,
+        period, channel, device, country,
         COUNT(*) AS sessions_with_product,
         ROUND(APPROX_QUANTILES(eng_ms / 1000.0, 100)[OFFSET(50)], 1) AS median_sec,
         ROUND(AVG(eng_ms / 1000.0), 1) AS avg_sec
     FROM sessions
     WHERE has_product = 1 AND channel != 'Spam'
-    GROUP BY period, channel, device
+    GROUP BY period, channel, device, country
     ORDER BY period, channel, device
     """
     product_time_rows = list(client.query(sql_product_time).result())
@@ -1262,6 +1267,7 @@ def fetch_analytics_data(client, grain):
         SELECT
             {period} AS period,
             device,
+            country,
             items[SAFE_OFFSET(0)].item_id AS item_id,
             items[SAFE_OFFSET(0)].item_name AS item_name,
             user_pseudo_id, session_id,
@@ -1273,6 +1279,7 @@ def fetch_analytics_data(client, grain):
         SELECT
             {period} AS period,
             device,
+            country,
             items[SAFE_OFFSET(0)].item_id AS item_id,
             user_pseudo_id, session_id
         FROM events
@@ -1282,6 +1289,7 @@ def fetch_analytics_data(client, grain):
         SELECT
             {period} AS period,
             device,
+            country,
             items[SAFE_OFFSET(0)].item_id AS item_id,
             user_pseudo_id, session_id
         FROM events
@@ -1289,34 +1297,34 @@ def fetch_analytics_data(client, grain):
     ),
     views_agg AS (
         SELECT
-            period, device, item_id, ANY_VALUE(item_name) AS item_name,
+            period, device, country, item_id, ANY_VALUE(item_name) AS item_name,
             COUNT(*) AS views,
             COUNT(DISTINCT CONCAT(CAST(user_pseudo_id AS STRING), '|', CAST(session_id AS STRING))) AS view_sessions,
             ROUND(APPROX_QUANTILES(sec_on_card, 100)[OFFSET(50)], 1) AS median_sec,
             ROUND(AVG(sec_on_card), 1) AS mean_sec
         FROM view_items
         WHERE sec_on_card IS NOT NULL
-        GROUP BY period, device, item_id
+        GROUP BY period, device, country, item_id
     ),
     atc_agg AS (
-        SELECT period, device, item_id,
+        SELECT period, device, country, item_id,
             COUNT(DISTINCT CONCAT(CAST(user_pseudo_id AS STRING), '|', CAST(session_id AS STRING))) AS atc
-        FROM atc_items GROUP BY period, device, item_id
+        FROM atc_items GROUP BY period, device, country, item_id
     ),
     purchase_agg AS (
-        SELECT period, device, item_id,
+        SELECT period, device, country, item_id,
             COUNT(DISTINCT CONCAT(CAST(user_pseudo_id AS STRING), '|', CAST(session_id AS STRING))) AS purchases
-        FROM purchase_items GROUP BY period, device, item_id
+        FROM purchase_items GROUP BY period, device, country, item_id
     )
     SELECT
-        v.period, v.device, v.item_id, v.item_name,
+        v.period, v.device, v.country, v.item_id, v.item_name,
         v.views, v.view_sessions, v.median_sec, v.mean_sec,
         IFNULL(a.atc, 0) AS atc,
         IFNULL(p.purchases, 0) AS purchases
     FROM views_agg v
-    LEFT JOIN atc_agg a ON v.period = a.period AND v.device = a.device AND v.item_id = a.item_id
-    LEFT JOIN purchase_agg p ON v.period = p.period AND v.device = p.device AND v.item_id = p.item_id
-    WHERE v.item_id IS NOT NULL
+    LEFT JOIN atc_agg a ON v.period = a.period AND v.device = a.device AND v.country = a.country AND v.item_id = a.item_id
+    LEFT JOIN purchase_agg p ON v.period = p.period AND v.device = p.device AND v.country = p.country AND v.item_id = p.item_id
+    WHERE v.item_id IS NOT NULL AND v.views >= 2
     ORDER BY v.period, v.views DESC
     """
     top_products_rows = list(client.query(sql_top_products).result())
@@ -4531,6 +4539,34 @@ def build_html(data):
             }});
             chart.update('none');
         }});
+
+        // ---------- Block 1b: pct-lines (catalog→product, product→ATC, etc.) ----------
+        // Sums per period across selected countries, then divides for stage-to-stage %.
+        const PCT_PAIRS = [
+            ['funnel_catalog',  'funnel_product'],
+            ['funnel_product',  'funnel_atc'],
+            ['funnel_atc',      'funnel_checkout'],
+            ['funnel_checkout', 'funnel_purchase'],
+        ];
+        [['pct-mobile', 'mobile'], ['pct-desktop', 'desktop']].forEach(([id, dev]) => {{
+            const chart = Chart.getChart(id);
+            if (!chart) return;
+            const byPeriod = fbc[dev] || {{}};
+            chart.data.datasets.forEach((ds, i) => {{
+                const [denomField, numerField] = PCT_PAIRS[i];
+                ds.data = periods.map(p => {{
+                    const countries = byPeriod[p] || {{}};
+                    let denom = 0, numer = 0;
+                    for (const c in countries) {{
+                        if (!picked.has(c)) continue;
+                        denom += (countries[c][denomField] || 0);
+                        numer += (countries[c][numerField] || 0);
+                    }}
+                    return denom > 0 ? Math.min(100, Math.round(numer / denom * 1000) / 10) : 0;
+                }});
+            }});
+            chart.update('none');
+        }});
     }}
 
     // ---------- Block 2 + 3: Channel / source cards ----------
@@ -4994,6 +5030,14 @@ def build_html(data):
         wrap.appendChild(c);
     }});
 
+    // Country-aware filter for analytics raw rows. When FILTERS.countries is null
+    // (user hasn't toggled), falls back to the default-excluded set so initial
+    // render matches what Python would have rendered server-side.
+    function _isPickedCountry(country) {{
+        if (FILTERS.countries) return FILTERS.countries.has(country);
+        return !_DEFAULT_EXCLUDED.has(country);
+    }}
+
     // Shared scroll-rate aggregators (used by both Сводка and Карточка товара tabs)
     function _scrollAgg(period, filterFn, kind) {{
         const A = DATA.analytics;
@@ -5001,6 +5045,7 @@ def build_html(data):
         let num = 0, den = 0;
         A.scroll.forEach(r => {{
             if (r.period !== period || !filterFn(r)) return;
+            if (r.country !== undefined && !_isPickedCountry(r.country)) return;
             if (kind === 'site') {{ num += r.sessions_with_scroll; den += r.sessions; }}
             else {{ num += r.scroll_on_product; den += r.sessions_with_product; }}
         }});
@@ -5543,6 +5588,7 @@ def build_html(data):
             registerFilterHandler(f => {{
                 scrollProdDevChart.data.datasets.forEach(ds => {{
                     ds.hidden = f.device !== 'all' && ds._device !== f.device;
+                    ds.data = DATA.periods.map(p => scrollByDev(p, ds._device, 'product'));
                 }});
                 scrollProdDevChart.update('none');
             }});
@@ -5591,6 +5637,7 @@ def build_html(data):
             A.product_time.forEach(r => {{
                 if (r.period !== period || r.channel !== channel) return;
                 if (device !== 'all' && r.device !== device) return;
+                if (r.country !== undefined && !_isPickedCountry(r.country)) return;
                 const w = r.sessions_with_product || 0;
                 totalSec += (r.median_sec || 0) * w;
                 totalSess += w;
@@ -5692,8 +5739,68 @@ def build_html(data):
     // 3c. Top-30 product cards table — per-device. Period toggle stays.
     if (DATA.top_products) {{
         let _tpPeriod = 'week';
-        // top_products[period] is now {{all, mobile, desktop, tablet}} dicts
+
+        // Country-aware re-aggregation from raw analytics.top_products rows
+        // (the BigQuery query now ships country in each row). For the 'week'
+        // period we sum just the current period; for 'agg_4w' we sum
+        // current + N previous periods.
+        function _tpAggregate(periodKey, device) {{
+            const raw = (DATA.analytics && DATA.analytics.top_products) || [];
+            const periods = DATA.periods || [];
+            if (!periods.length) return [];
+            let periodSet;
+            if (periodKey === 'agg_4w') {{
+                const nPrev = (DATA.summary && DATA.summary.n_prev) || 4;
+                periodSet = new Set(periods.slice(Math.max(0, periods.length - 1 - nPrev)));
+            }} else {{
+                periodSet = new Set([periods[periods.length - 1]]);
+            }}
+            const acc = new Map();
+            for (const r of raw) {{
+                if (!periodSet.has(r.period)) continue;
+                if (device !== 'all' && r.device !== device) continue;
+                if (r.country !== undefined && !_isPickedCountry(r.country)) continue;
+                const id = r.item_id;
+                if (!id) continue;
+                let b = acc.get(id);
+                if (!b) {{
+                    b = {{ item_id: id, item_name: r.item_name || id, views: 0, atc: 0, purchases: 0, _med_w: [], _mean_sum: 0, _view_total: 0 }};
+                    acc.set(id, b);
+                }}
+                if (r.item_name) b.item_name = r.item_name;
+                b.views += (r.views || 0);
+                b.atc += (r.atc || 0);
+                b.purchases += (r.purchases || 0);
+                const v = r.views || 0;
+                if (r.median_sec != null && v > 0) {{
+                    for (let i = 0; i < v; i++) b._med_w.push(r.median_sec);
+                }}
+                if (r.mean_sec != null && v > 0) {{
+                    b._mean_sum += r.mean_sec * v;
+                    b._view_total += v;
+                }}
+            }}
+            const out = [];
+            for (const b of acc.values()) {{
+                if (!b.views) continue;
+                const med = b._med_w.length ? Math.round(b._med_w.sort((a, c) => a - c)[Math.floor(b._med_w.length / 2)] * 10) / 10 : 0;
+                const mean = b._view_total ? Math.round(b._mean_sum / b._view_total * 10) / 10 : 0;
+                out.push({{
+                    item_id: b.item_id, item_name: b.item_name,
+                    views: b.views, median_sec: med, mean_sec: mean,
+                    atc: b.atc, purchases: b.purchases,
+                    cr_atc: b.views ? Math.round(b.atc / b.views * 1000) / 10 : 0,
+                }});
+            }}
+            return out.sort((a, b) => (b.views || 0) - (a.views || 0));
+        }}
+        // Use the JS aggregator if raw rows are shipped (after SQL country dim).
+        // Falls back to Python-pre-aggregated DATA.top_products[period][device].
         const _tpData = () => {{
+            if (DATA.analytics && DATA.analytics.top_products && DATA.analytics.top_products.length > 0
+                && DATA.analytics.top_products[0].country !== undefined) {{
+                return _tpAggregate(_tpPeriod, FILTERS.device);
+            }}
             const periodDict = DATA.top_products[_tpPeriod] || {{}};
             return periodDict[FILTERS.device] || periodDict.all || [];
         }};
@@ -5736,6 +5843,7 @@ def build_html(data):
             const byPeriod = {{}};
             A.catalog_depth.forEach(r => {{
                 if (device !== 'all' && r.device !== device) return;
+                if (r.country !== undefined && !_isPickedCountry(r.country)) return;
                 if (!byPeriod[r.period]) byPeriod[r.period] = {{ page1: 0, page2: 0, page3: 0, page4plus: 0, sessions: 0 }};
                 const b = byPeriod[r.period];
                 b.page1 += r.page1 || 0; b.page2 += r.page2 || 0;
@@ -6292,6 +6400,7 @@ def build_html(data):
                 registerFilterHandler(f => {{
                     scrollSiteDevChart.data.datasets.forEach(ds => {{
                         ds.hidden = f.device !== 'all' && ds._device !== f.device;
+                        ds.data = DATA.periods.map(p => scrollByDev(p, ds._device, 'site'));
                     }});
                     scrollSiteDevChart.update('none');
                 }});
