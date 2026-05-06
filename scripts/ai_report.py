@@ -138,9 +138,15 @@ def fetch_session_facts(client: bigquery.Client, start: date, end: date) -> list
 
 
 def aggregate_period(rows: list[dict], days: set[date]) -> dict:
-    """Roll up rows belonging to `days` into a metric summary with cross-dimensional breakdowns."""
+    """Roll up rows belonging to `days` into per-week metric averages.
+
+    All session counts are normalized to weekly averages (÷ len(days)/7),
+    so target (7d) and baseline (28d) are directly comparable.
+    """
     subset = [r for r in rows if r["day"] in days]
     n = max(len(days), 1)
+    n_weeks = n / 7.0  # 7d → 1.0, 28d → 4.0
+
     sessions = sum(r["sessions"] for r in subset)
     atc = sum(r["sessions_with_atc"] for r in subset)
     checkouts = sum(r["sessions_with_checkout"] for r in subset)
@@ -151,7 +157,6 @@ def aggregate_period(rows: list[dict], days: set[date]) -> dict:
     by_channel: dict[str, int] = {}
     by_country: dict[str, int] = {}
     by_device: dict[str, int] = {}
-    # country × channel cross-breakdown and per-country funnel
     country_channel: dict[str, dict[str, int]] = {}
     country_funnel: dict[str, dict] = {}
     for r in subset:
@@ -176,24 +181,44 @@ def aggregate_period(rows: list[dict], days: set[date]) -> dict:
     def pct(num: int, den: int) -> float:
         return round(100.0 * num / den, 2) if den else 0.0
 
+    def w(v: int | float) -> float:
+        return round(v / n_weeks, 1)
+
     return {
         "days_count": len(days),
-        "sessions_total": sessions,
-        "sessions_per_day_avg": round(sessions / n, 1),
+        "weeks_count": round(n_weeks, 2),
+        # All session counts below are PER-WEEK averages
+        "sessions_per_week": w(sessions),
+        "atc_per_week": w(atc),
+        "checkouts_per_week": w(checkouts),
+        "purchases_per_week": w(purchases),
         "atc_rate_pct": pct(atc, sessions),
         "view_to_atc_pct": pct(atc, views),
         "checkout_rate_pct": pct(checkouts, sessions),
         "purchase_rate_pct": pct(purchases, sessions),
         "new_sessions_share_pct": pct(new_sessions, sessions),
-        "channels_sessions": dict(sorted(by_channel.items(), key=lambda x: -x[1])),
+        # Per-week averages by channel / country
+        "channels_sessions_per_week": {
+            k: w(v) for k, v in sorted(by_channel.items(), key=lambda x: -x[1])
+        },
         "devices_sessions": dict(sorted(by_device.items(), key=lambda x: -x[1])),
-        # Cross-dimensional: which channels drove which countries
-        "country_channel_sessions": {
-            c: dict(sorted(country_channel[c].items(), key=lambda x: -x[1]))
+        # Cross-dimensional: weekly avg sessions per country per channel
+        "country_channel_sessions_per_week": {
+            c: {ch: w(v) for ch, v in sorted(country_channel[c].items(), key=lambda x: -x[1])}
             for c, _ in top8
         },
-        # Per-country funnel depth (top 8 by sessions)
-        "top_countries_funnel": [{"country": c, **v} for c, v in top8],
+        # Per-country funnel depth as weekly averages (top 8 by sessions)
+        "top_countries_funnel_per_week": [
+            {
+                "country": c,
+                "sessions": w(fv["sessions"]),
+                "view": w(fv["view"]),
+                "atc": w(fv["atc"]),
+                "checkout": w(fv["checkout"]),
+                "purchase": w(fv["purchase"]),
+            }
+            for c, fv in top8
+        ],
     }
 
 
@@ -409,13 +434,15 @@ def build_daily_prompt(
         f"{changelog_block(changelog_entries)}\n\n"
         "Сгенерируй daily report по шаблону из references/report-template.md (на русском).\n"
         "ВАЖНО ПРО ДАННЫЕ:\n"
+        "- Все счётчики сессий (sessions_per_week, channels_sessions_per_week, "
+        "country_channel_sessions_per_week, top_countries_funnel_per_week) — "
+        "это средние за НЕДЕЛЮ. Baseline (7 дней до целевого дня) и target — в одних единицах.\n"
         "- Используй индивидуальные ATC-сессии выше для секции «Корзины» — там есть город и канал.\n"
-        "- Используй country_channel_sessions чтобы точно знать, какой канал откуда пришёл. "
+        "- Используй country_channel_sessions_per_week чтобы точно знать, какой канал откуда пришёл. "
         "НЕ делай предположений о каналах если данные не подтверждают.\n"
-        "- Если США выросли/упали — смотри их channel split в country_channel_sessions, "
-        "не экстраполируй с общих цифр Paid/Social.\n"
+        "- Если США выросли/упали — смотри их channel split в country_channel_sessions_per_week.\n"
         "- changelog.md объясняет только те изменения, которые туда записаны. "
-        "Не применяй одно событие (например, ссылки в bio) как объяснение всего подряд.\n"
+        "Не применяй одно событие как объяснение всего подряд.\n"
         "Если значимых движений нет — одна строка «спокойный день»."
     )
 
@@ -431,20 +458,23 @@ def build_weekly_prompt(
     return (
         f"Сегодня weekly report для Pinkspink за неделю "
         f"{week_start.isoformat()}..{week_end.isoformat()}.\n\n"
-        f"Данные за прошлую неделю:\n```json\n"
+        f"Данные за прошлую неделю (weeks_count=1.0, все счётчики = фактические значения за неделю):\n```json\n"
         f"{json.dumps(target_data, indent=2, ensure_ascii=False)}\n```\n\n"
-        f"Данные за baseline (среднее по 4 предыдущим неделям, агрегировано):\n"
+        f"Данные за baseline — СРЕДНЕЕ за неделю по 4 предыдущим неделям (weeks_count=4.0, все счётчики уже поделены на 4):\n"
         f"```json\n{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```"
         f"{atc_block(atc_sessions)}"
         f"{changelog_block(changelog_entries)}\n\n"
         "Сгенерируй weekly report по шаблону из references/report-template.md "
         "(≤700 слов, на русском). Включи до 3 рекомендаций.\n"
         "ВАЖНО ПРО ДАННЫЕ:\n"
+        "- Все счётчики сессий (sessions_per_week, channels_sessions_per_week, "
+        "country_channel_sessions_per_week, top_countries_funnel_per_week) уже "
+        "нормированы до СРЕДНИХ ЗА НЕДЕЛЮ — и в target (1 неделя), и в baseline (28 дней ÷ 4). "
+        "Сравнивай напрямую, НЕ делая дополнительных пересчётов.\n"
         "- Используй индивидуальные ATC-сессии выше для секции «Корзины».\n"
-        "- Используй country_channel_sessions чтобы точно знать откуда пришла каждая страна. "
+        "- Используй country_channel_sessions_per_week чтобы точно знать откуда пришла каждая страна. "
         "НЕ приписывай каналу трафик страны без подтверждения в данных.\n"
-        "- Если страна выросла/упала — объясняй только через её channel split, "
-        "не через общий тренд Paid/Social.\n"
+        "- Если страна выросла/упала — объясняй только через её channel split в данных.\n"
         "- Changelog — только конкретные механизмы. Не применяй одно изменение "
         "как объяснение несвязанных метрик."
     )
