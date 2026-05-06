@@ -239,7 +239,9 @@ The user reads these reports the way a busy founder reads them: **what would I t
 
 **Banned in user-facing prose:** "View→ATC", "ATC rate", "small-sample", "confounder", "baseline", "trailing 7-day". They can appear in the underlying analysis, but not in the lines the user reads. (Tables are exempt — column headers can stay technical.)
 
-**Block structure with tables.** Daily-with-event and weekly reports are **block-based and scannable** — the user reads them by skimming headers, not by reading top-to-bottom. Use Markdown tables for ATC breakdowns, channel deltas, audience candidates. Flag emojis in the country column (🇯🇵 🇺🇸 🇩🇪 etc).
+**Block structure, NO Markdown tables.** Reports are delivered via Telegram Bot API with `parse_mode=Markdown` (v1). Telegram does not render Markdown tables — they appear as raw `|...|` text. Use inline list formats instead (see `references/report-template.md` for exact patterns). Flag emojis in country lines (🇯🇵 🇺🇸 🇩🇪 etc).
+
+**Telegram Markdown v1 syntax:** `*bold*` (not `**bold**`), `_italic_`, backtick for inline code, triple backtick for code blocks. Avoid `>` blockquotes and bare `[text](url)` links in body — they may trigger parse errors and cause the message to arrive as unstyled plain text.
 
 **Tie observations to actions.** Every "X moved" must be followed by "and here's what we did that week" — pull from `changelog.md` (always loaded into the prompt for last 14 / 60 days) and from the ad tracker. If you cannot tie an observation to a known action, say so explicitly: *"Это совпало с N. Что именно — пока неясно, нужно проверить в IG."*
 
