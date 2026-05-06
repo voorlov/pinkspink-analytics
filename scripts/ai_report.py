@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """Generate Pinkspink daily/weekly AI report via Claude API.
 
 Pulls metrics from BigQuery, asks Claude to interpret them using the
@@ -40,7 +41,7 @@ SERVICE_ACCOUNT_FILE = ROOT / "service_account.json"
 
 BQ_PROJECT = "claude-code-486108"
 BQ_DATASET = "analytics_411715710"
-EXCLUDED_COUNTRIES = ("China", "Hong Kong", "South Korea", "Singapore")
+EXCLUDED_COUNTRIES = ("China", "Hong Kong", "South Korea", "Singapore", "Georgia")
 SPAM_SOURCES = ("api.scraperforce.com", "sanganzhu.com", "jariblog.online")
 
 CLAUDE_MODEL = "claude-sonnet-4-6"

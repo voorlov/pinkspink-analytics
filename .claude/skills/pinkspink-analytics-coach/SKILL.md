@@ -49,7 +49,7 @@ The mental model for any anomaly: **traffic volume → engagement quality → fu
 5. Checkout — event: `begin_checkout`
 6. Purchase — event: `purchase`
 
-**Excluded countries (owners' own traffic):** China, Hong Kong, South Korea, Singapore. Always exclude these when reporting on real customer behavior. Report them separately if the user explicitly asks "what about our internal traffic".
+**Excluded countries (team traffic):** China, Hong Kong, South Korea, Singapore, **Georgia (Tbilisi = assistant)**. Always exclude these when reporting on real customer behavior — the cron at `scripts/ai_report.py` enforces this list. Report them separately only if the user explicitly asks "what about our internal traffic". Russia is a maybe — currently NOT excluded in `ai_report.py`, but excluded in the Sheets pipeline. If you see RU in ATC/checkout, flag the ambiguity to the user instead of assuming.
 
 **Business stage caveat:** Pinkspink is at the very early stage — at the time the skill was written, the store had had **one (1) total purchase** (Kazakhstan, Feb 6 2026, $630, ig/social, mobile). This means:
 - Anything dependent on purchase count (RPS, ROAS, AOV-by-channel) will be statistically meaningless for weeks at a time.
@@ -61,11 +61,49 @@ The mental model for any anomaly: **traffic volume → engagement quality → fu
 State these as context, do not re-prove them every report unless data contradicts them:
 
 1. **View Item → Add to Cart loses ~98% of users.** This is the single largest leak in the funnel. Any week where this number moves meaningfully is the most important thing to report.
-2. **Paid (Meta Ads) is wasting money.** ~15% of traffic, 85% bounce, 12s median, 0.3% conversion. Watch for any sign that this changed (creative refresh, audience change). If it didn't change — say so explicitly: "Paid behaved as expected: still wasteful."
+2. **GA4 "Paid" reflects only Stage-2 conversion ads** (see "Marketing and customer journey" below). Stage-2 spent ~$117 in mid-April with 0 purchases — they don't convert at the current scale. **This does not mean ad spend overall is wasted.** Stage-1 IG-warmup (~$343/week as of May 2026) drives most of the IG → Social traffic the site receives. Don't conflate the two.
 3. **Mobile converts to cart 2.7× worse than desktop.** Most traffic is mobile. The mobile product page is the highest-leverage thing to fix.
 4. **Most mobile users skip the homepage.** 64% of mobile users land on `/collections/*` directly, only 7% see the homepage. Treat catalog as the de-facto landing page on mobile.
 5. **Social (Instagram) is the best traffic source by engagement** (31s median, 3.5 pages). Direct is stable. Organic is small (2.5%) but high-quality (69% ER).
 6. **Geography concentration:** Japan is the primary market, USA second, EU growing (Germany, Netherlands, Finland — small but high engagement).
+
+## Marketing and customer journey
+
+Pinkspink ads are managed by Ksenia (file owner: stregenkova@gmail.com). Live data lives in the Google Drive spreadsheet `PINKSPINK_Ads_Tracker_v2.xlsx` (file id `11YOWKoURezNFKOfy_tQ5eykgQ9Qv_ZyQ`). Read it via Google Drive MCP when you need actual ad spend or per-creative numbers — GA4 only sees the resulting site clicks, not the ad context.
+
+**Two-stage ad strategy.** Paid traffic is split into two completely different campaign types — read them separately:
+
+**Stage 1 — IG profile warmup**
+- Objective: profile visits and IG follows. **Not** site clicks.
+- KPI: cost per profile visit ≤ $0.10 (✅ great ≤ $0.07; ⚠️ tolerated $0.10–$0.14; ❌ kill > $0.14)
+- Most ad budget goes here (~$343/week as of May 2026)
+- The user gets warm in IG, then re-enters via direct IG link → GA4 sees this as `Social / ig`, **not Paid**.
+- Implication: a chunk of GA4 "Social" traffic is paid-acquired but warmed first.
+- Don't judge Stage 1 by GA4 site metrics — judge by tracker numbers (profile visits, follows, cost per visit).
+
+**Stage 2 — Direct site conversion**
+- Objective: ATC / Begin Checkout / Purchase.
+- This IS what GA4 sees as `Paid / meta (paid)` channel.
+- Currently inactive (last campaigns ran 09–16.04, ~$117 spent, 0 purchases).
+- When Stage 2 is silent, GA4 "Paid" goes near-zero — this is **normal, not a regression**.
+
+**Audience and creative defaults (current targeting):**
+- Geo: **Japan only.** Tested in tiers — крупные/малые/от 250k/от 500k cities, plus specific cities (Tokyo, Osaka, Fukuoka)
+- Age: 18–24 and 18–34, occasional 25–34
+- Placement: Stories + Reels (Лента only for the Catalog campaign)
+- Platform: Instagram, iOS-targeted
+- Creative roster (rotating): Sheer lace longsleeve, Off-Shoulder Blazer, Layered lace pants, Розовая полушубка, Leopard Fur Hoodie, Lace Puff Shirt, Moon Flame Bikini, Ombre Mesh T-shirt, Brushstroke Hoodie, Ripped Toad T-shirt, Barbie Sport Dress
+
+**Reading the ad tracker — gotchas:**
+- The "Итого" row at the top of each section may be **stale** — it does not auto-update for new campaigns. Always re-sum the rows yourself before quoting numbers.
+- Per-creative columns include profile visits, follows, site visits, cost-per-visit, and a KPI verdict (✅⚠️❌).
+- When reporting on Paid metrics in any cadence: pull the tracker, identify which creatives and adsets ran in the period, attribute movement to specific launches.
+
+**How this changes interpretation of GA4 metrics:**
+- GA4 "Social" growth often = downstream of Stage-1 spend. Don't credit "organic IG" without first checking whether Stage-1 budget ramped up.
+- GA4 "Paid" performance reflects only Stage-2 campaigns. "Paid is wasteful" means Stage-2 didn't convert — it does **not** mean ad spend overall is wasted.
+- When Social or Paid moves significantly: first cross-check the ad tracker for budget/creative changes, then form hypotheses.
+- Audience-expansion candidates (high-quality non-Japan traffic) are **organic by definition** — all current ad spend is Japan-only. Any high-quality non-JP segment is a clean signal, not an ad effect.
 
 ## Exploratory analysis beyond the dashboard
 
@@ -180,11 +218,32 @@ Rules:
 
 Three standard outputs depending on cadence:
 
-- **Daily report** (≤300 words) — yesterday vs trailing 7-day average. See `references/report-template.md` § Daily.
-- **Weekly report** (≤700 words) — last full week vs prior 4 weeks average. See `references/report-template.md` § Weekly.
+- **Daily report** (quiet day: ≤30 words; day with event: ≤200 words of prose excluding tables) — yesterday vs trailing 7-day average. See `references/report-template.md` § Daily.
+- **Weekly report** (≤700 words of prose excluding tables) — last full week vs prior 4 weeks average. See `references/report-template.md` § Weekly.
 - **Monthly report** (≤1500 words) — full month vs previous month. See `references/report-template.md` § Monthly.
 
-Always end every report with a "Что я бы посмотрел дальше" section — 1–3 questions or follow-up queries that the user could run to dig deeper. This keeps the loop active.
+### Report style — the elevator-pitch rule
+
+The user reads these reports the way a busy founder reads them: **what would I tell my partner if they asked "how's it going?" in the elevator.** That's what the headline is for. Body sections are the structured backup.
+
+**Headline rule (daily and weekly).** The first line after the date heading is **one or two sentences** — verdict + main reason. No section header before it. Examples:
+- *"Из 66 посетителей 3 положили товар в корзину — в 2.4× выше нормы. Совпало с запуском новых рекламных сеток 30.04–04.05."*
+- *"Сильная неделя: трафик +34%, корзин +43%. 30 апреля запустились 5 новых рекламных сеток на разогрев в IG → со среды весь трафик удвоился. Покупок по-прежнему ноль."*
+
+**Quiet day rule.** If nothing moved (per metrics-playbook small-sample / threshold rules), the daily report is just a one-liner: *"[DD.MM] — спокойный день. [N] сессий, всё в норме. [Опционально: одна строка про то, чего ждём.]"* No sections, no bullets, no "что посмотрим завтра". Skip the rest. A two-line quiet-day report beats a fake five-section one.
+
+**Plain Russian for numbers.** Translate analyst jargon to human framing:
+- "View→ATC 12%" → "каждый 8-й добавляет в корзину" or "конверсия в корзину выросла вдвое"
+- "ATC rate +2.6pp" → "вдвое чаще, чем обычно"
+- "4.55% vs 1.91% baseline" → "обычно 2 из 100, в этот день почти 5"
+
+**Banned in user-facing prose:** "View→ATC", "ATC rate", "small-sample", "confounder", "baseline", "trailing 7-day". They can appear in the underlying analysis, but not in the lines the user reads. (Tables are exempt — column headers can stay technical.)
+
+**Block structure with tables.** Daily-with-event and weekly reports are **block-based and scannable** — the user reads them by skimming headers, not by reading top-to-bottom. Use Markdown tables for ATC breakdowns, channel deltas, audience candidates. Flag emojis in the country column (🇯🇵 🇺🇸 🇩🇪 etc).
+
+**Tie observations to actions.** Every "X moved" must be followed by "and here's what we did that week" — pull from `changelog.md` (always loaded into the prompt for last 14 / 60 days) and from the ad tracker. If you cannot tie an observation to a known action, say so explicitly: *"Это совпало с N. Что именно — пока неясно, нужно проверить в IG."*
+
+**End with "Что смотрим дальше" only when there's something to watch.** 2–3 concrete indicators max. On quiet days — skip.
 
 ## Querying BigQuery
 
