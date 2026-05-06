@@ -138,7 +138,7 @@ def fetch_session_facts(client: bigquery.Client, start: date, end: date) -> list
 
 
 def aggregate_period(rows: list[dict], days: set[date]) -> dict:
-    """Roll up rows belonging to `days` into a flat metric summary."""
+    """Roll up rows belonging to `days` into a metric summary with cross-dimensional breakdowns."""
     subset = [r for r in rows if r["day"] in days]
     n = max(len(days), 1)
     sessions = sum(r["sessions"] for r in subset)
@@ -151,10 +151,27 @@ def aggregate_period(rows: list[dict], days: set[date]) -> dict:
     by_channel: dict[str, int] = {}
     by_country: dict[str, int] = {}
     by_device: dict[str, int] = {}
+    # country × channel cross-breakdown and per-country funnel
+    country_channel: dict[str, dict[str, int]] = {}
+    country_funnel: dict[str, dict] = {}
     for r in subset:
-        by_channel[r["channel"]] = by_channel.get(r["channel"], 0) + r["sessions"]
-        by_country[r["country"]] = by_country.get(r["country"], 0) + r["sessions"]
+        c, ch = r["country"], r["channel"]
+        by_channel[ch] = by_channel.get(ch, 0) + r["sessions"]
+        by_country[c] = by_country.get(c, 0) + r["sessions"]
         by_device[r["device"]] = by_device.get(r["device"], 0) + r["sessions"]
+        if c not in country_channel:
+            country_channel[c] = {}
+        country_channel[c][ch] = country_channel[c].get(ch, 0) + r["sessions"]
+        if c not in country_funnel:
+            country_funnel[c] = {"sessions": 0, "view": 0, "atc": 0, "checkout": 0, "purchase": 0}
+        cf = country_funnel[c]
+        cf["sessions"] += r["sessions"]
+        cf["view"] += r["sessions_with_view"]
+        cf["atc"] += r["sessions_with_atc"]
+        cf["checkout"] += r["sessions_with_checkout"]
+        cf["purchase"] += r["sessions_with_purchase"]
+
+    top8 = sorted(country_funnel.items(), key=lambda x: -x[1]["sessions"])[:8]
 
     def pct(num: int, den: int) -> float:
         return round(100.0 * num / den, 2) if den else 0.0
@@ -169,11 +186,100 @@ def aggregate_period(rows: list[dict], days: set[date]) -> dict:
         "purchase_rate_pct": pct(purchases, sessions),
         "new_sessions_share_pct": pct(new_sessions, sessions),
         "channels_sessions": dict(sorted(by_channel.items(), key=lambda x: -x[1])),
-        "top_countries_sessions": dict(
-            sorted(by_country.items(), key=lambda x: -x[1])[:8]
-        ),
         "devices_sessions": dict(sorted(by_device.items(), key=lambda x: -x[1])),
+        # Cross-dimensional: which channels drove which countries
+        "country_channel_sessions": {
+            c: dict(sorted(country_channel[c].items(), key=lambda x: -x[1]))
+            for c, _ in top8
+        },
+        # Per-country funnel depth (top 8 by sessions)
+        "top_countries_funnel": [{"country": c, **v} for c, v in top8],
     }
+
+
+def fetch_atc_sessions(client: bigquery.Client, start: date, end: date) -> list[dict]:
+    """Individual sessions with ATC events — includes city, channel, full funnel."""
+    sql = f"""
+    WITH events AS (
+      SELECT
+        PARSE_DATE('%Y%m%d', event_date) AS day,
+        user_pseudo_id,
+        (SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS session_id,
+        event_name,
+        geo.country AS country,
+        geo.city AS city,
+        device.category AS device,
+        IFNULL(traffic_source.source, '(direct)') AS source,
+        IFNULL(traffic_source.medium, '(none)') AS medium
+      FROM `{BQ_PROJECT}.{BQ_DATASET}.events_*`
+      WHERE _TABLE_SUFFIX BETWEEN @start AND @end
+        AND geo.country NOT IN UNNEST(@excluded_countries)
+        AND IFNULL(traffic_source.source, '') NOT IN UNNEST(@spam_sources)
+    ),
+    classified AS (
+      SELECT *,
+        CASE
+          WHEN medium IN ('paid', 'cpm') OR REGEXP_CONTAINS(medium, r'(?i)instagram_|facebook_') THEN 'Paid'
+          WHEN source IN ('ig', 'l.instagram.com') AND medium IN ('social', 'referral') THEN 'Social'
+          WHEN medium = 'organic' THEN 'Organic'
+          WHEN medium = 'email' THEN 'Email'
+          WHEN source = '(direct)' AND medium IN ('(none)', '(not set)') THEN 'Direct'
+          WHEN medium = 'referral' THEN 'Referral'
+          ELSE 'Other'
+        END AS channel
+      FROM events
+    ),
+    sessions AS (
+      SELECT
+        day, user_pseudo_id, session_id,
+        ANY_VALUE(country) AS country,
+        ANY_VALUE(city) AS city,
+        ANY_VALUE(device) AS device,
+        ANY_VALUE(channel) AS channel,
+        ANY_VALUE(source) AS source,
+        MAX(IF(event_name = 'view_item', 1, 0)) AS has_view,
+        MAX(IF(event_name = 'add_to_cart', 1, 0)) AS has_atc,
+        MAX(IF(event_name = 'begin_checkout', 1, 0)) AS has_checkout,
+        MAX(IF(event_name = 'purchase', 1, 0)) AS has_purchase
+      FROM classified
+      WHERE session_id IS NOT NULL
+      GROUP BY day, user_pseudo_id, session_id
+    )
+    SELECT day, country, city, device, channel, source,
+           has_view, has_atc, has_checkout, has_purchase
+    FROM sessions
+    WHERE has_atc = 1
+    ORDER BY day, country
+    """
+    job = client.query(
+        sql,
+        job_config=bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("start", "STRING", start.strftime("%Y%m%d")),
+                bigquery.ScalarQueryParameter("end", "STRING", end.strftime("%Y%m%d")),
+                bigquery.ArrayQueryParameter("excluded_countries", "STRING", list(EXCLUDED_COUNTRIES)),
+                bigquery.ArrayQueryParameter("spam_sources", "STRING", list(SPAM_SOURCES)),
+            ]
+        ),
+    )
+    result = []
+    for r in job:
+        stages = ["view"] if r["has_view"] else []
+        stages.append("ATC")
+        if r["has_checkout"]:
+            stages.append("checkout")
+        if r["has_purchase"]:
+            stages.append("purchase")
+        result.append({
+            "date": r["day"].isoformat(),
+            "country": r["country"],
+            "city": r["city"] or "",
+            "device": r["device"],
+            "channel": r["channel"],
+            "source": r["source"],
+            "funnel": " → ".join(stages),
+        })
+    return result
 
 
 DAILY_LOOKBACK_DAYS = 10
@@ -263,12 +369,27 @@ def changelog_block(entries: str) -> str:
     )
 
 
+def atc_block(atc_sessions: list[dict]) -> str:
+    if not atc_sessions:
+        return "\n\nATC sessions in target period: none."
+    lines = [
+        f"  {s['date']} | {s['country']}/{s['city'] or '?'} | {s['device']} "
+        f"| {s['channel']}/{s['source']} | {s['funnel']}"
+        for s in atc_sessions
+    ]
+    return (
+        "\n\nИндивидуальные ATC-сессии целевого периода (с городом, каналом, воронкой):\n"
+        + "\n".join(lines)
+    )
+
+
 def build_daily_prompt(
     target: date,
     today_utc: date,
     target_data: dict,
     baseline_data: dict,
     changelog_entries: str,
+    atc_sessions: list[dict],
 ) -> str:
     age = (today_utc - target).days
     if age <= 1:
@@ -284,11 +405,18 @@ def build_daily_prompt(
         f"{json.dumps(target_data, indent=2, ensure_ascii=False)}\n```\n\n"
         f"Данные за trailing-7-day baseline (7 дней до целевого дня):\n```json\n"
         f"{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```"
+        f"{atc_block(atc_sessions)}"
         f"{changelog_block(changelog_entries)}\n\n"
-        "Сгенерируй daily report по шаблону из references/report-template.md "
-        "(≤300 слов, на русском). Применяй small-sample rules из metrics-playbook.md. "
-        "Если значимых движений нет — одна строка «спокойный день». "
-        "Не добавляй секции которых нет в шаблоне daily."
+        "Сгенерируй daily report по шаблону из references/report-template.md (на русском).\n"
+        "ВАЖНО ПРО ДАННЫЕ:\n"
+        "- Используй индивидуальные ATC-сессии выше для секции «Корзины» — там есть город и канал.\n"
+        "- Используй country_channel_sessions чтобы точно знать, какой канал откуда пришёл. "
+        "НЕ делай предположений о каналах если данные не подтверждают.\n"
+        "- Если США выросли/упали — смотри их channel split в country_channel_sessions, "
+        "не экстраполируй с общих цифр Paid/Social.\n"
+        "- changelog.md объясняет только те изменения, которые туда записаны. "
+        "Не применяй одно событие (например, ссылки в bio) как объяснение всего подряд.\n"
+        "Если значимых движений нет — одна строка «спокойный день»."
     )
 
 
@@ -298,6 +426,7 @@ def build_weekly_prompt(
     target_data: dict,
     baseline_data: dict,
     changelog_entries: str,
+    atc_sessions: list[dict],
 ) -> str:
     return (
         f"Сегодня weekly report для Pinkspink за неделю "
@@ -306,14 +435,18 @@ def build_weekly_prompt(
         f"{json.dumps(target_data, indent=2, ensure_ascii=False)}\n```\n\n"
         f"Данные за baseline (среднее по 4 предыдущим неделям, агрегировано):\n"
         f"```json\n{json.dumps(baseline_data, indent=2, ensure_ascii=False)}\n```"
+        f"{atc_block(atc_sessions)}"
         f"{changelog_block(changelog_entries)}\n\n"
         "Сгенерируй weekly report по шаблону из references/report-template.md "
-        "(≤700 слов, на русском). Включи до 3 рекомендаций.\n\n"
-        "ВАЖНО: у тебя нет прямого доступа к BigQuery в этом контексте, только "
-        "переданные выше агрегаты. Если в шаблоне есть секция «что я исследовал "
-        "за пределами дашборда» — пометь её одной строкой «требует ad-hoc "
-        "запроса в Claude Code, в этом автоотчёте недоступно». Это норма для "
-        "автоматического weekly. Остальные секции заполняй полностью."
+        "(≤700 слов, на русском). Включи до 3 рекомендаций.\n"
+        "ВАЖНО ПРО ДАННЫЕ:\n"
+        "- Используй индивидуальные ATC-сессии выше для секции «Корзины».\n"
+        "- Используй country_channel_sessions чтобы точно знать откуда пришла каждая страна. "
+        "НЕ приписывай каналу трафик страны без подтверждения в данных.\n"
+        "- Если страна выросла/упала — объясняй только через её channel split, "
+        "не через общий тренд Paid/Social.\n"
+        "- Changelog — только конкретные механизмы. Не применяй одно изменение "
+        "как объяснение несвязанных метрик."
     )
 
 
@@ -355,11 +488,12 @@ def main() -> int:
         baseline_set = {target_day - timedelta(days=i) for i in range(1, 8)}
         target_data = aggregate_period(rows, {target_day})
         baseline_data = aggregate_period(rows, baseline_set)
+        atc_sessions = fetch_atc_sessions(client, target_day, target_day)
         changelog_entries = load_recent_changelog(today_utc, window_days=14)
         prompt = build_daily_prompt(
-            target_day, today_utc, target_data, baseline_data, changelog_entries
+            target_day, today_utc, target_data, baseline_data, changelog_entries, atc_sessions
         )
-        max_tokens = 800
+        max_tokens = 1000
         out_path = report_path("daily", target_day, None)
     else:
         week_monday, week_sunday, target_set, baseline_set = weekly_window(today_utc)
@@ -368,9 +502,10 @@ def main() -> int:
         rows = fetch_session_facts(client, start, end)
         target_data = aggregate_period(rows, target_set)
         baseline_data = aggregate_period(rows, baseline_set)
+        atc_sessions = fetch_atc_sessions(client, week_monday, week_sunday)
         changelog_entries = load_recent_changelog(today_utc, window_days=60)
         prompt = build_weekly_prompt(
-            week_monday, week_sunday, target_data, baseline_data, changelog_entries
+            week_monday, week_sunday, target_data, baseline_data, changelog_entries, atc_sessions
         )
         max_tokens = 1800
         out_path = report_path("weekly", week_monday, week_monday)
