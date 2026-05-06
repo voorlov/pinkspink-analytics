@@ -4724,6 +4724,145 @@ def build_html(data):
         return bundle;
     }}
 
+    // =========================================================================
+    // Phase 6 — Analytics tab country reactivity for per_card_time-based blocks.
+    // Other Analytics charts (scroll, catalog_depth, product_time, top_products,
+    // cohort) don't carry a country dimension in their BigQuery aggregations —
+    // they stay static under country filter changes.
+    // =========================================================================
+    function _activePerCardRows() {{
+        const all = (DATA.analytics && DATA.analytics.per_card_time) || [];
+        if (FILTERS.countries) {{
+            const picked = FILTERS.countries;
+            return all.filter(r => picked.has(r.country));
+        }}
+        return all.filter(r => !_DEFAULT_EXCLUDED.has(r.country));
+    }}
+
+    // Mirror of Python's _build_per_card_chart — session-weighted mean, true median
+    // (extends the values list by card_views like the Python builder does).
+    function _buildPerCardChart(rows, device) {{
+        const acc = new Map();  // period -> bucket: card_views, _med (list), _mean_w
+        for (const r of rows) {{
+            if (!r.period) continue;
+            if (device != null && r.device !== device) continue;
+            let b = acc.get(r.period);
+            if (!b) {{ b = {{ card_views: 0, _med: [], _mean_w: 0 }}; acc.set(r.period, b); }}
+            b.card_views += (r.card_views || 0);
+            if (r.median_sec != null && r.card_views) {{
+                for (let i = 0; i < r.card_views; i++) b._med.push(r.median_sec);
+            }}
+            if (r.mean_sec != null) b._mean_w += r.mean_sec * (r.card_views || 0);
+        }}
+        const out = [];
+        for (const [p, b] of acc.entries()) {{
+            if (b.card_views === 0) continue;
+            const med = b._med.length ? Math.round(b._med.sort((a,c) => a - c)[Math.floor(b._med.length / 2)] * 10) / 10 : 0;
+            const mean = b.card_views ? Math.round(b._mean_w / b.card_views * 10) / 10 : 0;
+            out.push({{ period: p, card_views: b.card_views, median_sec: med, mean_sec: mean }});
+        }}
+        out.sort((a, b) => a.period.localeCompare(b.period));
+        return out;
+    }}
+
+    // Mirror of Python's build_per_card_breakdown — current period per group_key.
+    function _buildPerCardBreakdown(rows, groupKey, device, periods, nPrev) {{
+        if (!periods.length) return [];
+        const curP = periods[periods.length - 1];
+        const prevSet = new Set(periods.slice(Math.max(0, periods.length - 1 - nPrev), periods.length - 1));
+        function _bucketRow(r) {{ return device == null || r.device === device; }}
+        const cur = new Map();
+        const prev = new Map();
+        for (const r of rows) {{
+            if (!_bucketRow(r)) continue;
+            const key = r[groupKey]; if (!key) continue;
+            const target = r.period === curP ? cur : (prevSet.has(r.period) ? prev : null);
+            if (!target) continue;
+            let b = target.get(key);
+            if (!b) {{ b = {{ card_views: 0, _med: [], _mean_w: 0 }}; target.set(key, b); }}
+            b.card_views += (r.card_views || 0);
+            if (r.median_sec != null && r.card_views) {{
+                for (let i = 0; i < r.card_views; i++) b._med.push(r.median_sec);
+            }}
+            if (r.mean_sec != null && r.card_views) b._mean_w += r.mean_sec * r.card_views;
+        }}
+        const out = [];
+        for (const [k, b] of cur.entries()) {{
+            if (b.card_views < 10) continue;
+            const curMed = b._med.length ? Math.round(b._med.sort((a,c) => a - c)[Math.floor(b._med.length / 2)] * 10) / 10 : 0;
+            const curMean = b.card_views ? Math.round(b._mean_w / b.card_views * 10) / 10 : 0;
+            const p = prev.get(k) || {{ card_views: 0, _med: [], _mean_w: 0 }};
+            const prevMed = p._med.length ? Math.round(p._med.sort((a,c) => a - c)[Math.floor(p._med.length / 2)] * 10) / 10 : 0;
+            const prevMean = p.card_views ? Math.round(p._mean_w / p.card_views * 10) / 10 : 0;
+            const dMed = prevMed > 0 ? Math.round((curMed - prevMed) * 10) / 10 : null;
+            const dMean = prevMean > 0 ? Math.round((curMean - prevMean) * 10) / 10 : null;
+            out.push({{ name: k, card_views: b.card_views, median_sec: curMed, mean_sec: curMean, delta_median: dMed, delta_mean: dMean }});
+        }}
+        return out.sort((a, b) => b.card_views - a.card_views).slice(0, 15);
+    }}
+
+    // Mirror of Python's build_cards_breakdown — main rows query (uses raw_rows).
+    function _buildCardsBreakdown(rows, groupKey, device, periods, nPrev) {{
+        if (!periods.length) return [];
+        const curP = periods[periods.length - 1];
+        const prevSet = new Set(periods.slice(Math.max(0, periods.length - 1 - nPrev), periods.length - 1));
+        const devMatch = (r) => device == null || r.device === device;
+        const curAgg = _aggregateRows(rows, [groupKey], r => devMatch(r) && r.period === curP);
+        const prevAgg = _aggregateRows(rows, [groupKey, 'period'], r => devMatch(r) && prevSet.has(r.period));
+        const out = [];
+        for (const d of curAgg.values()) {{
+            if (d.sessions < 10) continue;
+            const key = d._key[0];
+            const prevMedVals = [];
+            const prevMeanVals = [];
+            for (const p of prevSet) {{
+                const e = prevAgg.get([key, p].join('||'));
+                if (e) {{
+                    if (e.median_product_views > 0) prevMedVals.push(e.median_product_views);
+                    if (e.avg_product_views > 0) prevMeanVals.push(e.avg_product_views);
+                }}
+            }}
+            const avgMed = prevMedVals.length ? prevMedVals.reduce((a,b)=>a+b,0) / prevMedVals.length : 0;
+            const avgMean = prevMeanVals.length ? prevMeanVals.reduce((a,b)=>a+b,0) / prevMeanVals.length : 0;
+            const dMed = avgMed > 0 ? Math.round((d.median_product_views - avgMed) * 10) / 10 : null;
+            const dMean = avgMean > 0 ? Math.round((d.avg_product_views - avgMean) * 10) / 10 : null;
+            out.push({{ name: key, sessions: d.sessions, median_products: d.median_product_views, mean_products: d.avg_product_views, delta_median: dMed, delta_mean: dMean }});
+        }}
+        return out.sort((a, b) => b.sessions - a.sessions).slice(0, 15);
+    }}
+
+    function _rebuildAnalyticsData() {{
+        const periods = DATA.periods || [];
+        const nPrev = (DATA.summary && DATA.summary.n_prev) || 4;
+        const pcRows = _activePerCardRows();
+        const mainRows = _activeRows();
+        const devices = ['all', 'mobile', 'desktop', 'tablet'];
+
+        const newPerCardChart = {{}};
+        const newPerCardByCountry = {{}};
+        const newPerCardBySource = {{}};
+        const newCardsByCountry = {{}};
+        const newCardsBySource = {{}};
+        for (const dev of devices) {{
+            const d = dev === 'all' ? null : dev;
+            newPerCardChart[dev]    = _buildPerCardChart(pcRows, d);
+            newPerCardByCountry[dev] = _buildPerCardBreakdown(pcRows, 'country', d, periods, nPrev);
+            newPerCardBySource[dev]  = _buildPerCardBreakdown(pcRows, 'source',  d, periods, nPrev);
+            newCardsByCountry[dev]   = _buildCardsBreakdown(mainRows, 'country', d, periods, nPrev);
+            newCardsBySource[dev]    = _buildCardsBreakdown(mainRows, 'source',  d, periods, nPrev);
+        }}
+
+        if (DATA.per_card_chart) Object.assign(DATA.per_card_chart, newPerCardChart);
+        if (DATA.per_card_breakdown) {{
+            if (DATA.per_card_breakdown.by_country) Object.assign(DATA.per_card_breakdown.by_country, newPerCardByCountry);
+            if (DATA.per_card_breakdown.by_source)  Object.assign(DATA.per_card_breakdown.by_source,  newPerCardBySource);
+        }}
+        if (DATA.cards_breakdown) {{
+            if (DATA.cards_breakdown.by_country) Object.assign(DATA.cards_breakdown.by_country, newCardsByCountry);
+            if (DATA.cards_breakdown.by_source)  Object.assign(DATA.cards_breakdown.by_source,  newCardsBySource);
+        }}
+    }}
+
     // ---------- Bulk-toggle helpers (4 dropdown buttons) ----------
     function setAllCountries(checked) {{
         document.querySelectorAll('.country-section.included input[type="checkbox"]')
@@ -4766,6 +4905,14 @@ def build_html(data):
             if (DATA_BY_GRAIN && DATA_BY_GRAIN[currentGrain] && DATA_BY_GRAIN[currentGrain].summary) {{
                 DATA_BY_GRAIN[currentGrain].summary = DATA.summary;
             }}
+        }}
+
+        // Phase 6: rebuild per_card_chart + cards/per_card breakdowns for the
+        // Analytics tab. Other Analytics charts (scroll, catalog_depth, product_time,
+        // top_products, cohort) lack a country dimension in their BigQuery aggregations
+        // and stay at SSR data.
+        if (DATA.raw_rows) {{
+            _rebuildAnalyticsData();
         }}
 
         // Funnels-tab specifics (only fire when Funnels is initialized).
