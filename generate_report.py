@@ -31,7 +31,7 @@ OUTPUT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "report.h
 DATA_START_DATE = date(2026, 2, 5)
 MONTH_GRAIN_MIN_FULL_MONTHS = 4
 
-EXCLUDED_COUNTRIES_DEFAULT = ["China", "Hong Kong", "South Korea", "Singapore", "Georgia"]
+EXCLUDED_COUNTRIES_DEFAULT = ["China", "Hong Kong", "South Korea", "Singapore", "Georgia", "Kazakhstan"]
 
 COUNTRY_FLAGS = {
     "Japan": "🇯🇵", "United States": "🇺🇸", "Germany": "🇩🇪", "France": "🇫🇷",

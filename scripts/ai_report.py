@@ -41,7 +41,7 @@ SERVICE_ACCOUNT_FILE = ROOT / "service_account.json"
 
 BQ_PROJECT = "claude-code-486108"
 BQ_DATASET = "analytics_411715710"
-EXCLUDED_COUNTRIES = ("China", "Hong Kong", "South Korea", "Singapore", "Georgia")
+EXCLUDED_COUNTRIES = ("China", "Hong Kong", "South Korea", "Singapore", "Georgia", "Kazakhstan")
 SPAM_SOURCES = ("api.scraperforce.com", "sanganzhu.com", "jariblog.online")
 
 CLAUDE_MODEL = "claude-sonnet-4-6"
