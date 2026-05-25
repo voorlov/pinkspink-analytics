@@ -1,17 +1,17 @@
-# PageSpeed snapshot — 2026-05-18
+# PageSpeed snapshot — 2026-05-25
 
 Источник: Google PageSpeed Insights (Lighthouse synthetic + CrUX p75 real-user, если есть достаточно трафика).
 
 | URL | устройство | perf | LCP | FCP | CLS | TBT | INP (CrUX p75) |
 |---|---|---|---|---|---|---|---|
-| intl homepage | mobile | **67/100** | 5.2s ❌ | 2.2s ⚠ | 0.000 ✅ | 288ms ⚠ | нет данных |
-| intl homepage | desktop | **92/100** | 1.5s ✅ | 485ms ✅ | 0.000 ✅ | 79ms ✅ | нет данных |
-| jp homepage | mobile | **60/100** | 14.8s ❌ | 3.3s ❌ | 0.000 ✅ | 189ms ✅ | нет данных |
-| jp homepage | desktop | **91/100** | 1.3s ✅ | 612ms ✅ | 0.000 ✅ | 130ms ✅ | нет данных |
-| intl catalog | mobile | **57/100** | 6.0s ❌ | 2.2s ⚠ | 0.000 ✅ | 492ms ⚠ | нет данных |
-| intl catalog | desktop | **47/100** | 1.2s ✅ | 503ms ✅ | 0.337 ❌ | 942ms ❌ | нет данных |
-| jp catalog | mobile | **42/100** | 7.5s ❌ | 2.1s ⚠ | 0.000 ✅ | 1.3s ❌ | нет данных |
-| jp catalog | desktop | **46/100** | 1.4s ✅ | 615ms ✅ | 0.337 ❌ | 810ms ❌ | нет данных |
+| intl homepage | mobile | **69/100** | 5.4s ❌ | 2.2s ⚠ | 0.000 ✅ | 236ms ⚠ | нет данных |
+| intl homepage | desktop | **94/100** | 1.1s ✅ | 503ms ✅ | 0.000 ✅ | 118ms ✅ | нет данных |
+| jp homepage | mobile | **62/100** | 6.4s ❌ | 2.7s ⚠ | 0.000 ✅ | 248ms ⚠ | нет данных |
+| jp homepage | desktop | **87/100** | 1.2s ✅ | 543ms ✅ | 0.000 ✅ | 191ms ✅ | нет данных |
+| intl catalog | mobile | **42/100** | 17.0s ❌ | 2.7s ⚠ | 0.000 ✅ | 1.0s ❌ | нет данных |
+| intl catalog | desktop | **55/100** | 1.3s ✅ | 502ms ✅ | 0.337 ❌ | 488ms ⚠ | нет данных |
+| jp catalog | mobile | **57/100** | 7.4s ❌ | 2.7s ⚠ | 0.000 ✅ | 401ms ⚠ | нет данных |
+| jp catalog | desktop | **60/100** | 1.4s ✅ | 542ms ✅ | 0.385 ❌ | 336ms ⚠ | нет данных |
 
 **Пороги Google:** LCP ≤2.5s ✅ ≤4s ⚠ >4s ❌  ·  INP ≤200ms ✅ ≤500ms ⚠  ·  CLS ≤0.1 ✅ ≤0.25 ⚠  ·  perf score ≥90 ✅ ≥50 ⚠ <50 ❌.
 
