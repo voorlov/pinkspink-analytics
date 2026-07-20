@@ -1,0 +1,181 @@
+{
+  "date": "2026-07-20",
+  "results": [
+    {
+      "label": "intl homepage",
+      "url": "https://pinkspink.company/",
+      "strategy": "mobile",
+      "fetched_at": "2026-07-20T05:57:01.519Z",
+      "lighthouse": {
+        "perf_score_0_100": 44,
+        "LCP_ms": 7619.50900586389,
+        "FCP_ms": 2036.9134591256807,
+        "TBT_ms": 65.5,
+        "CLS": 1.0,
+        "SpeedIndex_ms": 6182.496781898231
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "intl homepage",
+      "url": "https://pinkspink.company/",
+      "strategy": "desktop",
+      "fetched_at": "2026-07-20T05:57:24.701Z",
+      "lighthouse": {
+        "perf_score_0_100": 97,
+        "LCP_ms": 1016.5210786360427,
+        "FCP_ms": 529.4790987792883,
+        "TBT_ms": 26.500000000000227,
+        "CLS": 0.0,
+        "SpeedIndex_ms": 1555.9727005148798
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "jp homepage",
+      "url": "https://pinkspink.company/ja",
+      "strategy": "mobile",
+      "fetched_at": "2026-07-20T05:57:48.007Z",
+      "lighthouse": {
+        "perf_score_0_100": 66,
+        "LCP_ms": 4372.932405019335,
+        "FCP_ms": 1833.7046350547864,
+        "TBT_ms": 460.0000000000009,
+        "CLS": 0.0,
+        "SpeedIndex_ms": 6816.847119831444
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "jp homepage",
+      "url": "https://pinkspink.company/ja",
+      "strategy": "desktop",
+      "fetched_at": "2026-07-20T05:58:23.668Z",
+      "lighthouse": {
+        "perf_score_0_100": 89,
+        "LCP_ms": 1038.0338353729135,
+        "FCP_ms": 514.3612992183821,
+        "TBT_ms": 203.49999999999977,
+        "CLS": 0.0,
+        "SpeedIndex_ms": 1874.2370802962992
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "intl catalog",
+      "url": "https://pinkspink.company/collections/shop-all",
+      "strategy": "mobile",
+      "fetched_at": "2026-07-20T05:59:56.105Z",
+      "lighthouse": {
+        "perf_score_0_100": 42,
+        "LCP_ms": 21226.195034892968,
+        "FCP_ms": 2867.023068643254,
+        "TBT_ms": 915.5,
+        "CLS": 0.0,
+        "SpeedIndex_ms": 8438.277323145006
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "intl catalog",
+      "url": "https://pinkspink.company/collections/shop-all",
+      "strategy": "desktop",
+      "fetched_at": "2026-07-20T06:00:54.494Z",
+      "lighthouse": {
+        "perf_score_0_100": 50,
+        "LCP_ms": 981.0216990589813,
+        "FCP_ms": 519.7148690768693,
+        "TBT_ms": 616.9999999999995,
+        "CLS": 0.3847238823810663,
+        "SpeedIndex_ms": 2686.4789060995317
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "jp catalog",
+      "url": "https://pinkspink.company/ja/collections/shop-all",
+      "strategy": "mobile",
+      "fetched_at": "2026-07-20T06:01:45.063Z",
+      "lighthouse": {
+        "perf_score_0_100": 42,
+        "LCP_ms": 6920.264281210342,
+        "FCP_ms": 2063.0390229398195,
+        "TBT_ms": 1374.4516190840463,
+        "CLS": 0.0,
+        "SpeedIndex_ms": 7919.161980409789
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "jp catalog",
+      "url": "https://pinkspink.company/ja/collections/shop-all",
+      "strategy": "desktop",
+      "fetched_at": "2026-07-20T06:02:40.147Z",
+      "lighthouse": {
+        "perf_score_0_100": 63,
+        "LCP_ms": 1114.017686978883,
+        "FCP_ms": 514.6303023961326,
+        "TBT_ms": 231.47519285459612,
+        "CLS": 0.5500876563869632,
+        "SpeedIndex_ms": 2220.9172772830584
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    }
+  ]
+}
