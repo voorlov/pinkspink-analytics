@@ -1,0 +1,165 @@
+{
+  "date": "2026-09-28",
+  "results": [
+    {
+      "label": "intl homepage",
+      "url": "https://pinkspink.company/",
+      "strategy": "mobile",
+      "fetched_at": "2026-09-28T09:01:43.179Z",
+      "lighthouse": {
+        "perf_score_0_100": 61,
+        "LCP_ms": 37446.0,
+        "FCP_ms": 2915.4947183028253,
+        "TBT_ms": 26.5,
+        "CLS": 0.0,
+        "SpeedIndex_ms": 10011.572221707265
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "intl homepage",
+      "url": "https://pinkspink.company/",
+      "strategy": "desktop",
+      "fetched_at": "2026-09-28T09:02:32.012Z",
+      "lighthouse": {
+        "perf_score_0_100": 59,
+        "LCP_ms": 5258.0,
+        "FCP_ms": 798.0444459355388,
+        "TBT_ms": 276.5,
+        "CLS": 0.07503319140654031,
+        "SpeedIndex_ms": 2383.4957295752047
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "jp homepage",
+      "url": "https://pinkspink.company/ja",
+      "strategy": "mobile",
+      "error": "The read operation timed out"
+    },
+    {
+      "label": "jp homepage",
+      "url": "https://pinkspink.company/ja",
+      "strategy": "desktop",
+      "fetched_at": "2026-09-28T09:09:54.505Z",
+      "lighthouse": {
+        "perf_score_0_100": 63,
+        "LCP_ms": 10571.0,
+        "FCP_ms": 956.4443395441343,
+        "TBT_ms": 162.49999999999983,
+        "CLS": 0.07468996533588335,
+        "SpeedIndex_ms": 2385.4332813664437
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "intl catalog",
+      "url": "https://pinkspink.company/collections/shop-all",
+      "strategy": "mobile",
+      "fetched_at": "2026-09-28T09:11:56.493Z",
+      "lighthouse": {
+        "perf_score_0_100": 65,
+        "LCP_ms": 20806.0,
+        "FCP_ms": 2919.494190035334,
+        "TBT_ms": 83.0,
+        "CLS": 0.002388565468471267,
+        "SpeedIndex_ms": 5685.740936023947
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "intl catalog",
+      "url": "https://pinkspink.company/collections/shop-all",
+      "strategy": "desktop",
+      "fetched_at": "2026-09-28T09:12:41.308Z",
+      "lighthouse": {
+        "perf_score_0_100": 88,
+        "LCP_ms": 1236.0,
+        "FCP_ms": 799.2580266242367,
+        "TBT_ms": 175.99999999999977,
+        "CLS": 0.012649452964603475,
+        "SpeedIndex_ms": 2139.411194651665
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "jp catalog",
+      "url": "https://pinkspink.company/ja/collections/shop-all",
+      "strategy": "mobile",
+      "fetched_at": "2026-09-28T09:13:21.799Z",
+      "lighthouse": {
+        "perf_score_0_100": 61,
+        "LCP_ms": 41656.00000000001,
+        "FCP_ms": 4306.0,
+        "TBT_ms": 71.5,
+        "CLS": 0.002247692309743152,
+        "SpeedIndex_ms": 5807.515485924303
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    },
+    {
+      "label": "jp catalog",
+      "url": "https://pinkspink.company/ja/collections/shop-all",
+      "strategy": "desktop",
+      "fetched_at": "2026-09-28T09:20:34.910Z",
+      "lighthouse": {
+        "perf_score_0_100": 47,
+        "LCP_ms": 3971.0,
+        "FCP_ms": 991.0000000000001,
+        "TBT_ms": 840.4999999999997,
+        "CLS": 0.008597016884822731,
+        "SpeedIndex_ms": 1981.077147186248
+      },
+      "crux_url": {
+        "overall_category": null,
+        "has_data": false
+      },
+      "crux_origin": {
+        "overall_category": null,
+        "has_data": false
+      }
+    }
+  ]
+}
